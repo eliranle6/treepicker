@@ -15,3 +15,5 @@ for objectfile_name; do true; done
 
 # Run the compilation with the compilation database flag
 clang $@ -MJ $objectfile_name.compilation-database.json
+#rc -c clang $@ -MJ $objectfile_name.compilation-database.json
+#rc -J $objectfile_name.compilation-database.json
