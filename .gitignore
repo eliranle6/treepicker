@@ -1,7 +1,7 @@
-Makefile
 config.h
 config.log
 config.status
+Makefile
 src/Makefile
 stamp-h
 src/src
@@ -21,3 +21,6 @@ src/Makefile.in
 .idea
 CMakeLists.txt
 ar-lib
+config.h.in~
+src/libtreelib.a
+*.compilation-database.json
