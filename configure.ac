@@ -9,7 +9,12 @@ AC_INIT([amtree_exmple], [1.0])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
 # Use a C++ compiler
-AC_PROG_CXX
+AC_LANG(C)
+AC_LANG(C++)
+AC_PROG_CXX(clang)
+AC_CONFIG_MACRO_DIR([m4])
+m4_include([m4/ax_cxx_compile_stdcxx.m4])
+AX_CXX_COMPILE_STDCXX(11, noext, mandatory)
 
 # Header file for preprocessor directives (alternative for specifying -D flags when compiling)
 # The config.h file should be later included by the source code (if needed).
