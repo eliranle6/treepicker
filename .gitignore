@@ -24,3 +24,5 @@ ar-lib
 config.h.in~
 src/libtreelib.a
 *.compilation-database.json
+-ferror-limit=50
+*.gch
