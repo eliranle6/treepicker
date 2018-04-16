@@ -23,6 +23,8 @@ public:
     void print(void);
 
 private:
+    void print_node(Node<T>* node, int depth);
+
     std::map<std::string, Node<T> * > node_map;
     Node<T> *root;
 };
@@ -75,16 +77,28 @@ void Tree<T>::print(void) {
     if (nullptr == root) {
         return;
     }
-    std::stack< Node<T>* > bfs_queue;
-    bfs_queue.push(root);
-    while (not bfs_queue.empty()) {
-        Node<T> *node = bfs_queue.top();
-        bfs_queue.pop();
-        std::cout << node->tag << std::endl;
+    using node_depth_pair = std::pair<Node<T>*, int>;
+    std::stack< node_depth_pair > dfs_stack;
+    auto rootpair = std::make_pair(root, 0);
+    dfs_stack.push(rootpair);
+    while (not dfs_stack.empty()) {
+        // Today i learned: Structured bindings (C++ 17)
+        auto [node, depth] = dfs_stack.top();
+        dfs_stack.pop();
+        print_node(node, depth);
         for (auto child : node->children) {
-                bfs_queue.push(child);
+            auto node_depth_pair = std::make_pair(child, depth + 1);
+            dfs_stack.push(node_depth_pair);
         }
     }
+}
+
+template <typename T>
+void Tree<T>::print_node(Node<T>* node, int depth) {
+    for (int depth_idx = 0; depth_idx < depth; ++depth_idx) {
+        std::cout << "  ";
+    }
+    std::cout << node->tag << std::endl;
 }
 
 } // namespace treelib

@@ -1,4 +1,4 @@
-AM_CXXFLAGS=$(CXXFLAGS) -std=c++0x -Wall -Werror
+AM_CXXFLAGS=$(CXXFLAGS) -std=c++1z -Wall -Werror
 AM_LDFLAGS=$(LDFLAGS) -lstdc++
 
 bin_PROGRAMS = test_tree \
