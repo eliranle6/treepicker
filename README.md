@@ -1,6 +1,10 @@
 # cpptree
 A small and simple C++ tree library.
 
+This is for C++ practice only, so obviously i'm going to use features that are not necessarily needed.
+Each time a new feature is used for the first time, the text 'Today i learned: <feature name>" will appear as a comment in the code, near that feature and in the commit message.
+The names of the learned features will be taken from: https://github.com/AnthonyCalandra/modern-cpp-features.
+
 ## How to Build
 This package uses autotools as the build system. I chose it only to practice it and not because i think it's a good choice.
 
