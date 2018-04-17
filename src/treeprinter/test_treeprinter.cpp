@@ -1,7 +1,8 @@
 #include <assert.h>
 #include <boost/algorithm/string/replace.hpp>
+#include <sstream>
 
-#include <treelib.h>
+#include "treelib.h"
 
 
 // Not writing non-ASCII chars in code
@@ -30,8 +31,7 @@ static std::string convert_ascii_tree_to_unicode(std::string tree) {
     return tree;
 }
 
-
-void test_print_basic_tree() {
+treelib::Tree<int> get_simple_tree(void) {
     treelib::Tree<int> tree;
     tree.create_root_node("People", "people", 3);
     tree.create_node("Dumb people", "dumb", "people", 3);
@@ -40,19 +40,36 @@ void test_print_basic_tree() {
     tree.create_node("Smart people", "smart", "people", 11);
     tree.create_node("Rich smart people", "rich-smart", "smart", 12);
     tree.create_node("Poor smart people", "poor-smart", "smart", 13);
+    return tree;
+}
 
-    std::string actual = "";
+
+void test_print_basic_tree() {
+    // Store original cout buffer before mocking it
+    auto *original_out_buffer = std::cout.rdbuf();
+    // Mock the cout buffer
+    std::ostringstream out;
+    std::cout.rdbuf(out.rdbuf());
+
     std::string expected = convert_ascii_tree_to_unicode("People\n"
-                                                         "+-- Dumb people\n"
-                                                         "|  +-- Rich dumb people\n"
-                                                         "|  \\-- Poor dumb people\n"
-                                                         "\\-- Smart people\n"
-                                                         "   +-- Rich smart people\n"
-                                                         "   \\-- Poor smart people\n"
+                                                         "+--Dumb people\n"
+                                                         "|  +--Rich dumb people\n"
+                                                         "|  \\--Poor dumb people\n"
+                                                         "\\--Smart people\n"
+                                                         "   +--Rich smart people\n"
+                                                         "   \\--Poor smart people\n"
                                                         );
-    tree.print();
-    std::cout << expected << std::endl;
-    // assert(actual == expected);
+    // Print tree
+    treelib::Tree<int> tree = get_simple_tree();
+    out << tree;
+
+    // Restore stdout stream buffer
+    std::cout.rdbuf(original_out_buffer);
+
+    // Test results
+    std::string actual(out.str());
+    assert(actual == expected);
+
 }
 
 

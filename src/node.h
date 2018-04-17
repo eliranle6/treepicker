@@ -1,3 +1,6 @@
+#ifndef __NODE_H
+#define __NODE_H
+
 namespace treelib {
 
 template <class T>
@@ -27,7 +30,9 @@ Node<T>::Node(std::string _tag, std::string _identifier, T _data, std::string _p
 
 template <class T>
 void Node<T>::add_child(Node<T> *child) {
-    children.insert(children.begin(), child);
+    children.insert(children.end(), child);
 }
 
 }
+
+#endif
