@@ -17,7 +17,7 @@ class TreePrinter
 {
 public:
     // Today i learned: 'using' keyword (same as typedef)
-    using node_t = const Node<T>*;
+    using node_t = const std::shared_ptr< Node<T> >;
     void print(std::ostream &buf, const Tree<T> &tree);
 
 private:
@@ -27,7 +27,7 @@ private:
 
 template <typename T>
 void TreePrinter<T>::print(std::ostream &buf, const Tree<T> &tree) {
-    const Node<T> *root = tree.get_root();
+    node_t root = tree.get_root();
     if (nullptr == root) {
         return;
     }
@@ -65,10 +65,9 @@ void TreePrinter<T>::print(std::ostream &buf, const Tree<T> &tree) {
         print_node(node, depth, depth_to_next_sibling, tree, is_last_child);
 
         // Add children of current node to DFS stack. Iterate in reverse to cancel the stack's reverse effect
-        for (auto rev_iter = node->children.rbegin(); rev_iter != node->children.rend(); ++rev_iter) {
+        for (auto iter = node->children.rbegin(); iter != node->children.rend(); ++iter) {
         //for (auto child : node->children) {
-            auto child = *rev_iter;
-            auto current_node_depth_pair = std::make_pair(child, depth + 1);
+            auto current_node_depth_pair = std::make_pair(*iter, depth + 1);
             dfs_stack.push(current_node_depth_pair);
         }
     }

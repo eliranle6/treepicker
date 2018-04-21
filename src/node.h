@@ -1,6 +1,8 @@
 #ifndef __NODE_H
 #define __NODE_H
 
+#include <memory>
+
 namespace treelib {
 
 template <class T>
@@ -13,11 +15,11 @@ public:
     std::string identifier;
     std::string parent;
     T data;
-    std::vector< Node<T> * > children;
-    void add_child(Node<T> *node);
+    std::vector< std::shared_ptr< Node<T> > > children;
+    void add_child(std::shared_ptr< Node<T> > node);
 
 private:
-    Node *parent_node;
+    std::shared_ptr< Node<T> > parent_node;
 };
 
 template <class T>
@@ -29,8 +31,8 @@ Node<T>::Node(std::string _tag, std::string _identifier, T _data, std::string _p
 }
 
 template <class T>
-void Node<T>::add_child(Node<T> *child) {
-    children.insert(children.end(), child);
+void Node<T>::add_child(std::shared_ptr< Node<T> > node) {
+    children.insert(children.end(), node);
 }
 
 }

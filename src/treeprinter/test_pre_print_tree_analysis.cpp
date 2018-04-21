@@ -17,7 +17,7 @@ treelib::Tree<int> get_simple_tree(void) {
 
 void test_simple_tree_sibling_existance_map(void) {
     treelib::Tree<int> tree = get_simple_tree();
-    treelib::Node<int> *root = tree.get_root();
+    auto root = tree.get_root();
     treelib::TreeAnalysisInfo info = treelib::analyze_tree_for_printing(root);
     assert(info.m_node_to_next_sibling_existance["child1"]);
     assert(info.m_node_to_next_sibling_existance["child1.1"]);
@@ -29,14 +29,14 @@ void test_simple_tree_sibling_existance_map(void) {
 
 void test_simple_tree_max_depth(void) {
     treelib::Tree<int> tree = get_simple_tree();
-    treelib::Node<int> *root = tree.get_root();
+    auto root = tree.get_root();
     treelib::TreeAnalysisInfo info = treelib::analyze_tree_for_printing(root);
     assert(info.m_max_depth == 2);
 }
 
 void test_info_not_copied(void) {
     treelib::Tree<int> tree = get_simple_tree();
-    treelib::Node<int> *root = tree.get_root();
+    auto root = tree.get_root();
     treelib::TreeAnalysisInfo info = treelib::analyze_tree_for_printing(root);
     assert(not info.m_copied);
 }
