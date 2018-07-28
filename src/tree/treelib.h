@@ -9,7 +9,7 @@
 #include <iostream>
 #include <stdexcept>
 #include "node.h"
-#include "treeprinter/treeprinter.h"
+#include "treeprinter.h"
 
 namespace treelib {
 

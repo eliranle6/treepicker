@@ -1,7 +1,7 @@
 #include "assert.h"
 
 #include "treelib.h"
-#include "treeprinter/pre_print_tree_analysis.h"
+#include "pre_print_tree_analysis.h"
 
 
 treelib::Tree<int> get_simple_tree(void) {

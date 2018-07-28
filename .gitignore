@@ -1,7 +1,6 @@
 config.h
 config.log
 config.status
-Makefile
 src/Makefile
 stamp-h
 src/src
@@ -31,3 +30,4 @@ src/test_treeprinter
 src/treeprinter/.deps/
 src/treeprinter/test_pre_print_tree_analysis
 src/treeprinter/test_treeprinter
+*.Po

@@ -5,7 +5,7 @@
 
 #include "node.h"
 #include "treelib.h"
-#include "treeprinter/pre_print_tree_analysis.h"
+#include "pre_print_tree_analysis.h"
 
 namespace treelib {
 
