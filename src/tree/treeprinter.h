@@ -4,7 +4,7 @@
 #include <ostream>
 
 #include "node.h"
-#include "treelib.h"
+#include "tree.h"
 #include "pre_print_tree_analysis.h"
 
 namespace treelib {

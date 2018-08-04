@@ -20,48 +20,38 @@ public:
     // Today i learned: nullptr
     Tree(void) : root(nullptr) {}
     // Today i learned: shared_ptr
-    std::shared_ptr< Node<T> > create_root_node(std::string tag, std::string identifier, T data);
     std::shared_ptr< Node<T> > create_node(std::string tag, std::string identifier, std::string parent, T data);
     std::shared_ptr< Node<T> > get_node(std::string identifier);
     std::shared_ptr< Node<T> > get_root(void) const { return root; }
     const std::vector< std::shared_ptr < Node<T> > > & children(std::string identifier);
 
     // Print tree
-    template<T>
-    friend std::ostream& operator << (std::ostream &os, const Tree<T> &tree);
+    template <typename U>
+    friend std::ostream& operator << (std::ostream &os, const Tree<U> &tree);
 
-private:
-
+protected:
     std::map<std::string, std::shared_ptr< Node<T> > > node_map;
     std::shared_ptr< Node<T> > root;
 };
 
 template <typename T>
-std::shared_ptr< Node<T> > Tree<T>::create_root_node(std::string tag, std::string identifier, T data) {
-    if (root != nullptr) {
-        std::cout << "A root node already exists.";
-        throw std::invalid_argument("A root node already exists.");
-    }
-    root = create_node(tag, identifier, "", data);
-    return root;
-}
-
-template <typename T>
-std::shared_ptr< Node<T> >Tree<T>::create_node(std::string tag, std::string identifier, std::string parent, T data) {
+std::shared_ptr< Node<T> >Tree<T>::create_node(std::string tag, std::string identifier,
+                                               std::string parent, T data) {
     if (node_map.count(identifier)) {
         std::cout << "Duplicate node";
         throw std::invalid_argument("Duplicate node");
     }
-    const bool does_root_node_exist = root != nullptr;
-    const bool is_root_node_creation = parent.length() == 0;
-    if (not does_root_node_exist and not is_root_node_creation) {
-        std::cout << "Please create the root node first.";
-        throw std::invalid_argument("Please create the root node first.");
-    }
+    const bool is_root_node_creation = root == nullptr;
 
     auto nodeptr = std::make_shared< Node<T> >(tag, identifier, data, parent);
-    if (not is_root_node_creation) {
+    if (is_root_node_creation) {
+    // Set as child of designated parent
+        root = nodeptr;
+    } else {
         auto parent_node = get_node(parent);
+        if (parent_node == nullptr) {
+            throw std::invalid_argument("Parent node does not exist");
+        }
         parent_node->add_child(nodeptr);
     }
     node_map[identifier] =  nodeptr;
@@ -80,8 +70,9 @@ const std::vector< std::shared_ptr< Node<T> > > & Tree<T>::children(std::string 
     return node_map[identifier]->children;
 }
 
-std::ostream& operator << (std::ostream &os, const Tree<int> &tree) {
-    TreePrinter<int> tree_printer;
+template <typename T>
+std::ostream& operator << (std::ostream &os, const Tree<T> &tree) {
+    TreePrinter<T> tree_printer;
     tree_printer.print(os, tree);
     return os;
 }

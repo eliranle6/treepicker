@@ -6,7 +6,7 @@ AC_INIT([cpptree], [1.0])
 # The following are arguments for automake when invoked for building Makefile files,
 # and not(!!!) for the compiler.
 # `foreign` means that this package does not follow the GNU standards with regard to file structure.
-AM_INIT_AUTOMAKE([-Wall -Werror foreign])
+AM_INIT_AUTOMAKE([subdir-objects -Wall -Werror foreign])
 
 # Use a C++ compiler
 AC_LANG(C)
@@ -24,8 +24,15 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([
  Makefile
  src/Makefile
+
+ src/utils/Makefile
+ src/utils/tests/Makefile
+
  src/tree/Makefile
  src/tree/tests/Makefile
+
+ src/dirtree/Makefile
+ src/dirtree/tests/Makefile
 ])
 
 # Dunno what this is, but the GNU manual says to specify this if any libraries are built

@@ -32,7 +32,11 @@ Node<T>::Node(std::string _tag, std::string _identifier, T _data, std::string _p
 
 template <class T>
 void Node<T>::add_child(std::shared_ptr< Node<T> > node) {
-    children.insert(children.end(), node);
+    // Find position to keep sorted order (todo: optimize this)
+    auto position = children.begin();
+    for (; position != children.end() && node->tag > (*position)->tag; ++position);
+
+    children.insert(position, node);
 }
 
 }

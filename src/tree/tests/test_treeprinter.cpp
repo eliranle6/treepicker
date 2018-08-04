@@ -3,7 +3,7 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <gtest/gtest.h>
 
-#include "tree/treelib.h"
+#include "tree/tree.h"
 
 
 // Not writing non-ASCII chars in code
@@ -34,7 +34,7 @@ static std::string convert_ascii_tree_to_unicode(std::string tree) {
 
 treelib::Tree<int> get_simple_tree(void) {
     treelib::Tree<int> tree;
-    tree.create_root_node("People", "people", 3);
+    tree.create_node("People", "people", "", 3);
     tree.create_node("Dumb people", "dumb", "people", 3);
     tree.create_node("Rich dumb people", "rich-dumb", "dumb", 6);
     tree.create_node("Poor dumb people", "poor-dumb", "dumb", 8);
@@ -53,11 +53,11 @@ TEST(treeprinter, print_basic_tree) {
 
     std::string expected = convert_ascii_tree_to_unicode("People\n"
                                                          "+--Dumb people\n"
-                                                         "|  +--Rich dumb people\n"
-                                                         "|  \\--Poor dumb people\n"
+                                                         "|  +--Poor dumb people\n"
+                                                         "|  \\--Rich dumb people\n"
                                                          "\\--Smart people\n"
-                                                         "   +--Rich smart people\n"
-                                                         "   \\--Poor smart people\n"
+                                                         "   +--Poor smart people\n"
+                                                         "   \\--Rich smart people\n"
                                                         );
     // Print tree
     treelib::Tree<int> tree = get_simple_tree();
@@ -68,6 +68,6 @@ TEST(treeprinter, print_basic_tree) {
 
     // Test results
     std::string actual(out.str());
-    assert(actual == expected);
+    ASSERT_EQ(actual, expected);
 
 }

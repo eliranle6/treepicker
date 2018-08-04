@@ -1,13 +1,13 @@
 #include "assert.h"
 #include "gtest/gtest.h"
 
-#include "tree/treelib.h"
+#include "tree/tree.h"
 #include "tree/pre_print_tree_analysis.h"
 
 
 treelib::Tree<int> get_simple_tree(void) {
     treelib::Tree<int> tree;
-    tree.create_root_node("root", "root", 3);
+    tree.create_node("root", "root", "", 3);
     tree.create_node("child1", "child1", "root", 3);
     tree.create_node("child1.1", "child1.1", "child1", 6);
     tree.create_node("child1.2", "child1.2", "child1", 8);
