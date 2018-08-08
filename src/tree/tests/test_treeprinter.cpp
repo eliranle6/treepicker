@@ -1,8 +1,9 @@
 #include <assert.h>
-#include <boost/algorithm/string/replace.hpp>
 #include <sstream>
+#include <boost/algorithm/string/replace.hpp>
+#include <gtest/gtest.h>
 
-#include "treelib.h"
+#include "tree/treelib.h"
 
 
 // Not writing non-ASCII chars in code
@@ -43,8 +44,7 @@ treelib::Tree<int> get_simple_tree(void) {
     return tree;
 }
 
-
-void test_print_basic_tree() {
+TEST(treeprinter, print_basic_tree) {
     // Store original cout buffer before mocking it
     auto *original_out_buffer = std::cout.rdbuf();
     // Mock the cout buffer
@@ -70,10 +70,4 @@ void test_print_basic_tree() {
     std::string actual(out.str());
     assert(actual == expected);
 
-}
-
-
-int main(void) {
-    test_print_basic_tree();
-    std::cout << "great success" << std::endl;
 }

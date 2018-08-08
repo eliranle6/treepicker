@@ -1,7 +1,8 @@
 #include "assert.h"
+#include "gtest/gtest.h"
 
-#include "treelib.h"
-#include "pre_print_tree_analysis.h"
+#include "tree/treelib.h"
+#include "tree/pre_print_tree_analysis.h"
 
 
 treelib::Tree<int> get_simple_tree(void) {
@@ -15,7 +16,7 @@ treelib::Tree<int> get_simple_tree(void) {
     return tree;
 }
 
-void test_simple_tree_sibling_existance_map(void) {
+TEST(pre_print_tree_analysis, simple_tree_sibling_existance_map) {
     treelib::Tree<int> tree = get_simple_tree();
     auto root = tree.get_root();
     treelib::TreeAnalysisInfo info = treelib::analyze_tree_for_printing(root);
@@ -27,22 +28,16 @@ void test_simple_tree_sibling_existance_map(void) {
     assert(not info.m_node_to_next_sibling_existance["child2.1"]);
 }
 
-void test_simple_tree_max_depth(void) {
+TEST(pre_print_tree_analysis, test_simple_tree_max_depth) {
     treelib::Tree<int> tree = get_simple_tree();
     auto root = tree.get_root();
     treelib::TreeAnalysisInfo info = treelib::analyze_tree_for_printing(root);
     assert(info.m_max_depth == 2);
 }
 
-void test_info_not_copied(void) {
+TEST(pre_print_tree_analysis, test_info_not_copied) {
     treelib::Tree<int> tree = get_simple_tree();
     auto root = tree.get_root();
     treelib::TreeAnalysisInfo info = treelib::analyze_tree_for_printing(root);
     assert(not info.m_copied);
-}
-
-int main(void) {
-    test_simple_tree_sibling_existance_map();
-    test_simple_tree_max_depth();
-    test_info_not_copied();
 }

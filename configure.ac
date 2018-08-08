@@ -25,6 +25,7 @@ AC_CONFIG_FILES([
  Makefile
  src/Makefile
  src/tree/Makefile
+ src/tree/tests/Makefile
 ])
 
 # Dunno what this is, but the GNU manual says to specify this if any libraries are built

@@ -1,15 +1,16 @@
 #include <assert.h>
 #include <iostream>
-#include "treelib.h"
+#include "gtest/gtest.h"
+#include "tree/treelib.h"
 
-void test_create_root() {
+TEST(tree, create_root) {
     treelib::Tree<int> tree;
     tree.create_root_node("root_tag", "root_id", 10);
     auto root_node = tree.get_node("root_id");
     assert(root_node->data == 10);
 }
 
-void test_get_node() {
+TEST(tree, get_node) {
     treelib::Tree<int> tree;
     tree.create_root_node("root_tag", "root_id", 10);
     tree.create_node("child_node_tag", "child_node_id", "root_id", 20);
@@ -17,17 +18,10 @@ void test_get_node() {
     assert(node->data == 20);
 }
 
-void test_root_value_persists_after_child_is_born() {
+TEST(tree, root_value_persists_after_child_is_born) {
     treelib::Tree<int> tree;
     tree.create_root_node("root_tag", "root_id", 10);
     tree.create_node("child_node_tag", "child_node_id", "root_id", 20);
     auto node = tree.get_node("root_id");
     assert(node->data == 10);
-}
-
-int main(void) {
-    test_create_root();
-    test_get_node();
-    test_root_value_persists_after_child_is_born();
-    std::cout << "great success" << std::endl;
 }
