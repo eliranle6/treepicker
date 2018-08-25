@@ -5,6 +5,8 @@
 
 using bpath = boost::filesystem::path;
 
+namespace dirtree {
+
 DirTree::DirTree(std::string _path) : path(_path)
 {
 }
@@ -45,3 +47,5 @@ void DirTree::update_from_filesystem(void) {
                     entry);
     }
 }
+
+} // namespace dirtree

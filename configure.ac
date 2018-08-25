@@ -36,6 +36,9 @@ AC_CONFIG_FILES([
 
  src/guishell/Makefile
  src/guishell/tests/Makefile
+
+ src/picker/Makefile
+ src/picker/tests/Makefile
 ])
 
 # Dunno what this is, but the GNU manual says to specify this if any libraries are built

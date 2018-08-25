@@ -8,11 +8,22 @@
 #include "tree/tree.h"
 #include "utils/subprocess.h"
 
+namespace dirtree {
+
 class FileEntry
 {
 };
 
-template class treelib::Tree<FileEntry>;
+}
+
+// Template instantiation must be inside the namespace in which the template class
+// was defined.
+namespace treelib {
+template class Tree<dirtree::FileEntry>;
+}
+
+namespace dirtree {
+
 using FileEntryTree = treelib::Tree<FileEntry>;
 
 class DirTree : public FileEntryTree
@@ -23,5 +34,7 @@ public:
 
     void update_from_filesystem(void);
 };
+
+} // namespace dirtree
 
 #endif

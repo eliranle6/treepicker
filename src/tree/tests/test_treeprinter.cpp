@@ -45,11 +45,8 @@ treelib::Tree<int> get_simple_tree(void) {
 }
 
 TEST(treeprinter, print_basic_tree) {
-    // Store original cout buffer before mocking it
-    auto *original_out_buffer = std::cout.rdbuf();
-    // Mock the cout buffer
+    // // Store original cout buffer before mocking it
     std::ostringstream out;
-    std::cout.rdbuf(out.rdbuf());
 
     std::string expected = convert_ascii_tree_to_unicode("People\n"
                                                          "+--Dumb people\n"
@@ -63,11 +60,7 @@ TEST(treeprinter, print_basic_tree) {
     treelib::Tree<int> tree = get_simple_tree();
     out << tree;
 
-    // Restore stdout stream buffer
-    std::cout.rdbuf(original_out_buffer);
-
     // Test results
-    std::string actual(out.str());
+    std::string actual = out.str();
     ASSERT_EQ(actual, expected);
-
 }

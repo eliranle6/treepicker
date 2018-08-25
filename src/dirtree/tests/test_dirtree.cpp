@@ -21,34 +21,34 @@
 */
 
 
-DirTree create_example_tree() {
+dirtree::DirTree create_example_tree() {
     boost::filesystem::path tests_subdir =
         boost::filesystem::path(getexepath()).parent_path().string()
         + "/../../../../src/dirtree/tests/subdir_for_tests";
-    DirTree dir(tests_subdir.string());
+    dirtree::DirTree dir(tests_subdir.string());
     dir.update_from_filesystem();
     return dir;
 }
 
 TEST(dirtree, dirpath) {
-    DirTree dir("/some/path");
+    dirtree::DirTree dir("/some/path");
     ASSERT_EQ(dir.path, "/some/path");
 }
 
 TEST(dirtree, rootnode_properties) {
-    DirTree dir = create_example_tree();
+    dirtree::DirTree dir = create_example_tree();
     ASSERT_EQ(dir.get_root()->children.size(), 3);
     ASSERT_EQ(dir.get_root()->tag, "subdir_for_tests");
     ASSERT_EQ(dir.get_root()->identifier, "");
 }
 
 TEST(dirtree, read_flat_dir__nr_children_of_root) {
-    DirTree dir = create_example_tree();
+    dirtree::DirTree dir = create_example_tree();
     ASSERT_EQ(dir.get_root()->children.size(), 3);
 }
 
 TEST(dirtree, read_flat_dir__tree_node_tags) {
-    DirTree dir = create_example_tree();
+    dirtree::DirTree dir = create_example_tree();
     ASSERT_EQ(dir.get_root()->children[0]->tag, "firstdir");
         ASSERT_EQ(dir.get_root()->children[0]->children[0]->tag, "anotherfile.txt");
         ASSERT_EQ(dir.get_root()->children[0]->children[1]->tag, "somefile.txt");
@@ -62,7 +62,7 @@ TEST(dirtree, read_flat_dir__tree_node_tags) {
 }
 
 TEST(dirtree, read_flat_dir__tree_node_identifiers) {
-    DirTree dir = create_example_tree();
+    dirtree::DirTree dir = create_example_tree();
     ASSERT_EQ(dir.get_root()->children[0]->identifier,
               "firstdir");
         ASSERT_EQ(dir.get_root()->children[0]->children[0]->identifier,

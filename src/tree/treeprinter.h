@@ -18,15 +18,16 @@ class TreePrinter
 public:
     // Today i learned: 'using' keyword (same as typedef)
     using node_t = const std::shared_ptr< Node<T> >;
-    void print(std::ostream &buf, const Tree<T> &tree);
+    void print(std::ostream &out, const Tree<T> &tree);
 
 private:
     void print_node(node_t node, int depth, std::vector<bool> &depth_to_next_sibling_existance,
-                    const Tree<T> &tree, bool is_last_child);
+                    const Tree<T> &tree, bool is_last_child,
+                    std::ostream &out);
 };
 
 template <typename T>
-void TreePrinter<T>::print(std::ostream &buf, const Tree<T> &tree) {
+void TreePrinter<T>::print(std::ostream &out, const Tree<T> &tree) {
     node_t root = tree.get_root();
     if (nullptr == root) {
         return;
@@ -62,7 +63,7 @@ void TreePrinter<T>::print(std::ostream &buf, const Tree<T> &tree) {
         const auto is_last_child = info.m_node_to_next_sibling_existance[node->identifier];
 
         // Print node
-        print_node(node, depth, depth_to_next_sibling, tree, is_last_child);
+        print_node(node, depth, depth_to_next_sibling, tree, is_last_child, out);
 
         // Add children of current node to DFS stack. Iterate in reverse to cancel the stack's reverse effect
         for (auto iter = node->children.rbegin(); iter != node->children.rend(); ++iter) {
@@ -93,20 +94,21 @@ void TreePrinter<T>::print(std::ostream &buf, const Tree<T> &tree) {
 
 template <typename T>
 void TreePrinter<T>::print_node(node_t node, int depth, std::vector<bool> &depth_to_next_sibling,
-                                const Tree<T> &tree, bool is_last_child) {
+                                const Tree<T> &tree, bool is_last_child,
+                                std::ostream &out) {
     for (int depth_idx = 1; depth_idx < depth; ++depth_idx) {
         if (depth_to_next_sibling[depth_idx])
-            std::cout << VERTICAL_TREE_LINE << "  ";
+            out << VERTICAL_TREE_LINE << "  ";
         else
-            std::cout << "   ";
+            out << "   ";
     }
     if (node->identifier != tree.get_root()->identifier) {
         if (is_last_child)
-            std::cout << MIDDLE_CHILD_CONNECTOR << HORIZONTAL_TREE_LINE << HORIZONTAL_TREE_LINE;
+            out << MIDDLE_CHILD_CONNECTOR << HORIZONTAL_TREE_LINE << HORIZONTAL_TREE_LINE;
         else
-            std::cout << LAST_CHILD_CONNECTOR << HORIZONTAL_TREE_LINE << HORIZONTAL_TREE_LINE;
+            out << LAST_CHILD_CONNECTOR << HORIZONTAL_TREE_LINE << HORIZONTAL_TREE_LINE;
     }
-    std::cout << node->tag << std::endl;
+    out << node->tag << std::endl;
 }
 
 } // namespace treelib
