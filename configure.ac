@@ -33,6 +33,9 @@ AC_CONFIG_FILES([
 
  src/dirtree/Makefile
  src/dirtree/tests/Makefile
+
+ src/guishell/Makefile
+ src/guishell/tests/Makefile
 ])
 
 # Dunno what this is, but the GNU manual says to specify this if any libraries are built
