@@ -27,11 +27,14 @@ private:
 };
 
 template <class T>
-Node<T>::Node(std::string _tag, std::string _identifier, T _data, std::string _parent) {
-    tag = _tag;
-    identifier = _identifier;
-    data = _data;
-    parent = _parent;
+Node<T>::Node(std::string _tag, std::string _identifier, T _data, std::string _parent):
+        tag(_tag),
+        identifier(_identifier),
+        parent(_parent),
+        data(_data),
+        is_matching_search(false),
+        is_ancestor_of_matching_search(false)
+{
 }
 
 template <class T>
@@ -41,6 +44,7 @@ void Node<T>::add_child(std::shared_ptr< Node<T> > node) {
     for (; position != children.end() && node->tag > (*position)->tag; ++position);
 
     children.insert(position, node);
+    node->parent = identifier;
 }
 
 }

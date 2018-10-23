@@ -7,10 +7,10 @@ treelib::Tree<int> get_example_tree(void) {
     tree.create_node("root_tag", "root_id", "", 10);
         tree.create_node("child1_tag", "child1_id", "root_id", 20);
             tree.create_node("child1.1_tag", "child1.1_id", "child1_id", 20);
-            tree.create_node("child1.2_tag", "child1.2_tag", "child1_id", 20);
+            tree.create_node("child1.2_tag", "child1.2_id", "child1_id", 20);
         tree.create_node("child2_tag", "child2_id", "root_id", 20);
             tree.create_node("child2.1_tag", "child2.1_id", "child2_id", 20);
-            tree.create_node("child2.2_tag", "child2.1_tag", "child2_id", 20);
+            tree.create_node("child2.2_tag", "child2.2_id", "child2_id", 20);
     return tree;
 }
 
