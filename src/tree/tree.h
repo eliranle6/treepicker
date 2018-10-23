@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include "node.h"
 #include "treeprinter.h"
+#include "search.h"
 
 namespace treelib {
 
@@ -17,6 +18,8 @@ template <typename T>
 class Tree
 {
 public:
+    using node_t = std::shared_ptr< Node<T> >;
+
     // Today i learned: nullptr
     Tree(void) : root(nullptr) {}
     // Today i learned: shared_ptr
@@ -28,6 +31,8 @@ public:
     // Print tree
     template <typename U>
     friend std::ostream& operator << (std::ostream &os, const Tree<U> &tree);
+
+    void search(std::string pattern);
 
 protected:
     std::map<std::string, std::shared_ptr< Node<T> > > node_map;
@@ -75,6 +80,13 @@ std::ostream& operator << (std::ostream &os, const Tree<T> &tree) {
     TreePrinter<T> tree_printer;
     tree_printer.print(os, tree);
     return os;
+}
+
+template<typename T>
+void Tree<T>::search(std::string pattern)
+{
+    Search<T> search(*this);
+    search.search(pattern);
 }
 
 } // namespace treelib

@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <iostream>
 #include "gtest/gtest.h"
 #include "tree/tree.h"
 

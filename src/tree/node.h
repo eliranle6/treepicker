@@ -15,6 +15,10 @@ public:
     std::string identifier;
     std::string parent;
     T data;
+
+    bool is_matching_search;
+    bool is_ancestor_of_matching_search;
+
     std::vector< std::shared_ptr< Node<T> > > children;
     void add_child(std::shared_ptr< Node<T> > node);
 
