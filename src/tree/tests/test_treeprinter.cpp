@@ -48,14 +48,14 @@ TEST(treeprinter, print_basic_tree) {
     // // Store original cout buffer before mocking it
     std::ostringstream out;
 
-    std::string expected = convert_ascii_tree_to_unicode("People\n"
-                                                         "+--Dumb people\n"
-                                                         "|  +--Poor dumb people\n"
-                                                         "|  \\--Rich dumb people\n"
-                                                         "\\--Smart people\n"
-                                                         "   +--Poor smart people\n"
-                                                         "   \\--Rich smart people\n"
-                                                        );
+    std::string expected = ("People\n"
+                             "+--Dumb people\n"
+                             "|  +--Poor dumb people\n"
+                             "|  \\--Rich dumb people\n"
+                             "\\--Smart people\n"
+                             "   +--Poor smart people\n"
+                             "   \\--Rich smart people\n"
+                            );
     // Print tree
     treelib::Tree<int> tree = get_simple_tree();
     out << tree;

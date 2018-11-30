@@ -50,6 +50,10 @@ void GuiShell::refresh(void) {
     ::refresh();
 }
 
+void GuiShell::clear(void) {
+    erase(); // ncurses call
+}
+
 bool GuiShell::is_initialized = false;
 
 Color::Color(int code) : _code(code) {

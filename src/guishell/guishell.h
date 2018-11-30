@@ -49,6 +49,8 @@ public:
 
   void refresh(void);
 
+  void clear(void);
+
 private:
   GuiShell(NCursesSink &buff);
 };

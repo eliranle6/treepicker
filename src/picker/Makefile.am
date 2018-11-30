@@ -6,4 +6,4 @@ LDADD=-lboost_system -lncurses $(top_builddir)/src/guishell/libguishell.a
 bin_PROGRAMS = picker
 
 #picker_LDADD=$(top_builddir)/src/utils/libsubprocess.a
-picker_SOURCES = main.cpp
+picker_SOURCES = main.cpp menu.cpp

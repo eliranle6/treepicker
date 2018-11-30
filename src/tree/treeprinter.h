@@ -74,23 +74,28 @@ void TreePrinter<T>::print(std::ostream &out, const Tree<T> &tree) {
     }
 }
 //
-// Not writing non-ASCII chars in code
-//
+// Cannot get unicode characters to work with ncurses, or find a
+//  compatible version of ncursesw. For the meantime, use regular
+//  ASCII chars
 // --
 //
-#define HORIZONTAL_TREE_LINE ("\xe2\x94\x80")
+//#define HORIZONTAL_TREE_LINE ("\xe2\x94\x80")
+#define HORIZONTAL_TREE_LINE ("-")
 // |
 // |
 // |
-#define VERTICAL_TREE_LINE ("\xe2\x94\x82")
+//#define VERTICAL_TREE_LINE ("\xe2\x94\x82")
+#define VERTICAL_TREE_LINE ("|")
 // |
 // |--
 // |
-#define MIDDLE_CHILD_CONNECTOR ("\xe2\x94\x9c")
+//#define MIDDLE_CHILD_CONNECTOR ("\xe2\x94\x9c")
+#define MIDDLE_CHILD_CONNECTOR ("+")
 // |
 // |--
 //
-#define LAST_CHILD_CONNECTOR  ("\xe2\x94\x94")
+//#define LAST_CHILD_CONNECTOR  ("\xe2\x94\x94")
+#define LAST_CHILD_CONNECTOR  ("+")
 
 template <typename T>
 void TreePrinter<T>::print_node(node_t node, int depth, std::vector<bool> &depth_to_next_sibling,
