@@ -29,7 +29,14 @@ void Search<T>::search(std::string &keyword) {
     // Currently,  assume that there are no cycles.
     // Also, not using concurrency yet.
     std::stack< node_t > dfs_stack;
-    dfs_stack.push(_tree.get_root());
+
+    // Validate that the tree is not empty
+    auto root = _tree.get_root();
+    if (root == nullptr) {
+        return;
+    }
+
+    dfs_stack.push(root);
 
     // Use a simple cycle counter to prevent infinite loops (TODO: implement a better
     // cycle detection with a set or something)

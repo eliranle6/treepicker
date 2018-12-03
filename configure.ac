@@ -39,6 +39,8 @@ AC_CONFIG_FILES([
 
  src/picker/Makefile
  src/picker/tests/Makefile
+
+ src/dirpicker/Makefile
 ])
 
 # Dunno what this is, but the GNU manual says to specify this if any libraries are built

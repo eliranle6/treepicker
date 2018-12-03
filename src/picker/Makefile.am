@@ -1,9 +1,12 @@
 AM_CXXFLAGS = $(CXXFLAGS) -std=c++1z -Wall -Werror -I$(top_srcdir)/src/ -pthread
-SUBDIRS = tests
 EXEXT=bin
-LDADD=-lboost_system -lncurses $(top_builddir)/src/guishell/libguishell.a
+LDADD= $(top_builddir)/src/guishell/libguishell.a $(top_builddir)/src/utils/libsubprocess.a -lboost_system -lboost_filesystem -lboost_iostreams -lncurses
 
 bin_PROGRAMS = picker
+lib_LIBRARIES = libpicker.a
 
-#picker_LDADD=$(top_builddir)/src/utils/libsubprocess.a
-picker_SOURCES = main.cpp menu.cpp
+picker_LDADD= $(LDADD)
+picker_SOURCES = main.cpp picker.cpp
+
+#libpicker_a_LIBADD= $(LIBS)
+libpicker_a_SOURCES = picker.cpp

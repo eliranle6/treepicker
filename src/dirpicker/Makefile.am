@@ -1,0 +1,9 @@
+AM_CXXFLAGS = $(CXXFLAGS) -std=c++1z -Wall -Werror -I$(top_srcdir)/src/ -pthread
+EXEXT=bin
+LDADD= $(top_builddir)/src/dirtree/libdirtree.a $(top_builddir)/src/picker/libpicker.a $(top_builddir)/src/utils/libsubprocess.a $(top_builddir)/src/guishell/libguishell.a -lboost_system -lboost_filesystem -lboost_iostreams -lncurses
+
+bin_PROGRAMS = dirpicker
+
+dirpicker_LDADD= $(LDADD)
+dirpicker_SOURCES = dirpicker.cpp main.cpp
+

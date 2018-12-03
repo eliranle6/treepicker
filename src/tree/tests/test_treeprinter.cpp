@@ -5,25 +5,7 @@
 
 #include "tree/tree.h"
 
-
-// Not writing non-ASCII chars in code
-//
-// --
-//
-#define HORIZONTAL_TREE_LINE ("\xe2\x94\x80")
-// |
-// |
-// |
-#define VERTICAL_TREE_LINE ("\xe2\x94\x82")
-// |
-// |--
-// |
-#define MIDDLE_CHILD_CONNECTOR ("\xe2\x94\x9c")
-// |
-// |--
-//
-#define LAST_CHILD_CONNECTOR  ("\xe2\x94\x94")
-
+# if 0
 static std::string convert_ascii_tree_to_unicode(std::string tree) {
     boost::replace_all(tree, "|", VERTICAL_TREE_LINE);
     boost::replace_all(tree, "+", MIDDLE_CHILD_CONNECTOR);
@@ -31,6 +13,7 @@ static std::string convert_ascii_tree_to_unicode(std::string tree) {
     boost::replace_all(tree, "\\", LAST_CHILD_CONNECTOR);
     return tree;
 }
+#endif
 
 treelib::Tree<int> get_simple_tree(void) {
     treelib::Tree<int> tree;
@@ -51,10 +34,10 @@ TEST(treeprinter, print_basic_tree) {
     std::string expected = ("People\n"
                              "+--Dumb people\n"
                              "|  +--Poor dumb people\n"
-                             "|  \\--Rich dumb people\n"
-                             "\\--Smart people\n"
+                             "|  +--Rich dumb people\n"
+                             "+--Smart people\n"
                              "   +--Poor smart people\n"
-                             "   \\--Rich smart people\n"
+                             "   +--Rich smart people\n"
                             );
     // Print tree
     treelib::Tree<int> tree = get_simple_tree();
