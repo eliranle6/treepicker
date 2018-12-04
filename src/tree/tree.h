@@ -78,7 +78,7 @@ const std::vector< std::shared_ptr< Node<T> > > & Tree<T>::children(std::string 
 template <typename T>
 std::ostream& operator << (std::ostream &os, const Tree<T> &tree) {
     TreePrinter<T> tree_printer;
-    tree_printer.print(os, tree);
+    tree_printer.print(os, tree, true);
     return os;
 }
 

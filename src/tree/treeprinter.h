@@ -18,7 +18,7 @@ class TreePrinter
 public:
     // Today i learned: 'using' keyword (same as typedef)
     using node_t = const std::shared_ptr< Node<T> >;
-    void print(std::ostream &out, const Tree<T> &tree);
+    void print(std::ostream &out, const Tree<T> &tree, bool filter_search_nodes = true);
 
 private:
     void print_node(node_t node, int depth, std::vector<bool> &depth_to_next_sibling_existance,
@@ -27,7 +27,8 @@ private:
 };
 
 template <typename T>
-void TreePrinter<T>::print(std::ostream &out, const Tree<T> &tree) {
+void TreePrinter<T>::print(std::ostream &out, const Tree<T> &tree,
+                           bool filter_search_nodes) {
     node_t root = tree.get_root();
     if (nullptr == root) {
         return;
@@ -52,6 +53,13 @@ void TreePrinter<T>::print(std::ostream &out, const Tree<T> &tree) {
         node = std::get<0>(current_node_depth_pair);
         depth = std::get<1>(current_node_depth_pair);
         dfs_stack.pop();
+
+        // Filter out nodes that don't match an ongoing search
+        if (filter_search_nodes) {
+            if (not node->is_ancestor_of_matching_search and not node->is_matching_search) {
+                continue;
+            }
+        }
 
         // Maintain the depth-to-next-sibnling map
         const bool is_first_node_of_parent = previous_depth < depth;
