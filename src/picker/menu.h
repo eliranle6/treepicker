@@ -66,7 +66,10 @@ void Menu<T>::char_pressed(char c)
         default:
             _search_keyword += c;
     };
-    _tree.search(_search_keyword);
+    _tree.is_there_an_ongoing_search = not _search_keyword.empty();
+    if (_tree.is_there_an_ongoing_search) {
+        _tree.search(_search_keyword);
+    }
     _print_tree();
 }
 
@@ -74,7 +77,7 @@ template<typename T>
 void Menu<T>::_print_tree(void) {
     _out.clear();
     _out << _tree;
-    if (not _search_keyword.empty()) {
+    if (_tree.is_there_an_ongoing_search) {
         _out << std::endl << "Search: " + _search_keyword;
     }
     _out.refresh();

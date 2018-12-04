@@ -18,7 +18,7 @@ class TreePrinter
 public:
     // Today i learned: 'using' keyword (same as typedef)
     using node_t = const std::shared_ptr< Node<T> >;
-    void print(std::ostream &out, const Tree<T> &tree, bool filter_search_nodes = true);
+    void print(std::ostream &out, const Tree<T> &tree, bool filter_search_nodes = false);
 
 private:
     void print_node(node_t node, int depth, std::vector<bool> &depth_to_next_sibling_existance,
@@ -55,7 +55,7 @@ void TreePrinter<T>::print(std::ostream &out, const Tree<T> &tree,
         dfs_stack.pop();
 
         // Filter out nodes that don't match an ongoing search
-        if (filter_search_nodes) {
+        if (tree.is_there_an_ongoing_search and filter_search_nodes) {
             if (not node->is_ancestor_of_matching_search and not node->is_matching_search) {
                 continue;
             }

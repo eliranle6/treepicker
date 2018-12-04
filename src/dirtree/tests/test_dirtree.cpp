@@ -32,7 +32,7 @@ dirtree::DirTree create_example_tree() {
 
 TEST(dirtree, dirpath) {
     dirtree::DirTree dir("/some/path");
-    ASSERT_EQ(dir.path, "/some/path");
+    ASSERT_EQ(dir.path.string(), "/some/path");
 }
 
 TEST(dirtree, rootnode_properties) {

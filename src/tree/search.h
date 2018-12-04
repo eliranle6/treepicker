@@ -49,6 +49,7 @@ void Search<T>::search(std::string &keyword) {
         // Visit node
         bool found = node->tag.find(keyword) != std::string::npos;
         node->is_matching_search = found;
+        node->is_ancestor_of_matching_search = false;
 
         if (found) {
             mark_ancestors(node->identifier);

@@ -21,7 +21,10 @@ public:
     using node_t = std::shared_ptr< Node<T> >;
 
     // Today i learned: nullptr
-    Tree(void) : root(nullptr) {}
+    Tree(void) :
+        is_there_an_ongoing_search(false),
+        root(nullptr)
+    {}
     // Today i learned: shared_ptr
     std::shared_ptr< Node<T> > create_node(std::string tag, std::string identifier, std::string parent, T data);
     std::shared_ptr< Node<T> > get_node(std::string identifier);
@@ -33,6 +36,8 @@ public:
     friend std::ostream& operator << (std::ostream &os, const Tree<U> &tree);
 
     void search(std::string pattern);
+
+    bool is_there_an_ongoing_search;
 
 protected:
     std::map<std::string, std::shared_ptr< Node<T> > > node_map;

@@ -32,8 +32,8 @@ Node<T>::Node(std::string _tag, std::string _identifier, T _data, std::string _p
         identifier(_identifier),
         parent(_parent),
         data(_data),
-        is_matching_search(false),
-        is_ancestor_of_matching_search(false)
+        is_matching_search(true),
+        is_ancestor_of_matching_search(true)
 {
 }
 

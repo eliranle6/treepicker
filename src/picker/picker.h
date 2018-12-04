@@ -37,6 +37,7 @@ template<typename T>
 void Picker<T>::start(void) {
     boost::asio::io_service::work work(_io_service);
 
+    guishell::GuiShell::get_instance() << _tree;
     // Handle keyboard events from a separate thread.
     // See https://stackoverflow.com/questions/10934444/asio-service-handler-for-stdin-keypress
     std::thread listen_thread(&Picker<T>::trigger_from_stdin, this, &_io_service);
