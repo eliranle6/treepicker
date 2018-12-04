@@ -50,9 +50,12 @@ void Picker<T>::start(void) {
 template<typename T>
 void Picker<T>::trigger_from_stdin(boost::asio::io_service *io_service) {
     assert(io_service != NULL);
-    char c;
-    while ((c = getch()) != 'q') {
-        _io_service.dispatch([=]() { _menu.char_pressed(c); });
+    bool is_finished = false;
+    while (not is_finished) {
+        const char c = getch();
+        auto one_menu_action =
+            [&]() { is_finished = _menu.char_pressed(c); };
+        _io_service.dispatch(one_menu_action);
     }
     kill(getpid(), SIGTERM);
 }

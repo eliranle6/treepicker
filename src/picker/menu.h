@@ -12,7 +12,7 @@ class Menu
 public:
     Menu(treelib::Tree<T>& tree);
 
-    void char_pressed(char c);
+    bool char_pressed(char c);
 
     void _print_tree(void);
 
@@ -46,13 +46,18 @@ Menu<T>::Menu(treelib::Tree<T>& tree):
 }
 
 template<typename T>
-void Menu<T>::char_pressed(char c)
+bool Menu<T>::char_pressed(char c)
 {
+    bool is_finished = false;
+
     // _tree.get_root()->tag += std::to_string((int)c);
     switch(c) {
         case KEYCODE_DOWN:
             break;
         case KEYCODE_UP:
+            break;
+        case KEYCODE_BACK:
+            is_finished = true;
             break;
         case KEYCODE_BACKSPACE:
             if (not _search_keyword.empty()) {
@@ -71,6 +76,8 @@ void Menu<T>::char_pressed(char c)
         _tree.search(_search_keyword);
     }
     _print_tree();
+
+    return is_finished;
 }
 
 template<typename T>
