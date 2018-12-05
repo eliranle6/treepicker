@@ -1,4 +1,5 @@
 AM_CXXFLAGS = $(CXXFLAGS) -std=c++1z -Wall -Werror -I$(top_srcdir)/src/ -pthread
+SUBDIRS = tests
 EXEXT=bin
 LDADD= $(top_builddir)/src/guishell/libguishell.a $(top_builddir)/src/utils/libsubprocess.a -lboost_system -lboost_filesystem -lboost_iostreams -lncurses
 

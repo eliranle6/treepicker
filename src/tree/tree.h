@@ -26,10 +26,10 @@ public:
         root(nullptr)
     {}
     // Today i learned: shared_ptr
-    std::shared_ptr< Node<T> > create_node(std::string tag, std::string identifier, std::string parent, T data);
-    std::shared_ptr< Node<T> > get_node(std::string identifier);
-    std::shared_ptr< Node<T> > get_root(void) const { return root; }
-    const std::vector< std::shared_ptr < Node<T> > > & children(std::string identifier);
+    node_t create_node(std::string tag, std::string identifier, std::string parent, T data);
+    node_t get_node(std::string identifier);
+    node_t get_root(void) const { return root; }
+    const std::vector<node_t> & children(std::string identifier);
 
     // Print tree
     template <typename U>
@@ -40,8 +40,8 @@ public:
     bool is_there_an_ongoing_search;
 
 protected:
-    std::map<std::string, std::shared_ptr< Node<T> > > node_map;
-    std::shared_ptr< Node<T> > root;
+    std::map<std::string, node_t > node_map;
+    node_t root;
 };
 
 template <typename T>
