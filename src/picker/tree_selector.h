@@ -15,6 +15,8 @@ public:
 
     node_t get_selection(void);
 
+    void explore_children_of_selection(void);
+
 private:
     const treelib::Tree<T>& _tree;
     node_t _selection;
@@ -30,6 +32,15 @@ TreeSelector<T>::TreeSelector(const treelib::Tree<T>& tree) :
 template<typename T>
 typename TreeSelector<T>::node_t TreeSelector<T>::get_selection(void) {
     return _selection;
+}
+
+template<typename T>
+void TreeSelector<T>::explore_children_of_selection(void) {
+    if (_selection != nullptr) {
+        if (_selection->children.size() > 0) {
+            _selection = _selection->children[0];
+        }
+    }
 }
 
 }
