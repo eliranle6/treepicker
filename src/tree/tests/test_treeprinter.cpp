@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 
 #include "tree/tree.h"
+#include "common.h"
 
 # if 0
 static std::string convert_ascii_tree_to_unicode(std::string tree) {
@@ -14,18 +15,6 @@ static std::string convert_ascii_tree_to_unicode(std::string tree) {
     return tree;
 }
 #endif
-
-treelib::Tree<int> get_simple_tree(void) {
-    treelib::Tree<int> tree;
-    tree.create_node("People", "people", "", 3);
-    tree.create_node("Dumb people", "dumb", "people", 3);
-    tree.create_node("Rich dumb people", "rich-dumb", "dumb", 6);
-    tree.create_node("Poor dumb people", "poor-dumb", "dumb", 8);
-    tree.create_node("Smart people", "smart", "people", 11);
-    tree.create_node("Rich smart people", "rich-smart", "smart", 12);
-    tree.create_node("Poor smart people", "poor-smart", "smart", 13);
-    return tree;
-}
 
 TEST(treeprinter, print_basic_tree) {
     // // Store original cout buffer before mocking it
