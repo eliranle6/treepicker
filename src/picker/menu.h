@@ -12,6 +12,7 @@ enum {
     KEYCODE_CTRL_C = 3,
     KEYCODE_CTRL_J = 10,
     KEYCODE_CTRL_K = 11,
+    KEYCODE_CTRL_L = 12,
     KEYCODE_CTRL_U = 21,
     KEYCODE_CTRL_W = 23,
     KEYCODE_BACKSPACE = 127,
@@ -22,6 +23,7 @@ enum {
 enum {
     KEYCODE_DOWN = KEYCODE_CTRL_J,
     KEYCODE_UP = KEYCODE_CTRL_K,
+    KEYCODE_RIGHT = KEYCODE_CTRL_L,
     KEYCODE_BACK = KEYCODE_CTRL_C,
     KEYCODE_START_SEARCH = KEYCODE_SLASH,
     KEYCODE_MOVE_FROM_SEARCH_TO_NAV_MODE = KEYCODE_ENTER
@@ -70,8 +72,13 @@ bool Menu<T>::char_pressed(char c)
     // _tree.get_root()->tag += std::to_string((int)c);
     switch(c) {
         case KEYCODE_DOWN:
+            _tree_selector.move_selection_one_down();
+            break;
+        case KEYCODE_RIGHT:
+            _tree_selector.explore_children_of_selection();
             break;
         case KEYCODE_UP:
+            _tree_selector.move_selection_one_up();
             break;
         case KEYCODE_BACK:
             is_finished = true;

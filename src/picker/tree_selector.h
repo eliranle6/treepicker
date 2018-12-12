@@ -11,19 +11,23 @@ class TreeSelector
 public:
     using node_t = typename treelib::Tree<T>::node_t;
 
-    TreeSelector(const treelib::Tree<T>& tree);
+    TreeSelector(treelib::Tree<T>& tree);
 
     node_t get_selection(void);
 
     void explore_children_of_selection(void);
+    void move_selection_one_down(void);
+    void move_selection_one_up(void);
 
 private:
-    const treelib::Tree<T>& _tree;
+    treelib::Tree<T>& _tree;
     node_t _selection;
+
+    void _advance_selection_at_same_tree_level(int direction);
 };
 
 template<typename T>
-TreeSelector<T>::TreeSelector(const treelib::Tree<T>& tree) :
+TreeSelector<T>::TreeSelector(treelib::Tree<T>& tree) :
     _tree(tree),
     _selection(tree.get_root())
 {
@@ -36,12 +40,66 @@ typename TreeSelector<T>::node_t TreeSelector<T>::get_selection(void) {
 
 template<typename T>
 void TreeSelector<T>::explore_children_of_selection(void) {
-    if (_selection != nullptr) {
-        if (_selection->children.size() > 0) {
-            _selection = _selection->children[0];
-        }
+    if (nullptr == _selection) {
+        return;
+    }
+    if (_selection->children.size() > 0) {
+        _selection = _selection->children[0];
     }
 }
 
+template<typename T>
+void TreeSelector<T>::move_selection_one_down(void) {
+    _advance_selection_at_same_tree_level(1);
 }
+
+template<typename T>
+void TreeSelector<T>::move_selection_one_up(void) {
+    _advance_selection_at_same_tree_level(-1);
+}
+
+template<typename T>
+void TreeSelector<T>::_advance_selection_at_same_tree_level(int difference) {
+    if (nullptr == _selection) {
+        return;
+    }
+    if (_tree.get_root() == _selection) {
+        return;
+    }
+    node_t parent = _tree.get_node(_selection->parent);
+    if (parent.get() == nullptr) {
+        return;
+    }
+    auto& children = parent->children;
+    auto position = children.begin();
+    // Find the index of the current selection in the array of paren'ts children
+    // TODO: optimize this (to something better than O(n))
+    for (; position != children.end() &&
+        _selection->identifier != (*position)->identifier; ++position);
+    assert(position != children.end());
+
+    // Advance
+    int direction = 0;
+    if (difference > 0) {
+        direction = 1;
+    } else if (difference < 0) {
+        direction = -1;
+    }
+    for (int count = 0; count < abs(difference); ++count) {
+        auto target = position + direction;
+        if (target == children.end()) {
+            break;
+        } else if (position == children.begin() and direction == -1) {
+            break;
+        } else {
+            position = target;
+        }
+    }
+
+    // Set selection
+    _selection = *position;
+}
+
+}
+
 #endif
