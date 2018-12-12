@@ -57,7 +57,7 @@ void TreePrinter<T>::print(std::ostream &out, const Tree<T> &tree,
         dfs_stack.pop();
 
         // Filter out nodes that don't match an ongoing search
-        if (tree.is_there_an_ongoing_search and filter_search_nodes) {
+        if (filter_search_nodes) {
             if (not node->is_ancestor_of_matching_search and not node->is_matching_search) {
                 continue;
             }

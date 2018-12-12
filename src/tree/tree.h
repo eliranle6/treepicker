@@ -21,7 +21,6 @@ public:
 
     // Today i learned: nullptr
     Tree(void) :
-        is_there_an_ongoing_search(false),
         root(nullptr)
     {}
     // Today i learned: shared_ptr
@@ -35,8 +34,6 @@ public:
     friend std::ostream& operator << (std::ostream &os, const Tree<U> &tree);
 
     void search(std::string pattern);
-
-    bool is_there_an_ongoing_search;
 
 protected:
     std::map<std::string, node_t > node_map;

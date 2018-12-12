@@ -8,6 +8,30 @@
 
 namespace picker {
 
+enum {
+    KEYCODE_CTRL_C = 3,
+    KEYCODE_CTRL_J = 10,
+    KEYCODE_CTRL_K = 11,
+    KEYCODE_CTRL_U = 21,
+    KEYCODE_CTRL_W = 23,
+    KEYCODE_BACKSPACE = 127,
+    KEYCODE_SLASH = 47,
+    KEYCODE_ENTER = 13
+};
+
+enum {
+    KEYCODE_DOWN = KEYCODE_CTRL_J,
+    KEYCODE_UP = KEYCODE_CTRL_K,
+    KEYCODE_BACK = KEYCODE_CTRL_C,
+    KEYCODE_START_SEARCH = KEYCODE_SLASH,
+    KEYCODE_MOVE_FROM_SEARCH_TO_NAV_MODE = KEYCODE_ENTER
+};
+
+enum mode {
+    MODE_NAVIGATION,
+    MODE_EDIT_SEARCH
+};
+
 template<typename T>
 class Menu
 {
@@ -24,29 +48,17 @@ private:
     std::string _search_keyword;
     TreeSelector<T> _tree_selector;
     treelib::TreePrinter<T> _tree_printer;
+    mode _mode;
 };
 
-enum {
-    KEYCODE_CTRL_C = 3,
-    KEYCODE_CTRL_J = 10,
-    KEYCODE_CTRL_K = 11,
-    KEYCODE_CTRL_U = 21,
-    KEYCODE_CTRL_W = 23,
-    KEYCODE_BACKSPACE = 127
-};
-
-enum {
-    KEYCODE_DOWN = KEYCODE_CTRL_J,
-    KEYCODE_UP = KEYCODE_CTRL_K,
-    KEYCODE_BACK = KEYCODE_CTRL_C,
-};
 
 template<typename T>
 Menu<T>::Menu(treelib::Tree<T>& tree):
     _tree(tree),
     _out(guishell::GuiShell::get_instance()),
     _search_keyword(),
-    _tree_selector(tree)
+    _tree_selector(tree),
+    _mode(mode::MODE_NAVIGATION)
 {
 }
 
@@ -71,13 +83,26 @@ bool Menu<T>::char_pressed(char c)
             break;
         case KEYCODE_CTRL_W:
         case KEYCODE_CTRL_U:
+            if (_mode == mode::MODE_EDIT_SEARCH) {
                 _search_keyword = "";
-                break;
+            }
+            break;
+        case KEYCODE_START_SEARCH:
+            if (_mode == mode::MODE_NAVIGATION) {
+                _search_keyword = "";
+                _mode = mode::MODE_EDIT_SEARCH;
+            }
+            break;
+        case KEYCODE_MOVE_FROM_SEARCH_TO_NAV_MODE:
+            _mode = mode::MODE_NAVIGATION;
+            break;
         default:
-            _search_keyword += c;
+            if (_mode == mode::MODE_EDIT_SEARCH)
+                _search_keyword += c;
+            else {
+            }
     };
-    _tree.is_there_an_ongoing_search = not _search_keyword.empty();
-    if (_tree.is_there_an_ongoing_search) {
+    if (not _search_keyword.empty()) {
         _tree.search(_search_keyword);
     }
     print_tree();
@@ -88,8 +113,12 @@ bool Menu<T>::char_pressed(char c)
 template<typename T>
 void Menu<T>::print_tree(void) {
     _out.clear();
-    _tree_printer.print(_out, _tree, true, _tree_selector.get_selection());
-    if (_tree.is_there_an_ongoing_search) {
+    const bool should_nodes_be_search_filtered = not _search_keyword.empty();
+    _tree_printer.print(_out, _tree, should_nodes_be_search_filtered,
+                        _tree_selector.get_selection());
+    const bool should_search_bar_be_displayed = 
+        should_nodes_be_search_filtered or _mode == mode::MODE_EDIT_SEARCH;
+    if (should_search_bar_be_displayed) {
         _out << std::endl << "Search: " + _search_keyword;
     }
     _out.refresh();
