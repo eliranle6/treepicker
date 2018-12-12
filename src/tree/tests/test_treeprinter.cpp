@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 
 #include "tree/tree.h"
+#include "tree/treeprinter.h"
 #include "common.h"
 
 # if 0
@@ -20,17 +21,40 @@ TEST(treeprinter, print_basic_tree) {
     // // Store original cout buffer before mocking it
     std::ostringstream out;
 
-    std::string expected = ("People\n"
-                             "+--Dumb people\n"
-                             "|  +--Poor dumb people\n"
-                             "|  +--Rich dumb people\n"
-                             "+--Smart people\n"
-                             "   +--Poor smart people\n"
-                             "   +--Rich smart people\n"
+    std::string expected = ("> People\n"
+                            "  +--Dumb people\n"
+                            "  |  +--Poor dumb people\n"
+                            "  |  +--Rich dumb people\n"
+                            "  +--Smart people\n"
+                            "     +--Poor smart people\n"
+                            "     +--Rich smart people\n"
                             );
     // Print tree
     treelib::Tree<int> tree = get_simple_tree();
-    out << tree;
+    treelib::TreePrinter<int> tree_printer;
+    tree_printer.print(out, tree, true, tree.get_root());
+
+    // Test results
+    std::string actual = out.str();
+    ASSERT_EQ(actual, expected);
+}
+
+TEST(treeprinter, test_different_selection) {
+    // // Store original cout buffer before mocking it
+    std::ostringstream out;
+
+    std::string expected = ("  People\n"
+                            "  +--Dumb people\n"
+                            "  |  +--Poor dumb people\n"
+                            "> |  +--Rich dumb people\n"
+                            "  +--Smart people\n"
+                            "     +--Poor smart people\n"
+                            "     +--Rich smart people\n"
+                            );
+    // Print tree
+    treelib::Tree<int> tree = get_simple_tree();
+    treelib::TreePrinter<int> tree_printer;
+    tree_printer.print(out, tree, true, tree.get_node("rich-dumb"));
 
     // Test results
     std::string actual = out.str();

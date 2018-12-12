@@ -2,7 +2,9 @@
 #define MENU_H__
 
 #include "tree/tree.h"
+#include "tree/treeprinter.h"
 #include "guishell/guishell.h"
+#include "tree_selector.h"
 
 namespace picker {
 
@@ -14,12 +16,14 @@ public:
 
     bool char_pressed(char c);
 
-    void _print_tree(void);
+    void print_tree(void);
 
 private:
     treelib::Tree<T>& _tree;
     guishell::GuiShell& _out;
     std::string _search_keyword;
+    TreeSelector<T> _tree_selector;
+    treelib::TreePrinter<T> _tree_printer;
 };
 
 enum {
@@ -41,7 +45,8 @@ template<typename T>
 Menu<T>::Menu(treelib::Tree<T>& tree):
     _tree(tree),
     _out(guishell::GuiShell::get_instance()),
-    _search_keyword()
+    _search_keyword(),
+    _tree_selector(tree)
 {
 }
 
@@ -75,15 +80,15 @@ bool Menu<T>::char_pressed(char c)
     if (_tree.is_there_an_ongoing_search) {
         _tree.search(_search_keyword);
     }
-    _print_tree();
+    print_tree();
 
     return is_finished;
 }
 
 template<typename T>
-void Menu<T>::_print_tree(void) {
+void Menu<T>::print_tree(void) {
     _out.clear();
-    _out << _tree;
+    _tree_printer.print(_out, _tree, true, _tree_selector.get_selection());
     if (_tree.is_there_an_ongoing_search) {
         _out << std::endl << "Search: " + _search_keyword;
     }

@@ -9,7 +9,6 @@
 #include <iostream>
 #include <stdexcept>
 #include "node.h"
-#include "treeprinter.h"
 #include "search.h"
 
 namespace treelib {
@@ -78,13 +77,6 @@ std::shared_ptr< Node<T> > Tree<T>::get_node(std::string identifier) {
 template <typename T>
 const std::vector< std::shared_ptr< Node<T> > > & Tree<T>::children(std::string identifier) {
     return node_map[identifier]->children;
-}
-
-template <typename T>
-std::ostream& operator << (std::ostream &os, const Tree<T> &tree) {
-    TreePrinter<T> tree_printer;
-    tree_printer.print(os, tree, true);
-    return os;
 }
 
 template<typename T>
