@@ -16,8 +16,9 @@ public:
     node_t get_selection(void);
 
     void explore_children_of_selection(void);
-    void move_selection_one_down(void);
-    void move_selection_one_up(void);
+    void move_to_next(void);
+    void move_to_prev(void);
+    void move_one_up(void);
 
 private:
     treelib::Tree<T>& _tree;
@@ -49,12 +50,23 @@ void TreeSelector<T>::explore_children_of_selection(void) {
 }
 
 template<typename T>
-void TreeSelector<T>::move_selection_one_down(void) {
+void TreeSelector<T>::move_one_up(void) {
+    if (nullptr == _selection) {
+        return;
+    }
+    auto parent = _tree.get_node(_selection->parent);
+    if (parent != nullptr) {
+        _selection = parent;
+    }
+}
+
+template<typename T>
+void TreeSelector<T>::move_to_next(void) {
     _advance_selection_at_same_tree_level(1);
 }
 
 template<typename T>
-void TreeSelector<T>::move_selection_one_up(void) {
+void TreeSelector<T>::move_to_prev(void) {
     _advance_selection_at_same_tree_level(-1);
 }
 

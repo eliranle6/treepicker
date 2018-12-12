@@ -10,6 +10,7 @@ namespace picker {
 
 enum {
     KEYCODE_CTRL_C = 3,
+    KEYCODE_CTRL_H = 8,
     KEYCODE_CTRL_J = 10,
     KEYCODE_CTRL_K = 11,
     KEYCODE_CTRL_L = 12,
@@ -22,7 +23,8 @@ enum {
 
 enum {
     KEYCODE_DOWN = KEYCODE_CTRL_J,
-    KEYCODE_UP = KEYCODE_CTRL_K,
+    KEYCODE_UP = KEYCODE_CTRL_H,
+    KEYCODE_PREV = KEYCODE_CTRL_K,
     KEYCODE_RIGHT = KEYCODE_CTRL_L,
     KEYCODE_BACK = KEYCODE_CTRL_C,
     KEYCODE_START_SEARCH = KEYCODE_SLASH,
@@ -69,16 +71,19 @@ bool Menu<T>::char_pressed(char c)
 {
     bool is_finished = false;
 
-    // _tree.get_root()->tag += std::to_string((int)c);
+    //_tree.get_root()->tag += std::to_string((int)c);
     switch(c) {
         case KEYCODE_DOWN:
-            _tree_selector.move_selection_one_down();
+            _tree_selector.move_to_next();
+            break;
+        case KEYCODE_UP:
+            _tree_selector.move_one_up();
             break;
         case KEYCODE_RIGHT:
             _tree_selector.explore_children_of_selection();
             break;
-        case KEYCODE_UP:
-            _tree_selector.move_selection_one_up();
+        case KEYCODE_PREV:
+            _tree_selector.move_to_prev();
             break;
         case KEYCODE_BACK:
             is_finished = true;
