@@ -114,9 +114,13 @@ void TreePrinter<T>::print_node(node_t node, int depth, std::vector<bool> &depth
                                 const Tree<T> &tree, bool is_last_child,
                                 std::ostream &out, bool is_selection) {
     if (is_selection) {
-            out << "> ";
+            out << ">";
     } else {
-            out << "  ";
+            out << " ";
+    }
+    //out << " ";
+    if (node->identifier != tree.get_root()->identifier) {
+        out << " ";
     }
     for (int depth_idx = 1; depth_idx < depth; ++depth_idx) {
         if (depth_to_next_sibling[depth_idx])
@@ -130,7 +134,7 @@ void TreePrinter<T>::print_node(node_t node, int depth, std::vector<bool> &depth
         else
             out << LAST_CHILD_CONNECTOR << HORIZONTAL_TREE_LINE << HORIZONTAL_TREE_LINE;
     }
-    out << node->tag << std::endl;
+    out << " " << node->tag << std::endl;
 }
 
 } // namespace treelib
