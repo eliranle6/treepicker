@@ -7,4 +7,4 @@ TESTS = test_dirtree.bin
 check_PROGRAMS = test_dirtree
 
 test_dirtree_SOURCES = test_dirtree.cpp
-test_dirtree_LDADD=../libdirtree.a ../../utils/libsubprocess.a $(LDADD)
+test_dirtree_LDADD=../libdirtree.la ../../utils/libsubprocess.la $(LDADD)

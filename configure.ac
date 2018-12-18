@@ -20,6 +20,7 @@ AX_CXX_COMPILE_STDCXX(11, noext, mandatory)
 # The config.h file should be later included by the source code (if needed).
 AC_CONFIG_HEADERS([config.h])
 
+
 # Output makefiles
 AC_CONFIG_FILES([
  Makefile
@@ -43,11 +44,11 @@ AC_CONFIG_FILES([
  src/dirpicker/Makefile
 ])
 
-# Dunno what this is, but the GNU manual says to specify this if any libraries are built
-AC_PROG_RANLIB
-
 # Support for unusual archivers
 AM_PROG_AR
+
+# Use libtool for shared libraries
+LT_INIT
 
 # Tell autoconf to generate the makefiles
 AC_OUTPUT

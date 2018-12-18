@@ -3,7 +3,6 @@ SUBDIRS = tests
 
 LIBADD = -lncurses -lboost_filesystem
 
-lib_LIBRARIES = libguishell.a
+lib_LTLIBRARIES = libguishell.la
 
-libguishell_a_SOURCES = guishell.cpp
-#libguishell_a_LIBADD = $(LIBADD)
+libguishell_la_SOURCES = guishell.cpp

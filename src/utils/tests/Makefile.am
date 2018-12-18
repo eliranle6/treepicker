@@ -8,4 +8,4 @@ TESTS = test_subprocess.bin
 check_PROGRAMS = test_subprocess
 
 test_subprocess_SOURCES = test_subprocess.cpp
-test_subprocess_LDADD=../libsubprocess.a $(LDADD)
+test_subprocess_LDADD=../libsubprocess.la $(LDADD)
