@@ -124,7 +124,7 @@ void TreePrinter<T>::print_node(node_t node, int depth, std::vector<bool> &depth
     }
     for (int depth_idx = 1; depth_idx < depth; ++depth_idx) {
         if (depth_to_next_sibling[depth_idx])
-            out << VERTICAL_TREE_LINE << "  ";
+            out << VERTICAL_TREE_LINE << "   ";
         else
             out << "   ";
     }
