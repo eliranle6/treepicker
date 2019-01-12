@@ -1,1 +1,1 @@
-SUBDIRS = utils tree dirtree guishell picker dirpicker
+SUBDIRS = utils tree treeprinter dirtree picker dirpicker

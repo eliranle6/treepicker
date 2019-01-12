@@ -2,9 +2,10 @@
 #define __TREE_PRINTER_H
 
 #include <ostream>
+#include <vector>
 
-#include "node.h"
-#include "tree.h"
+#include "tree/node.h"
+#include "tree/tree.h"
 #include "pre_print_tree_analysis.h"
 
 namespace treelib {

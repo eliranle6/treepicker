@@ -32,11 +32,11 @@ AC_CONFIG_FILES([
  src/tree/Makefile
  src/tree/tests/Makefile
 
+ src/treeprinter/Makefile
+ src/treeprinter/tests/Makefile
+
  src/dirtree/Makefile
  src/dirtree/tests/Makefile
-
- src/guishell/Makefile
- src/guishell/tests/Makefile
 
  src/picker/Makefile
  src/picker/tests/Makefile

@@ -4,7 +4,7 @@
 #include <gtest/gtest.h>
 
 #include "tree/tree.h"
-#include "tree/treeprinter.h"
+#include "treeprinter/treeprinter.h"
 #include "common.h"
 
 # if 0

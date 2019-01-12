@@ -1,7 +1,7 @@
 #ifndef __PRE_PRINT_TREE_ANALYSIS
 #define __PRE_PRINT_TREE_ANALYSIS
 
-#include "node.h"
+#include "tree/node.h"
 
 namespace treelib {
 

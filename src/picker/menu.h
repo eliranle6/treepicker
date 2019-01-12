@@ -2,8 +2,8 @@
 #define MENU_H__
 
 #include "tree/tree.h"
-#include "tree/treeprinter.h"
-#include "guishell/guishell.h"
+#include "treeprinter/treeprinter.h"
+#include "utils/guishell.h"
 #include "tree_selector.h"
 
 namespace picker {
