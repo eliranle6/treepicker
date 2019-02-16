@@ -127,7 +127,7 @@ void TreePrinter<T>::print_node(node_t node, int depth, std::vector<bool> &depth
         if (depth_to_next_sibling[depth_idx])
             out << VERTICAL_TREE_LINE << "   ";
         else
-            out << "   ";
+            out << "    ";
     }
     if (node->identifier != tree.get_root()->identifier) {
         if (is_last_child)

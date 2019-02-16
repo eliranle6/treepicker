@@ -12,8 +12,8 @@
 *      ├── firstdir
 *      │   ├── anotherfile.txt
 *      │   └── somefile.txt
-*      ├── seconddir
-*      │   └── subdir_in_second
+*      ├── seconddir-empty
+*      │   └── file_in_second
 *      └── thirddir
 *          ├── subdir_in_third
 *          │   └── file_in_subdir.txt
@@ -37,7 +37,6 @@ TEST(dirtree, dirpath) {
 
 TEST(dirtree, rootnode_properties) {
     dirtree::DirTree dir = create_example_tree();
-    ASSERT_EQ(dir.get_root()->children.size(), 3);
     ASSERT_EQ(dir.get_root()->tag, "subdir_for_tests");
     ASSERT_EQ(dir.get_root()->identifier, "");
 }
@@ -53,7 +52,7 @@ TEST(dirtree, read_flat_dir__tree_node_tags) {
         ASSERT_EQ(dir.get_root()->children[0]->children[0]->tag, "anotherfile.txt");
         ASSERT_EQ(dir.get_root()->children[0]->children[1]->tag, "somefile.txt");
     ASSERT_EQ(dir.get_root()->children[1]->tag, "seconddir");
-        ASSERT_EQ(dir.get_root()->children[1]->children[0]->tag, "subdir_in_second");
+        ASSERT_EQ(dir.get_root()->children[1]->children[0]->tag, "file_in_second");
     ASSERT_EQ(dir.get_root()->children[2]->tag, "thirddir");
         ASSERT_EQ(dir.get_root()->children[2]->children[0]->tag, "subdir_in_third");
             ASSERT_EQ(dir.get_root()->children[2]->children[0]->children[0]->tag,
@@ -72,7 +71,7 @@ TEST(dirtree, read_flat_dir__tree_node_identifiers) {
     ASSERT_EQ(dir.get_root()->children[1]->identifier,
               "seconddir");
         ASSERT_EQ(dir.get_root()->children[1]->children[0]->identifier,
-                  "seconddir/subdir_in_second");
+                  "seconddir/file_in_second");
     ASSERT_EQ(dir.get_root()->children[2]->identifier,
               "thirddir");
         ASSERT_EQ(dir.get_root()->children[2]->children[0]->identifier,

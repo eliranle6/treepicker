@@ -2,8 +2,8 @@
 #include "gtest/gtest.h"
 
 #include "tree/tree.h"
-#include "tree/pre_print_tree_analysis.h"
-#include "common.h"
+#include "treeprinter/pre_print_tree_analysis.h"
+#include "tree/tests/common.h"
 
 TEST(pre_print_tree_analysis, simple_tree_sibling_existance_map) {
     treelib::Tree<int> tree = get_simple_tree_informative_nodes();

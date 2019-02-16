@@ -4,8 +4,8 @@
 #include <gtest/gtest.h>
 
 #include "tree/tree.h"
+#include "tree/tests/common.h"
 #include "treeprinter/treeprinter.h"
-#include "common.h"
 
 # if 0
 static std::string convert_ascii_tree_to_unicode(std::string tree) {
@@ -22,12 +22,12 @@ TEST(treeprinter, print_basic_tree) {
     std::ostringstream out;
 
     std::string expected = ("> People\n"
-                            "  +--Dumb people\n"
-                            "  |  +--Poor dumb people\n"
-                            "  |  +--Rich dumb people\n"
-                            "  +--Smart people\n"
-                            "     +--Poor smart people\n"
-                            "     +--Rich smart people\n"
+                            "  +-- Dumb people\n"
+                            "  |   +-- Poor dumb people\n"
+                            "  |   +-- Rich dumb people\n"
+                            "  +-- Smart people\n"
+                            "      +-- Poor smart people\n"
+                            "      +-- Rich smart people\n"
                             );
     // Print tree
     treelib::Tree<int> tree = get_simple_tree();
@@ -44,12 +44,12 @@ TEST(treeprinter, test_different_selection) {
     std::ostringstream out;
 
     std::string expected = ("  People\n"
-                            "  +--Dumb people\n"
-                            "  |  +--Poor dumb people\n"
-                            "> |  +--Rich dumb people\n"
-                            "  +--Smart people\n"
-                            "     +--Poor smart people\n"
-                            "     +--Rich smart people\n"
+                            "  +-- Dumb people\n"
+                            "  |   +-- Poor dumb people\n"
+                            "> |   +-- Rich dumb people\n"
+                            "  +-- Smart people\n"
+                            "      +-- Poor smart people\n"
+                            "      +-- Rich smart people\n"
                             );
     // Print tree
     treelib::Tree<int> tree = get_simple_tree();
