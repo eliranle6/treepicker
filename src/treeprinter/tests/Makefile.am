@@ -7,8 +7,10 @@ TESTS = test_treeprinter.bin \
 		test_pre_print_tree_analysis.bin
 
 check_PROGRAMS = test_treeprinter \
-				 test_pre_print_tree_analysis
+				 test_pre_print_tree_analysis \
+			     test_treewindowfitter
 
 test_treeprinter_SOURCES = test_treeprinter.cpp
 test_pre_print_tree_analysis_SOURCES = test_pre_print_tree_analysis.cpp
+test_treewindowfitter_SOURCES = test_treewindowfitter.cpp
 
