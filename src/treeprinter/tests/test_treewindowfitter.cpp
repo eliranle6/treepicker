@@ -66,7 +66,8 @@ TEST(treewindowfitter, fitting_tree_smaller_than_window_returns_same_tree) {
     assert(window_size > get_tree_print_size(tree));
 
     auto selected = tree.get_node("dumb");
-    auto actual = fit_tree_to_window(tree, window_size, selected);
+    TreeWindowFitter<int> fitter;
+    auto actual = fitter.fit_tree_to_window(tree, window_size, selected);
     auto expected = tree;
 
     ASSERT_TRUE(are_two_trees_equal(actual, tree));
@@ -79,7 +80,8 @@ TEST(treewindowfitter, fitting_tree_the_same_size_as_window_returns_same_tree) {
     ASSERT_EQ(window_size, get_tree_print_size(tree));
 
     auto selected = tree.get_node("dumb");
-    auto actual = fit_tree_to_window(tree, window_size, selected);
+    TreeWindowFitter<int> fitter;
+    auto actual = fitter.fit_tree_to_window(tree, window_size, selected);
     auto expected = tree;
 
     ASSERT_TRUE(are_two_trees_equal(actual, tree));
@@ -89,7 +91,8 @@ TEST(treewindowfitter, parent_of_selected_when_not_root_is_root_of_printed_tree)
     auto tree = get_simple_tree();
     auto selected = tree.get_node("rich-dumb");
     auto window_size = 3;
-    auto fitted_tree = fit_tree_to_window(tree, window_size, selected);
+    TreeWindowFitter<int> fitter;
+    auto fitted_tree = fitter.fit_tree_to_window(tree, window_size, selected);
     auto actual = fitted_tree.get_root();
     auto expected = tree.get_node("dumb");
     ASSERT_EQ(actual, expected);
