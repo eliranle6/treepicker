@@ -3,10 +3,12 @@
 
 #include <ostream>
 #include <vector>
+#include <ncurses.h>
 
 #include "tree/node.h"
 #include "tree/tree.h"
 #include "pre_print_tree_analysis.h"
+#include "treewindowfitter.h"
 
 namespace treelib {
 
@@ -19,27 +21,38 @@ class TreePrinter
 public:
     // Today i learned: 'using' keyword (same as typedef)
     using node_t = const std::shared_ptr< Node<T> >;
-    void print(std::ostream &out, const Tree<T> &tree, bool filter_search_nodes = false,
-               node_t selection = nullptr);
+    void print(std::ostream &out, Tree<T> &tree, bool filter_search_nodes = false,
+               node_t selection = nullptr, int window_height = 100);
 
 private:
     void print_node(node_t node, int depth, std::vector<bool> &depth_to_next_sibling_existance,
                     const Tree<T> &tree, bool is_last_child,
-                    std::ostream &out, bool is_selection);
+                    std::ostream &out, bool is_selection,
+                    node_t printed_subtree_root);
+
+    std::shared_ptr<treelib::Node<T>> choose_printed_tree_root(
+        treelib::Tree<T> tree,
+        std::shared_ptr<treelib::Node<T>> selection);
 };
 
 template <typename T>
-void TreePrinter<T>::print(std::ostream &out, const Tree<T> &tree,
+void TreePrinter<T>::print(std::ostream &out, Tree<T> &tree,
                            bool filter_search_nodes,
-                           node_t selection) {
+                           node_t selection,
+                           int window_height) {
     node_t root = tree.get_root();
     if (nullptr == root) {
         return;
     }
+    auto printed_subtree_root = choose_printed_tree_root(tree, selection);
+    TreeWindowFitter<T> tree_window_fitter;
+    int nr_levels_to_print = tree_window_fitter.get_nr_of_levels_to_print(tree,
+                                                                          window_height,
+                                                                          printed_subtree_root);
     TreeAnalysisInfo info = analyze_tree_for_printing(root);
     std::stack< std::pair<node_t, int> > dfs_stack;
     int depth = 0;
-    auto node = root;
+    auto node = printed_subtree_root;
     dfs_stack.push(std::make_pair(node, depth));
     std::vector<bool> depth_to_next_sibling(info.m_max_depth);
     while (not dfs_stack.empty()) {
@@ -76,13 +89,15 @@ void TreePrinter<T>::print(std::ostream &out, const Tree<T> &tree,
         // Print node
         const bool is_selection = node.get() == selection.get();
         print_node(node, depth, depth_to_next_sibling, tree, is_last_child, out,
-                   is_selection);
+                   is_selection, printed_subtree_root);
 
+        auto child_depth = depth + 1;
+        if (child_depth < nr_levels_to_print) {
         // Add children of current node to DFS stack. Iterate in reverse to cancel the stack's reverse effect
-        for (auto iter = node->children.rbegin(); iter != node->children.rend(); ++iter) {
-        //for (auto child : node->children) {
-            auto current_node_depth_pair = std::make_pair(*iter, depth + 1);
-            dfs_stack.push(current_node_depth_pair);
+            for (auto iter = node->children.rbegin(); iter != node->children.rend(); ++iter) {
+                auto current_node_depth_pair = std::make_pair(*iter, child_depth);
+                dfs_stack.push(current_node_depth_pair);
+            }
         }
     }
 }
@@ -113,14 +128,15 @@ void TreePrinter<T>::print(std::ostream &out, const Tree<T> &tree,
 template <typename T>
 void TreePrinter<T>::print_node(node_t node, int depth, std::vector<bool> &depth_to_next_sibling,
                                 const Tree<T> &tree, bool is_last_child,
-                                std::ostream &out, bool is_selection) {
+                                std::ostream &out, bool is_selection,
+                                node_t printed_subtree_root) {
     if (is_selection) {
             out << ">";
     } else {
             out << " ";
     }
     //out << " ";
-    if (node->identifier != tree.get_root()->identifier) {
+    if (node->identifier != printed_subtree_root->identifier) {
         out << " ";
     }
     for (int depth_idx = 1; depth_idx < depth; ++depth_idx) {
@@ -129,13 +145,24 @@ void TreePrinter<T>::print_node(node_t node, int depth, std::vector<bool> &depth
         else
             out << "    ";
     }
-    if (node->identifier != tree.get_root()->identifier) {
+    if (node->identifier != printed_subtree_root->identifier) {
         if (is_last_child)
             out << MIDDLE_CHILD_CONNECTOR << HORIZONTAL_TREE_LINE << HORIZONTAL_TREE_LINE;
         else
             out << LAST_CHILD_CONNECTOR << HORIZONTAL_TREE_LINE << HORIZONTAL_TREE_LINE;
     }
     out << " " << node->tag << std::endl;
+}
+
+template<typename T>
+std::shared_ptr<treelib::Node<T>> TreePrinter<T>::choose_printed_tree_root(
+        treelib::Tree<T> tree,
+        std::shared_ptr<treelib::Node<T>> selection) {
+    auto result = tree.get_root();
+    if (selection != tree.get_root()) {
+        result = tree.get_node(selection->parent);
+    }
+    return result;
 }
 
 } // namespace treelib

@@ -3,54 +3,52 @@
 
 #include "tree/tree.h"
 #include "tree/node.h"
+#include <iostream>
 
 template<typename T>
 class TreeWindowFitter
 {
 public:
-    treelib::Tree<T> fit_tree_to_window(treelib::Tree<T> tree,
-                                        int window_size,
-                                        std::shared_ptr<treelib::Node<T>> selected);
-
-private:
-    std::shared_ptr<treelib::Node<T>>
-            choose_printed_tree_root(treelib::Tree<T> tree,
-                                    int window_size,
-                                    std::shared_ptr<treelib::Node<T>> selected);
+    int get_nr_of_levels_to_print(treelib::Tree<T> tree,
+                                  int window_size,
+                                  std::shared_ptr<treelib::Node<T>> selected);
 };
 
 template<typename T>
-treelib::Tree<T> TreeWindowFitter<T>::fit_tree_to_window(treelib::Tree<T> tree,
+int TreeWindowFitter<T>::get_nr_of_levels_to_print(treelib::Tree<T> tree,
         int window_size,
         std::shared_ptr<treelib::Node<T>> selected) {
-    auto root = tree.get_root();
-    auto printed_tree_root = choose_printed_tree_root(tree, window_size, selected);
+    using NodeP = std::shared_ptr<treelib::Node<T>>;
 
-    // TODO: Uncomment the line below once get_subtree_from_node is implemented, instead of
-    // the other line (which uses the same tree)
-    // auto printed_tree = get_subtree_from_node(printed_tree_root);
-    auto printed_tree = tree;
-    return printed_tree;
-}
+    using NodeDepth = std::pair<NodeP, int>;
+    std::queue<NodeDepth> bfs_queue;
+    bfs_queue.push(std::make_pair(selected, 0));
+    int nr_nodes_to_print_until_previous_level = 0;
+    int nr_nodes_in_current_depth = 0;
+    int nr_depths_to_print = 0;
+    while(not bfs_queue.empty() and
+          nr_nodes_to_print_until_previous_level + nr_nodes_in_current_depth <= window_size + 1) {
+        auto node_depth_pair = bfs_queue.front();
+        auto node = std::get<0>(node_depth_pair);
+        auto depth = std::get<1>(node_depth_pair);
+        bfs_queue.pop();
+        for (auto iter = node->children.rbegin(); iter != node->children.rend(); ++iter) {
+            auto child_node_depth_pair = std::make_pair(*iter, depth + 1);
+            bfs_queue.push(child_node_depth_pair);
+        }
 
-template<typename T>
-std::shared_ptr<treelib::Node<T>> TreeWindowFitter<T>::choose_printed_tree_root(
-        treelib::Tree<T> tree,
-        int window_size,
-        std::shared_ptr<treelib::Node<T>> selected) {
-    auto root = tree.get_root();
-
-    std::shared_ptr<treelib::Node<T>> result;
-    if (selected == root) {
-        result = root;
-    } else if (selected == nullptr) {
-        result = nullptr;
-    } else if (root == nullptr) {
-        result = nullptr;
-    } else {
-        result = tree.get_node(selected->parent);
+        // Add the previous fully-scanned level as a printed
+        ++nr_nodes_in_current_depth;
+        int previous_depth = nr_depths_to_print;
+        if (previous_depth != depth or bfs_queue.empty()) {
+            if (nr_nodes_to_print_until_previous_level <= window_size) {
+                ++nr_depths_to_print;
+                nr_nodes_to_print_until_previous_level += nr_nodes_in_current_depth;
+            }
+            nr_nodes_in_current_depth = 1;
+        }
     }
-    return result;
+    return nr_depths_to_print;
 }
 
 #endif

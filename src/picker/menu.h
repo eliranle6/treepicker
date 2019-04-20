@@ -126,9 +126,16 @@ template<typename T>
 void Menu<T>::print_tree(void) {
     _out.clear();
     const bool should_nodes_be_search_filtered = not _search_keyword.empty();
+
+    // Get window height
+    int max_line_idx = 0;
+    getmaxyx(stdscr, max_line_idx, std::ignore);
+    int window_height = max_line_idx + 1;
+
+    // Print
     _tree_printer.print(_out, _tree, should_nodes_be_search_filtered,
-                        _tree_selector.get_selection());
-    const bool should_search_bar_be_displayed = 
+                        _tree_selector.get_selection(), window_height);
+    const bool should_search_bar_be_displayed =
         should_nodes_be_search_filtered or _mode == mode::MODE_EDIT_SEARCH;
     if (should_search_bar_be_displayed) {
         _out << std::endl << "Search: " + _search_keyword;
