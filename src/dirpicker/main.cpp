@@ -5,7 +5,7 @@ int main(void) {
     dirtree::DirTree tree(".");
     tree.update_from_filesystem();
     dirpicker::DirPicker picker(tree);
-    picker.start();
+    picker.run();
 
     return 0;
 }

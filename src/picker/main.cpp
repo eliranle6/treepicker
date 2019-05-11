@@ -12,7 +12,7 @@ int main(void) {
             tree.create_node("Poor smart people", "poor-smart", "smart", 13);
 
     picker::Picker treepicker(tree);
-    treepicker.start();
+    treepicker.run();
 
     return 0;
 }

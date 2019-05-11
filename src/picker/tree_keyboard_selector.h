@@ -37,14 +37,16 @@ enum mode {
 };
 
 template<typename T>
-class Menu
+class TreeKeyboardSelector
 {
 public:
-    Menu(treelib::Tree<T>& tree);
+    TreeKeyboardSelector(treelib::Tree<T>& tree);
 
     bool char_pressed(char c);
 
     void print_tree(void);
+
+    void initialize(void);
 
 private:
     treelib::Tree<T>& _tree;
@@ -57,7 +59,7 @@ private:
 
 
 template<typename T>
-Menu<T>::Menu(treelib::Tree<T>& tree):
+TreeKeyboardSelector<T>::TreeKeyboardSelector(treelib::Tree<T>& tree):
     _tree(tree),
     _out(guishell::GuiShell::get_instance()),
     _search_keyword(),
@@ -67,11 +69,10 @@ Menu<T>::Menu(treelib::Tree<T>& tree):
 }
 
 template<typename T>
-bool Menu<T>::char_pressed(char c)
+bool TreeKeyboardSelector<T>::char_pressed(char c)
 {
     bool is_finished = false;
 
-    //_tree.get_root()->tag += std::to_string((int)c);
     switch(c) {
         case KEYCODE_DOWN:
             _tree_selector.move_to_next();
@@ -123,7 +124,7 @@ bool Menu<T>::char_pressed(char c)
 }
 
 template<typename T>
-void Menu<T>::print_tree(void) {
+void TreeKeyboardSelector<T>::print_tree(void) {
     _out.clear();
     const bool should_nodes_be_search_filtered = not _search_keyword.empty();
 
@@ -141,6 +142,12 @@ void Menu<T>::print_tree(void) {
         _out << std::endl << "Search: " + _search_keyword;
     }
     _out.refresh();
+}
+
+
+template<typename T>
+void TreeKeyboardSelector<T>::initialize(void) {
+    print_tree();
 }
 
 } // namespace picker
