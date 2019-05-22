@@ -26,4 +26,15 @@ treelib::Tree<int> get_simple_tree_informative_nodes(void) {
     return tree;
 }
 
+treelib::Tree<int> get_tree_with_countries(void) {
+    treelib::Tree<int> tree;
+    tree.create_node("Countries", "countries", "", 3);
+        tree.create_node("Jewish majority countries", "jewish_majority", "countries", 3);
+            tree.create_node("Jewish majority countries", "israel", "jewish_majority", 3);
+        tree.create_node("Non Jewish majority countries", "nonjewish_majority", "countries", 3);
+            tree.create_node("Bangladesh", "bangladesh", "nonjewish_majority", 6);
+            tree.create_node("India", "india", "nonjewish_majority", 6);
+    return tree;
+}
+
 #endif
