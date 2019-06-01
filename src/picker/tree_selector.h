@@ -41,13 +41,33 @@ typename TreeSelector<T>::node_t TreeSelector<T>::get_selection(void) {
 
 template<typename T>
 void TreeSelector<T>::explore_children_of_selection(void) {
-    if (nullptr == _selection) {
+    if (nullptr == _selection or _selection->children.size() == 0) {
         return;
     }
-    if (_selection->children.size() > 0) {
-        _selection = _selection->children[0];
+    auto orig = _selection;
+    _selection = _selection->children[0];
+    if ((not (_selection)->is_matching_search
+         and not (_selection)->is_ancestor_of_matching_search)) {
+        _advance_selection_at_same_tree_level(1);
+    }
+
+    if (not (_selection)->is_matching_search
+        and not (_selection)->is_ancestor_of_matching_search) {
+        _selection = orig;
     }
 }
+
+//void TreeSelector<T>::go_next_until_reaching_a_matching_node(void) {
+//    auto position = _selection->children.begin();
+//    for (; position != _selection->children.end() &&
+//            (not (*position)->is_matching_search
+//             and not (*position)->is_ancestor_of_matching_search);
+//            ++position);
+//
+//    if (position != _selection->children.end()) {
+//        _selection = (*position);
+//    }
+//}
 
 template<typename T>
 void TreeSelector<T>::move_one_up(void) {
@@ -97,14 +117,20 @@ void TreeSelector<T>::_advance_selection_at_same_tree_level(int difference) {
     } else if (difference < 0) {
         direction = -1;
     }
-    for (int count = 0; count < abs(difference); ++count) {
-        auto target = position + direction;
+    int nr_steps_to_take = abs(difference);
+    int nr_steps_taken = 0;
+    auto target = position;
+    while (nr_steps_taken < nr_steps_to_take) {
+        target += direction;
         if (target == children.end()) {
             break;
         } else if (position == children.begin() and direction == -1) {
             break;
         } else {
-            position = target;
+            if ((*target)->is_matching_search or (*target)->is_ancestor_of_matching_search) {
+                position = target;
+                ++nr_steps_taken;
+            }
         }
     }
 
