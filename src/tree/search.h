@@ -1,6 +1,7 @@
 #ifndef TREE_SERACH_H
 #define TREE_SERACH_H
 
+#include <syslog.h>
 #include "tree.h"
 
 namespace treelib {
@@ -42,13 +43,16 @@ void Search<T>::search(std::string &keyword) {
     // cycle detection with a set or something)
     int cycle_count = 0;
     static const int cycle_count_limit = 999999;
+    syslog(LOG_NOTICE, "searching with keyword '%s', %lu", keyword.c_str(), keyword.size());
     while (not dfs_stack.empty() and cycle_count < cycle_count_limit) {
         node_t node = dfs_stack.top();
         dfs_stack.pop();
 
         // Visit node
-        bool found = node->tag.find(keyword) != std::string::npos;
+        bool found = keyword.empty() or node->tag.find(keyword) != std::string::npos;
         node->is_matching_search = found;
+        //syslog (LOG_NOTICE, "Marking node %s as found: %d with keyword %lu",
+        //        node->tag.c_str(), found, keyword.size());
         node->is_ancestor_of_matching_search = false;
 
         if (found) {

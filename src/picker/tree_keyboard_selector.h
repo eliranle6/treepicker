@@ -115,9 +115,7 @@ bool TreeKeyboardSelector<T>::char_pressed(char c)
             else {
             }
     };
-    if (not _search_keyword.empty()) {
-        _tree.search(_search_keyword);
-    }
+    _tree.search(_search_keyword);
     print_tree();
 
     return is_finished;

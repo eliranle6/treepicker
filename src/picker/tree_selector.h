@@ -126,11 +126,9 @@ void TreeSelector<T>::_advance_selection_at_same_tree_level(int difference) {
             break;
         } else if (position == children.begin() and direction == -1) {
             break;
-        } else {
-            if ((*target)->is_matching_search or (*target)->is_ancestor_of_matching_search) {
-                position = target;
-                ++nr_steps_taken;
-            }
+        } else if ((*target)->is_matching_search or (*target)->is_ancestor_of_matching_search) {
+            position = target;
+            ++nr_steps_taken;
         }
     }
 
