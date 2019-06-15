@@ -71,7 +71,7 @@ TEST(treeprinter, print_tree_in_window_smaller_than_tree_omits_levels) {
     ASSERT_EQ(actual, expected);
 }
 
-TEST(treeprinter, print_tree_in_window_the_size_of_tree_with_leaves_omitted_omits_levels) {
+TEST(treeprinter, print_tree_in_window_the_size_of_tree_with_leaves_omitted_omits_trees) {
     // Store original cout buffer before mocking it
     std::ostringstream out;
 
@@ -81,7 +81,10 @@ TEST(treeprinter, print_tree_in_window_the_size_of_tree_with_leaves_omitted_omit
                            "  +-- Smart people\n"
                            ;
     // Print tree
-    treelib::Tree<int> tree = get_simple_tree();
+    treelib::Tree<int> tree;
+    tree.create_node("People", "people", "", 3);
+        tree.create_node("Dumb people", "dumb", "people", 3);
+        tree.create_node("Smart people", "smart", "people", 11);
     treelib::TreePrinter<int> tree_printer;
     tree_printer.print(out, tree, true, tree.get_root(), window_height);
 

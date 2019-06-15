@@ -9,13 +9,13 @@ template<typename T>
 class TreeWindowFitter
 {
 public:
-    int get_nr_of_levels_to_print(treelib::Tree<T> tree,
-                                  int window_size,
-                                  std::shared_ptr<treelib::Node<T>> selected);
+    int get_nr_levels_that_fit_in_window(treelib::Tree<T> tree,
+                                         int window_size,
+                                         std::shared_ptr<treelib::Node<T>> selected);
 };
 
 template<typename T>
-int TreeWindowFitter<T>::get_nr_of_levels_to_print(treelib::Tree<T> tree,
+int TreeWindowFitter<T>::get_nr_levels_that_fit_in_window(treelib::Tree<T> tree,
         int window_size,
         std::shared_ptr<treelib::Node<T>> selected) {
     using NodeP = std::shared_ptr<treelib::Node<T>>;

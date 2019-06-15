@@ -3,5 +3,5 @@ SUBDIRS = tests
 
 lib_LTLIBRARIES = libtreeprinter.la
 
-libtreeprinter_la_SOURCES = treeprinter.cpp
+libtreeprinter_la_SOURCES = treeprinter.cpp paginator.cpp
 libtreeprinter_la_LIBADD = -lncurses

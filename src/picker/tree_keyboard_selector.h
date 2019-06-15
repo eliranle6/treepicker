@@ -127,9 +127,8 @@ void TreeKeyboardSelector<T>::print_tree(void) {
     const bool should_nodes_be_search_filtered = not _search_keyword.empty();
 
     // Get window height
-    int max_line_idx = 0;
-    getmaxyx(stdscr, max_line_idx, std::ignore);
-    int window_height = max_line_idx + 1;
+    int window_height = 0;
+    getmaxyx(stdscr, window_height, std::ignore);
 
     // Print
     _tree_printer.print(_out, _tree, should_nodes_be_search_filtered,

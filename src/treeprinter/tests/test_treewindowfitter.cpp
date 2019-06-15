@@ -22,7 +22,7 @@ TEST(treewindowfitter, fitting_tree_smaller_than_window_returns_same_tree) {
 
     auto selected = tree.get_node("people");
     TreeWindowFitter<int> fitter;
-    auto actual = fitter.get_nr_of_levels_to_print(tree, window_size, selected);
+    auto actual = fitter.get_nr_levels_that_fit_in_window(tree, window_size, selected);
     auto expected = 3;
 
     ASSERT_EQ(actual, expected);
@@ -34,7 +34,7 @@ TEST(treewindowfitter, fitting_tree_the_same_size_as_window_returns_same_tree) {
 
     auto selected = tree.get_node("people");
     TreeWindowFitter<int> fitter;
-    auto actual = fitter.get_nr_of_levels_to_print(tree, window_size, selected);
+    auto actual = fitter.get_nr_levels_that_fit_in_window(tree, window_size, selected);
     auto expected = 3;
 
     ASSERT_EQ(actual, expected);
@@ -46,7 +46,7 @@ TEST(treewindowfitter, fitting_tree_bigger_than_window_but_smaller_without_leave
 
     auto selected = tree.get_node("people");
     TreeWindowFitter<int> fitter;
-    auto actual = fitter.get_nr_of_levels_to_print(tree, window_size, selected);
+    auto actual = fitter.get_nr_levels_that_fit_in_window(tree, window_size, selected);
     auto expected = 2;
 
     ASSERT_EQ(actual, expected);
@@ -58,7 +58,7 @@ TEST(treewindowfitter, fitting_tree_one_line_bigger_than_window) {
 
     auto selected = tree.get_node("people");
     TreeWindowFitter<int> fitter;
-    auto actual = fitter.get_nr_of_levels_to_print(tree, window_size, selected);
+    auto actual = fitter.get_nr_levels_that_fit_in_window(tree, window_size, selected);
     auto expected = 2;
 
     ASSERT_EQ(actual, expected);
@@ -70,7 +70,7 @@ TEST(treewindowfitter, fitting_tree_in_window_the_size_of_tree_without_leaves) {
 
     auto selected = tree.get_node("people");
     TreeWindowFitter<int> fitter;
-    auto actual = fitter.get_nr_of_levels_to_print(tree, window_size, selected);
+    auto actual = fitter.get_nr_levels_that_fit_in_window(tree, window_size, selected);
     auto expected = 2;
 
     ASSERT_EQ(actual, expected);
@@ -82,7 +82,7 @@ TEST(treewindowfitter, fitting_subtree_with_one_node_in_large_enough_window) {
 
     auto selected = tree.get_node("jewish_majority");
     TreeWindowFitter<int> fitter;
-    auto actual = fitter.get_nr_of_levels_to_print(tree, window_size, selected);
+    auto actual = fitter.get_nr_levels_that_fit_in_window(tree, window_size, selected);
     auto expected = 2;
 
     ASSERT_EQ(actual, expected);

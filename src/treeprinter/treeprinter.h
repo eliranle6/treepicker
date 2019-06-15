@@ -8,6 +8,7 @@
 #include "tree/node.h"
 #include "tree/tree.h"
 #include "pre_print_tree_analysis.h"
+#include "paginator.h"
 #include "treewindowfitter.h"
 
 namespace treelib {
@@ -46,9 +47,11 @@ void TreePrinter<T>::print(std::ostream &out, Tree<T> &tree,
     }
     auto printed_subtree_root = choose_printed_tree_root(tree, selection);
     TreeWindowFitter<T> tree_window_fitter;
-    int nr_levels_to_print = tree_window_fitter.get_nr_of_levels_to_print(tree,
-                                                                          window_height,
-                                                                          printed_subtree_root);
+    int nr_levels_that_fit_in_window = tree_window_fitter.get_nr_levels_that_fit_in_window(
+        tree,
+        window_height,
+        printed_subtree_root);
+    const bool paginate_last_level = nr_levels_that_fit_in_window == 1;
     TreeAnalysisInfo info = analyze_tree_for_printing(root);
     std::stack< std::pair<node_t, int> > dfs_stack;
     int depth = 0;
@@ -92,9 +95,45 @@ void TreePrinter<T>::print(std::ostream &out, Tree<T> &tree,
                    is_selection, printed_subtree_root);
 
         auto child_depth = depth + 1;
-        if (child_depth < nr_levels_to_print) {
+        const int last_depth_that_fits_in_window = nr_levels_that_fit_in_window - 1;
+        const bool next_depth_fits_in_window = child_depth <= last_depth_that_fits_in_window;
+        const bool is_at_last_depth = depth == last_depth_that_fits_in_window;
+        const bool paginate_next_depth = is_at_last_depth and paginate_last_level;
+
+        if (next_depth_fits_in_window) {
         // Add children of current node to DFS stack. Iterate in reverse to cancel the stack's reverse effect
             for (auto iter = node->children.rbegin(); iter != node->children.rend(); ++iter) {
+                auto current_node_depth_pair = std::make_pair(*iter, child_depth);
+                dfs_stack.push(current_node_depth_pair);
+            }
+        } else if (paginate_next_depth) {
+            size_t nr_children = node->children.size();
+            syslog(LOG_NOTICE, "paginate, selection: %s\n", selection->tag.c_str());
+            int selection_idx = 0;
+            for (auto iter = node->children.begin();
+                 iter != node->children.end() and (*iter)->identifier != selection->identifier;
+                 ++iter) {
+                ++selection_idx;
+            }
+            int nr_items_removed_at_the_beginning = 0;
+            int nr_items_removed_at_the_end = 0;
+            std::tie(nr_items_removed_at_the_beginning, nr_items_removed_at_the_end) =
+                paginate(nr_children, window_height - 1, selection_idx);
+            syslog(LOG_NOTICE, "window height: %d", window_height);
+            syslog(LOG_NOTICE, "remove at beginning: %d", nr_items_removed_at_the_beginning);
+            syslog(LOG_NOTICE, "remove at end: %d", nr_items_removed_at_the_end);
+            int counter = 0;
+            auto iter = node->children.rbegin();
+            for (;iter != node->children.rend()
+                 and counter < nr_items_removed_at_the_end;
+                 ++iter, ++counter) {
+            }
+            int nr_items_to_print = nr_children - nr_items_removed_at_the_beginning
+                - nr_items_removed_at_the_end;
+            syslog(LOG_NOTICE, "nr items: %d", nr_items_to_print);
+            for (counter = 0;
+                 counter < nr_items_to_print and iter != node->children.rend();
+                 ++counter, ++iter) {
                 auto current_node_depth_pair = std::make_pair(*iter, child_depth);
                 dfs_stack.push(current_node_depth_pair);
             }
