@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <sstream>
 #include <boost/filesystem/path.hpp>
 #include "dirtree.h"
@@ -13,9 +14,13 @@ DirTree::DirTree(std::string _path) : path(_path)
 
 void DirTree::update_from_filesystem(void) {
     // Create root node
-    std::string filename = path.filename().string();
+
+    char* realpath_ret_value = realpath(path.c_str(), nullptr);
+    //throw std::runtime_error(root_tag_ptr);
+    free(realpath_ret_value);
+    std::string root_tag = std::string(basename(realpath_ret_value));
     FileEntry root_dir;
-    create_node(filename, "", "", root_dir);
+    create_node(root_tag, "", "", root_dir);
 
     // Execute the `find` command to explore the dir contents
     char const *argv[] = {"/usr/bin/find", path.string().c_str(),
