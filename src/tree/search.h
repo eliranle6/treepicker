@@ -49,7 +49,7 @@ void Search<T>::search(std::string &keyword) {
         dfs_stack.pop();
 
         // Visit node
-        bool found = keyword.empty() or node->tag.find(keyword) != std::string::npos;
+        bool found = keyword.empty() or node->path.find(keyword) != std::string::npos;
         node->is_matching_search = found;
         //syslog (LOG_NOTICE, "Marking node %s as found: %d with keyword %lu",
         //        node->tag.c_str(), found, keyword.size());

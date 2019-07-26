@@ -1,5 +1,6 @@
 #include <assert.h>
 #include "gtest/gtest.h"
+#include "common.h"
 #include "tree/tree.h"
 
 TEST(tree, create_root) {
@@ -23,4 +24,10 @@ TEST(tree, root_value_persists_after_child_is_born) {
     tree.create_node("child_node_tag", "child_node_id", "root_id", 20);
     auto node = tree.get_node("root_id");
     assert(node->data == 10);
+}
+
+TEST(tree, node_path) {
+    auto tree = get_simple_tree();
+    ASSERT_EQ(tree.get_node("rich-dumb")->path, std::string("/People/Dumb people/Rich dumb people"));
+    ASSERT_EQ(tree.get_node("people")->path, std::string("/People"));
 }

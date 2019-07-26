@@ -38,3 +38,23 @@ TEST(treesearch, simple_search_ancestors_of_matching_nodes) {
     ASSERT_FALSE(tree.get_node("child2.1_id")->is_ancestor_of_matching_search);
     ASSERT_FALSE(tree.get_node("child2.2_id")->is_ancestor_of_matching_search);
 }
+
+TEST(treesearch, search_by_path) {
+    treelib::Tree<int> tree = get_example_tree();
+    tree.search("child1_tag/");
+    ASSERT_FALSE(tree.get_node("root_id")->is_matching_search);
+    ASSERT_FALSE(tree.get_node("child1_id")->is_matching_search);
+    ASSERT_TRUE(tree.get_node("child1.1_id")->is_matching_search);
+    ASSERT_TRUE(tree.get_node("child1.2_id")->is_matching_search);
+    ASSERT_FALSE(tree.get_node("child2_id")->is_matching_search);
+    ASSERT_FALSE(tree.get_node("child2.1_id")->is_matching_search);
+    ASSERT_FALSE(tree.get_node("child2.2_id")->is_matching_search);
+
+    ASSERT_TRUE(tree.get_node("root_id")->is_ancestor_of_matching_search);
+    ASSERT_TRUE(tree.get_node("child1_id")->is_ancestor_of_matching_search);
+    ASSERT_FALSE(tree.get_node("child1.1_id")->is_ancestor_of_matching_search);
+    ASSERT_FALSE(tree.get_node("child1.2_id")->is_ancestor_of_matching_search);
+    ASSERT_FALSE(tree.get_node("child2_id")->is_ancestor_of_matching_search);
+    ASSERT_FALSE(tree.get_node("child2.1_id")->is_ancestor_of_matching_search);
+    ASSERT_FALSE(tree.get_node("child2.2_id")->is_ancestor_of_matching_search);
+}

@@ -44,7 +44,6 @@ template <typename T>
 std::shared_ptr< Node<T> >Tree<T>::create_node(std::string tag, std::string identifier,
                                                std::string parent, T data) {
     if (node_map.count(identifier)) {
-        std::cout << "Duplicate node";
         throw std::invalid_argument("Duplicate node");
     }
     const bool is_root_node_creation = root == nullptr;
@@ -53,11 +52,13 @@ std::shared_ptr< Node<T> >Tree<T>::create_node(std::string tag, std::string iden
     if (is_root_node_creation) {
     // Set as child of designated parent
         root = nodeptr;
+        nodeptr->path = std::string("/") + tag;
     } else {
         auto parent_node = get_node(parent);
         if (parent_node == nullptr) {
             throw std::invalid_argument("Parent node does not exist");
         }
+        nodeptr->path = parent_node->path + std::string("/") + tag;
         parent_node->add_child(nodeptr);
     }
     node_map[identifier] =  nodeptr;

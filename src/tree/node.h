@@ -14,6 +14,7 @@ public:
     std::string tag;
     std::string identifier;
     std::string parent;
+    std::string path;
     T data;
 
     bool is_matching_search;
