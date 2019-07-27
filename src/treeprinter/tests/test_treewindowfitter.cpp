@@ -87,3 +87,19 @@ TEST(treewindowfitter, fitting_subtree_with_one_node_in_large_enough_window) {
 
     ASSERT_EQ(actual, expected);
 }
+
+TEST(treewindowfitter, fitting_nodes_that_match_search_may_change_nr_levels_to_fit) {
+    const int window_size = 4;
+    auto tree = get_simple_tree();
+
+    TreeWindowFitter<int> fitter;
+    auto actual = fitter.get_nr_levels_that_fit_in_window(tree, window_size, tree.get_root());
+    auto expected = 2;
+    ASSERT_EQ(actual, expected);
+
+    tree.search(std::string("Dumb"));
+
+    actual = fitter.get_nr_levels_that_fit_in_window(tree, window_size, tree.get_root());
+    expected = 3;
+    ASSERT_EQ(actual, expected);
+}

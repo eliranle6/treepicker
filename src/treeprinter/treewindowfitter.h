@@ -34,8 +34,10 @@ int TreeWindowFitter<T>::get_nr_levels_that_fit_in_window(treelib::Tree<T> tree,
         auto depth = std::get<1>(node_depth_pair);
         bfs_queue.pop();
         for (auto iter = node->children.rbegin(); iter != node->children.rend(); ++iter) {
-            auto child_node_depth_pair = std::make_pair(*iter, depth + 1);
-            bfs_queue.push(child_node_depth_pair);
+            if ((*iter)->is_matching_search or (*iter)->is_ancestor_of_matching_search) {
+                auto child_node_depth_pair = std::make_pair(*iter, depth + 1);
+                bfs_queue.push(child_node_depth_pair);
+            }
         }
 
         // Add the previous fully-scanned level as a printed
