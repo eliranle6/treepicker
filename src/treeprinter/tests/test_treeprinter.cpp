@@ -92,3 +92,16 @@ TEST(treeprinter, print_tree_in_window_the_size_of_tree_with_leaves_omitted_omit
     std::string actual = out.str();
     ASSERT_EQ(actual, expected);
 }
+
+TEST(treeprinter, get_next_printed_node) {
+    treelib::Tree<int> tree = get_simple_tree();
+    std::ostringstream out;
+    treelib::TreePrinter<int> tree_printer;
+    constexpr static int window_height = 6;
+    tree_printer.print(out, tree, true, tree.get_root(), window_height);
+
+    auto expected = tree.get_node("dumb");
+    auto actual = tree_printer.get_next_printed_node_after_selected();
+
+    ASSERT_EQ(expected, actual);
+}

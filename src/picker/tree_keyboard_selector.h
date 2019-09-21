@@ -18,7 +18,8 @@ enum {
     KEYCODE_CTRL_W = 23,
     KEYCODE_BACKSPACE = 127,
     KEYCODE_SLASH = 47,
-    KEYCODE_ENTER = 13
+    KEYCODE_ENTER = 13,
+    KEYCODE_J = 106
 };
 
 enum {
@@ -63,7 +64,7 @@ TreeKeyboardSelector<T>::TreeKeyboardSelector(treelib::Tree<T>& tree):
     _tree(tree),
     _out(guishell::GuiShell::get_instance()),
     _search_keyword(),
-    _tree_selector(tree),
+    _tree_selector(tree, _tree_printer),
     _mode(mode::MODE_NAVIGATION)
 {
 }
@@ -76,6 +77,9 @@ bool TreeKeyboardSelector<T>::char_pressed(char c)
     switch(c) {
         case KEYCODE_DOWN:
             _tree_selector.move_to_next();
+            break;
+        case KEYCODE_J:
+            _tree_selector.move_to_next_printed_node();
             break;
         case KEYCODE_UP:
             _tree_selector.move_one_up();

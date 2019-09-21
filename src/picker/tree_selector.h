@@ -2,6 +2,7 @@
 #define __TREESELECTOR_H
 
 #include "tree/tree.h"
+#include "treeprinter/treeprinter.h"
 
 namespace picker {
 
@@ -11,25 +12,28 @@ class TreeSelector
 public:
     using node_t = typename treelib::Tree<T>::node_t;
 
-    TreeSelector(treelib::Tree<T>& tree);
+    TreeSelector(treelib::Tree<T>& tree, treelib::TreePrinter<T>& tree_printer);
 
     node_t get_selection(void);
 
     void explore_children_of_selection(void);
     void move_to_next(void);
+    void move_to_next_printed_node(void);
     void move_to_prev(void);
     void move_one_up(void);
 
 private:
     treelib::Tree<T>& _tree;
+    treelib::TreePrinter<T>& _tree_printer;
     node_t _selection;
 
     void _advance_selection_at_same_tree_level(int direction);
 };
 
 template<typename T>
-TreeSelector<T>::TreeSelector(treelib::Tree<T>& tree) :
+TreeSelector<T>::TreeSelector(treelib::Tree<T>& tree, treelib::TreePrinter<T>& tree_printer) :
     _tree(tree),
+    _tree_printer(tree_printer),
     _selection(tree.get_root())
 {
 }
@@ -82,6 +86,11 @@ void TreeSelector<T>::move_one_up(void) {
 
 template<typename T>
 void TreeSelector<T>::move_to_next(void) {
+    _advance_selection_at_same_tree_level(1);
+}
+
+template<typename T>
+void TreeSelector<T>::move_to_next_printed_node(void) {
     _advance_selection_at_same_tree_level(1);
 }
 

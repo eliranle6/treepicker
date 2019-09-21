@@ -24,6 +24,7 @@ public:
     using node_t = const std::shared_ptr< Node<T> >;
     void print(std::ostream &out, Tree<T> &tree, bool filter_search_nodes = false,
                node_t selection = nullptr, int window_height = 100);
+    std::shared_ptr<treelib::Node<T>> get_next_printed_node_after_selected(void);
 
 private:
     void print_node(node_t node, int depth, std::vector<bool> &depth_to_next_sibling_existance,
@@ -34,6 +35,8 @@ private:
     std::shared_ptr<treelib::Node<T>> choose_printed_tree_root(
         treelib::Tree<T> tree,
         std::shared_ptr<treelib::Node<T>> selection);
+    std::shared_ptr< Node<T> > next_printed_node_after_selected;
+    bool was_previously_printed_node_selected;
 };
 
 template <typename T>
@@ -45,6 +48,7 @@ void TreePrinter<T>::print(std::ostream &out, Tree<T> &tree,
     if (nullptr == root) {
         return;
     }
+    next_printed_node_after_selected.reset();
     auto printed_subtree_root = choose_printed_tree_root(tree, selection);
     TreeWindowFitter<T> tree_window_fitter;
     int nr_levels_that_fit_in_window = tree_window_fitter.get_nr_levels_that_fit_in_window(
@@ -58,6 +62,7 @@ void TreePrinter<T>::print(std::ostream &out, Tree<T> &tree,
     auto node = printed_subtree_root;
     dfs_stack.push(std::make_pair(node, depth));
     std::vector<bool> depth_to_next_sibling(info.m_max_depth);
+    was_previously_printed_node_selected = false;
     while (not dfs_stack.empty()) {
         // Store previous values before reassigning new ones
         auto previous_depth = depth;
@@ -93,6 +98,13 @@ void TreePrinter<T>::print(std::ostream &out, Tree<T> &tree,
         const bool is_selection = node.get() == selection.get();
         print_node(node, depth, depth_to_next_sibling, tree, is_last_child, out,
                    is_selection, printed_subtree_root);
+
+        if (is_selection) {
+            was_previously_printed_node_selected = true;
+        } else if (was_previously_printed_node_selected) {
+            next_printed_node_after_selected = node;
+            was_previously_printed_node_selected = false;
+        }
 
         auto child_depth = depth + 1;
         const int last_depth_that_fits_in_window = nr_levels_that_fit_in_window - 1;
@@ -202,6 +214,11 @@ std::shared_ptr<treelib::Node<T>> TreePrinter<T>::choose_printed_tree_root(
         result = tree.get_node(selection->parent);
     }
     return result;
+}
+
+template<typename T>
+std::shared_ptr<treelib::Node<T>> TreePrinter<T>::get_next_printed_node_after_selected(void) {
+    return next_printed_node_after_selected;
 }
 
 } // namespace treelib
