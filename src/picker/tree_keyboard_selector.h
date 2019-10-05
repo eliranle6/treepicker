@@ -19,7 +19,8 @@ enum {
     KEYCODE_BACKSPACE = 127,
     KEYCODE_SLASH = 47,
     KEYCODE_ENTER = 13,
-    KEYCODE_J = 106
+    KEYCODE_J = 106,
+    KEYCODE_K = 107
 };
 
 enum {
@@ -80,6 +81,9 @@ bool TreeKeyboardSelector<T>::char_pressed(char c)
             break;
         case KEYCODE_J:
             _tree_selector.move_to_next_printed_node();
+            break;
+        case KEYCODE_K:
+            _tree_selector.move_to_previously_printed_node();
             break;
         case KEYCODE_UP:
             _tree_selector.move_one_up();

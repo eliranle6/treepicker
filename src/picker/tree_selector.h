@@ -10,22 +10,23 @@ template <typename T>
 class TreeSelector
 {
 public:
-    using node_t = typename treelib::Tree<T>::node_t;
+    using NodePtr = typename treelib::Tree<T>::node_t;
 
     TreeSelector(treelib::Tree<T>& tree, treelib::TreePrinter<T>& tree_printer);
 
-    node_t get_selection(void);
+    NodePtr get_selection(void);
 
     void explore_children_of_selection(void);
     void move_to_next(void);
     void move_to_next_printed_node(void);
+    void move_to_previously_printed_node(void);
     void move_to_prev(void);
     void move_one_up(void);
 
 private:
     treelib::Tree<T>& _tree;
     treelib::TreePrinter<T>& _tree_printer;
-    node_t _selection;
+    NodePtr _selection;
 
     void _advance_selection_at_same_tree_level(int direction);
 };
@@ -39,7 +40,7 @@ TreeSelector<T>::TreeSelector(treelib::Tree<T>& tree, treelib::TreePrinter<T>& t
 }
 
 template<typename T>
-typename TreeSelector<T>::node_t TreeSelector<T>::get_selection(void) {
+typename TreeSelector<T>::NodePtr TreeSelector<T>::get_selection(void) {
     return _selection;
 }
 
@@ -91,7 +92,14 @@ void TreeSelector<T>::move_to_next(void) {
 
 template<typename T>
 void TreeSelector<T>::move_to_next_printed_node(void) {
-    _advance_selection_at_same_tree_level(1);
+    auto next_node = _tree_printer.get_next_printed_node_after_selected();
+    _selection = next_node;
+}
+
+template<typename T>
+void TreeSelector<T>::move_to_previously_printed_node(void) {
+    auto prev_node = _tree_printer.get_previously_printed_node_before_selected();
+    _selection = prev_node;
 }
 
 template<typename T>
@@ -101,13 +109,13 @@ void TreeSelector<T>::move_to_prev(void) {
 
 template<typename T>
 void TreeSelector<T>::_advance_selection_at_same_tree_level(int difference) {
-    if (nullptr == _selection) {
+    if (nullptr == _selection.get()) {
         return;
     }
     if (_tree.get_root() == _selection) {
         return;
     }
-    node_t parent = _tree.get_node(_selection->parent);
+    NodePtr parent = _tree.get_node(_selection->parent);
     if (parent.get() == nullptr) {
         return;
     }
