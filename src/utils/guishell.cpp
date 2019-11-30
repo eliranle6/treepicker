@@ -1,18 +1,19 @@
 #include <streambuf>
 #include <iostream>
-#include <ncurses.h>
+#include <curses.h>
 #include <unistd.h>
 #include <boost/iostreams/stream.hpp>
 
 #include "guishell.h"
 
+char OUTPUT_BUFFER[1024];
+
 namespace guishell {
 
 std::streamsize NCursesSink::write(const char *s, std::streamsize n) {
-    const char *bound = s + n - 1;
-    for(; s <= bound; ++s) {
-        addch(*s);
-    }
+    strncpy(OUTPUT_BUFFER, s, sizeof(OUTPUT_BUFFER));
+    OUTPUT_BUFFER[n] = '\0';
+    printw(OUTPUT_BUFFER);
     return n;
 }
 

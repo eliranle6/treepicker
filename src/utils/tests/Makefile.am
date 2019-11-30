@@ -11,4 +11,4 @@ test_subprocess_SOURCES = test_subprocess.cpp
 test_subprocess_LDADD=../libsubprocess.la $(LDADD)
 
 test_guishell_SOURCES = test_guishell.cpp
-test_guishell_LDADD=../libguishell.la -lncurses
+test_guishell_LDADD=../libguishell.la -lncursesw

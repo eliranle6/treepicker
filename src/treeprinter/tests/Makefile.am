@@ -14,12 +14,12 @@ check_PROGRAMS = test_treeprinter \
 				 test_paginator
 
 test_treeprinter_SOURCES = test_treeprinter.cpp
-test_treeprinter_LDADD = -lncurses $(LDADD) $(top_builddir)/src/treeprinter/libtreeprinter.la
+test_treeprinter_LDADD = -lncursesw $(LDADD) $(top_builddir)/src/treeprinter/libtreeprinter.la
 
 test_pre_print_tree_analysis_SOURCES = test_pre_print_tree_analysis.cpp
 
 test_treewindowfitter_SOURCES = test_treewindowfitter.cpp
-test_treewindowfitter_LDADD = -lncurses $(LDADD)
+test_treewindowfitter_LDADD = -lncursesw $(LDADD)
 
 test_paginator_SOURCES = test_paginator.cpp
 test_paginator_LDADD = $(LDADD) $(top_builddir)/src/treeprinter/libtreeprinter.la

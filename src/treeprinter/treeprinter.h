@@ -3,7 +3,6 @@
 
 #include <ostream>
 #include <vector>
-#include <ncurses.h>
 
 #include "tree/node.h"
 #include "tree/tree.h"
@@ -108,7 +107,6 @@ void TreePrinter<T>::print(std::ostream &out, Tree<T> &tree,
             }
         } else if (paginate_next_depth) {
             size_t nr_children = node->children.size();
-            syslog(LOG_NOTICE, "paginate, selection: %s\n", selection->tag.c_str());
             int selection_idx = 0;
             for (auto iter = node->children.begin();
                  iter != node->children.end() and (*iter)->identifier != selection->identifier;
@@ -119,9 +117,6 @@ void TreePrinter<T>::print(std::ostream &out, Tree<T> &tree,
             int nr_items_removed_at_the_end = 0;
             std::tie(nr_items_removed_at_the_beginning, nr_items_removed_at_the_end) =
                 paginate(nr_children, window_height - 1, selection_idx);
-            syslog(LOG_NOTICE, "window height: %d", window_height);
-            syslog(LOG_NOTICE, "remove at beginning: %d", nr_items_removed_at_the_beginning);
-            syslog(LOG_NOTICE, "remove at end: %d", nr_items_removed_at_the_end);
             int counter = 0;
             auto iter = node->children.rbegin();
             for (;iter != node->children.rend()
@@ -130,7 +125,6 @@ void TreePrinter<T>::print(std::ostream &out, Tree<T> &tree,
             }
             int nr_items_to_print = nr_children - nr_items_removed_at_the_beginning
                 - nr_items_removed_at_the_end;
-            syslog(LOG_NOTICE, "nr items: %d", nr_items_to_print);
             for (counter = 0;
                  counter < nr_items_to_print and iter != node->children.rend();
                  ++counter, ++iter) {
@@ -140,29 +134,21 @@ void TreePrinter<T>::print(std::ostream &out, Tree<T> &tree,
         }
     }
 }
-//
-// Cannot get unicode characters to work with ncurses, or find a
-//  compatible version of ncursesw. For the meantime, use regular
-//  ASCII chars
 // --
 //
-//#define HORIZONTAL_TREE_LINE ("\xe2\x94\x80")
-#define HORIZONTAL_TREE_LINE ("-")
+#define HORIZONTAL_TREE_LINE ("\xe2\x94\x80")
 // |
 // |
 // |
-//#define VERTICAL_TREE_LINE ("\xe2\x94\x82")
-#define VERTICAL_TREE_LINE ("|")
+#define VERTICAL_TREE_LINE ("\xe2\x94\x82")
 // |
 // |--
 // |
-//#define MIDDLE_CHILD_CONNECTOR ("\xe2\x94\x9c")
-#define MIDDLE_CHILD_CONNECTOR ("+")
+#define MIDDLE_CHILD_CONNECTOR ("\xe2\x94\x9c")
 // |
 // |--
 //
-//#define LAST_CHILD_CONNECTOR  ("\xe2\x94\x94")
-#define LAST_CHILD_CONNECTOR  ("+")
+#define LAST_CHILD_CONNECTOR  ("\xe2\x94\x94")
 
 template <typename T>
 void TreePrinter<T>::print_node(node_t node, int depth, std::vector<bool> &depth_to_next_sibling,
@@ -170,11 +156,10 @@ void TreePrinter<T>::print_node(node_t node, int depth, std::vector<bool> &depth
                                 std::ostream &out, bool is_selection,
                                 node_t printed_subtree_root) {
     if (is_selection) {
-            out << ">";
+        out << ">";
     } else {
-            out << " ";
+        out << " ";
     }
-    //out << " ";
     if (node->identifier != printed_subtree_root->identifier) {
         out << " ";
     }

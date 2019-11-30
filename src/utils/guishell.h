@@ -3,7 +3,7 @@
 
 #include <streambuf>
 #include <iostream>
-#include <ncurses.h>
+#include <curses.h>
 #include <unistd.h>
 #include <boost/iostreams/stream.hpp>
 

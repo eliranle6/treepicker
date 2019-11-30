@@ -7,4 +7,4 @@ libsubprocess_la_SOURCES = subprocess.cpp
 libsubprocess_la_LIBADD = -lboost_iostreams
 
 libguishell_la_SOURCES = guishell.cpp
-libguishell_la_LIBADD = -lncurses -lboost_filesystem
+libguishell_la_LIBADD = -lncursesw -lboost_filesystem
