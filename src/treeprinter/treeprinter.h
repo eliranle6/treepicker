@@ -64,6 +64,7 @@ void TreePrinter<T>::print(std::ostream &out, Tree<T> &tree,
     auto node = printed_subtree_root;
     dfs_stack.push(std::make_pair(node, depth));
     std::vector<bool> depth_to_next_sibling(info.m_max_depth);
+    was_previously_printed_node_selected = false;
     while (not dfs_stack.empty()) {
         // Store previous values before reassigning new ones
         auto previous_depth = depth;
