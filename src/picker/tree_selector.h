@@ -101,7 +101,9 @@ void TreeSelector<T>::move_to_next_printed_node(void) {
 template<typename T>
 void TreeSelector<T>::move_to_previously_printed_node(void) {
     auto prev_node = _tree_printer.get_previously_printed_node_before_selected();
-    _selection = prev_node;
+    if (prev_node) {
+        _selection = prev_node;
+    }
 }
 
 template<typename T>
