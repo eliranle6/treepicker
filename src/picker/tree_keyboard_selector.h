@@ -54,8 +54,8 @@ private:
     treelib::Tree<T>& _tree;
     guishell::GuiShell& _out;
     std::string _search_keyword;
-    TreeSelector<T> _tree_selector;
     treelib::TreePrinter<T> _tree_printer;
+    TreeSelector<T> _tree_selector;
     mode _mode;
 };
 
@@ -65,6 +65,7 @@ TreeKeyboardSelector<T>::TreeKeyboardSelector(treelib::Tree<T>& tree):
     _tree(tree),
     _out(guishell::GuiShell::get_instance()),
     _search_keyword(),
+    _tree_printer(tree),
     _tree_selector(tree, _tree_printer),
     _mode(mode::MODE_NAVIGATION)
 {

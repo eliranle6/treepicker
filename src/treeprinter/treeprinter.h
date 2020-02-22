@@ -21,6 +21,7 @@ class TreePrinter
 public:
     // Today i learned: 'using' keyword (same as typedef)
     using node_t = const std::shared_ptr< Node<T> >;
+    TreePrinter(Tree<T> &tree);
     void print(std::ostream &out, Tree<T> &tree, bool filter_search_nodes = false,
                node_t selection = nullptr, int window_height = 100);
     std::shared_ptr<treelib::Node<T>> get_next_printed_node_after_selected(void);
@@ -35,10 +36,16 @@ private:
     std::shared_ptr<treelib::Node<T>> choose_printed_tree_root(
         treelib::Tree<T> tree,
         std::shared_ptr<treelib::Node<T>> selection);
+    Tree<T>& _tree;
     std::shared_ptr< Node<T> > previously_printed_node_before_selected;
     std::shared_ptr< Node<T> > next_printed_node_after_selected;
+    std::shared_ptr< Node<T> > _printed_tree_root;
     bool was_previously_printed_node_selected;
 };
+
+template <typename T>
+TreePrinter<T>::TreePrinter(Tree<T>& tree): _tree(tree) {
+}
 
 template <typename T>
 void TreePrinter<T>::print(std::ostream &out, Tree<T> &tree,
