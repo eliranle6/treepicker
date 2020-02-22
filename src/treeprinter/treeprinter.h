@@ -39,12 +39,13 @@ private:
     Tree<T>& _tree;
     std::shared_ptr< Node<T> > previously_printed_node_before_selected;
     std::shared_ptr< Node<T> > next_printed_node_after_selected;
-    std::shared_ptr< Node<T> > _printed_tree_root;
+    std::shared_ptr< Node<T> > _printed_subtree_root;
     bool was_previously_printed_node_selected;
 };
 
 template <typename T>
-TreePrinter<T>::TreePrinter(Tree<T>& tree): _tree(tree) {
+TreePrinter<T>::TreePrinter(Tree<T>& tree): _tree(tree),
+                                            _printed_subtree_root(tree.get_root()) {
 }
 
 template <typename T>
@@ -208,11 +209,12 @@ template<typename T>
 std::shared_ptr<treelib::Node<T>> TreePrinter<T>::choose_printed_tree_root(
         treelib::Tree<T> tree,
         std::shared_ptr<treelib::Node<T>> selection) {
-    auto result = tree.get_root();
-    if (selection != tree.get_root()) {
-        result = tree.get_node(selection->parent);
-    }
-    return result;
+    return _printed_subtree_root;
+    //auto result = tree.get_root();
+    //if (selection != tree.get_root()) {
+    //    result = tree.get_node(selection->parent);
+    //}
+    //return result;
 }
 
 template<typename T>
