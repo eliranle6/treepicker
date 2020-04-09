@@ -26,7 +26,7 @@ public:
     void print(std::ostream &out, bool filter_search_nodes = false,
                node_t selection = nullptr, int window_height = 100);
     std::shared_ptr<treelib::Node<T>> get_next_printed_node_after_selected(void);
-    std::shared_ptr<treelib::Node<T>> get_previously_printed_node_before_selected(void);
+    std::shared_ptr<treelib::Node<T>> get_printed_node_before_selected(void);
 
 private:
     void print_node(node_t node,
@@ -62,14 +62,14 @@ private:
         std::shared_ptr<treelib::Node<T>> selection);
     Tree<T>& _tree;
     TreeAnalysisInfo info;
-    std::shared_ptr< Node<T> > previously_printed_node_before_selected;
-    std::shared_ptr< Node<T> > next_printed_node_after_selected;
+    std::shared_ptr< Node<T> > _printed_node_before_selected;
+    std::shared_ptr< Node<T> > _next_printed_node_after_selected;
     std::shared_ptr< Node<T> > _printed_subtree_root;
     int _nr_levels_that_fit_in_window;
     static constexpr std::size_t MAX_DEPTH = 512;
     bool depth_to_next_sibling[MAX_DEPTH];
     std::shared_ptr<Node<T>> _previously_printed_node;
-    bool was_previously_printed_node_selected;
+    bool _was_previously_printed_node_selected;
     bool _paginate_last_level;
 };
 
@@ -82,8 +82,8 @@ TreePrinter<T>::TreePrinter(Tree<T>& tree): _tree(tree),
 template <typename T>
 void TreePrinter<T>::init_pre_dfs_state(std::shared_ptr<treelib::Node<T>> selection,
                                         int window_height) {
-    next_printed_node_after_selected.reset();
-    previously_printed_node_before_selected.reset();
+    _next_printed_node_after_selected.reset();
+    _printed_node_before_selected.reset();
 
 
     // Determine the printed subtree root
@@ -97,7 +97,7 @@ void TreePrinter<T>::init_pre_dfs_state(std::shared_ptr<treelib::Node<T>> select
     // Determine the number of depth layers, from root, that will be printed
     _paginate_last_level = _nr_levels_that_fit_in_window == 1;
 
-    was_previously_printed_node_selected = false;
+    _was_previously_printed_node_selected = false;
 }
 
 template <typename T>
@@ -190,11 +190,11 @@ void TreePrinter<T>::update_mid_dfs_state(std::shared_ptr<Node<T>> node,
     // Update next printed node after selected
     const bool is_selection = node == selection;
     if (is_selection) {
-        was_previously_printed_node_selected = true;
-        previously_printed_node_before_selected = _previously_printed_node;
-    } else if (was_previously_printed_node_selected) {
-        next_printed_node_after_selected = node;
-        was_previously_printed_node_selected = false;
+        _was_previously_printed_node_selected = true;
+        _printed_node_before_selected = _previously_printed_node;
+    } else if (_was_previously_printed_node_selected) {
+        _next_printed_node_after_selected = node;
+        _was_previously_printed_node_selected = false;
     }
 }
 
@@ -319,12 +319,12 @@ std::shared_ptr<treelib::Node<T>> TreePrinter<T>::choose_printed_tree_root(
 
 template<typename T>
 std::shared_ptr<treelib::Node<T>> TreePrinter<T>::get_next_printed_node_after_selected(void) {
-    return next_printed_node_after_selected;
+    return _next_printed_node_after_selected;
 }
 
 template<typename T>
-std::shared_ptr<treelib::Node<T>> TreePrinter<T>::get_previously_printed_node_before_selected(void) {
-    return previously_printed_node_before_selected;
+std::shared_ptr<treelib::Node<T>> TreePrinter<T>::get_printed_node_before_selected(void) {
+    return _printed_node_before_selected;
 }
 
 } // namespace treelib

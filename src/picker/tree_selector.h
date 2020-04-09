@@ -18,8 +18,6 @@ public:
 
     void explore_children_of_selection(void);
     void move_to_next(void);
-    void move_to_next_printed_node(void);
-    void move_to_previously_printed_node(void);
     void move_to_prev(void);
     void move_one_up(void);
 
@@ -87,11 +85,6 @@ void TreeSelector<T>::move_one_up(void) {
 
 template<typename T>
 void TreeSelector<T>::move_to_next(void) {
-    _advance_selection_at_same_tree_level(1);
-}
-
-template<typename T>
-void TreeSelector<T>::move_to_next_printed_node(void) {
     auto next_node = _tree_printer.get_next_printed_node_after_selected();
     if (next_node) {
         _selection = next_node;
@@ -99,16 +92,11 @@ void TreeSelector<T>::move_to_next_printed_node(void) {
 }
 
 template<typename T>
-void TreeSelector<T>::move_to_previously_printed_node(void) {
-    auto prev_node = _tree_printer.get_previously_printed_node_before_selected();
+void TreeSelector<T>::move_to_prev(void) {
+    auto prev_node = _tree_printer.get_printed_node_before_selected();
     if (prev_node) {
         _selection = prev_node;
     }
-}
-
-template<typename T>
-void TreeSelector<T>::move_to_prev(void) {
-    _advance_selection_at_same_tree_level(-1);
 }
 
 template<typename T>

@@ -1,3 +1,4 @@
+//TODO generalize this module to a 'keyboard selector'
 #ifndef MENU_H__
 #define MENU_H__
 
@@ -19,15 +20,17 @@ enum {
     KEYCODE_BACKSPACE = 127,
     KEYCODE_SLASH = 47,
     KEYCODE_ENTER = 13,
+    KEYCODE_H = 104,
     KEYCODE_J = 106,
-    KEYCODE_K = 107
+    KEYCODE_K = 107,
+    KEYCODE_L = 108
 };
 
 enum {
-    KEYCODE_DOWN = KEYCODE_CTRL_J,
-    KEYCODE_UP = KEYCODE_CTRL_H,
-    KEYCODE_PREV = KEYCODE_CTRL_K,
-    KEYCODE_RIGHT = KEYCODE_CTRL_L,
+    KEYCODE_PREV = KEYCODE_K,
+    KEYCODE_NEXT = KEYCODE_J,
+    KEYCODE_RIGHT = KEYCODE_L,
+    KEYCODE_LEFT = KEYCODE_H,
     KEYCODE_BACK = KEYCODE_CTRL_C,
     KEYCODE_START_SEARCH = KEYCODE_SLASH,
     KEYCODE_MOVE_FROM_SEARCH_TO_NAV_MODE = KEYCODE_ENTER
@@ -77,23 +80,17 @@ bool TreeKeyboardSelector<T>::char_pressed(char c)
     bool is_finished = false;
 
     switch(c) {
-        case KEYCODE_DOWN:
+        case KEYCODE_PREV:
+            _tree_selector.move_to_prev();
+            break;
+        case KEYCODE_NEXT:
             _tree_selector.move_to_next();
-            break;
-        case KEYCODE_J:
-            _tree_selector.move_to_next_printed_node();
-            break;
-        case KEYCODE_K:
-            _tree_selector.move_to_previously_printed_node();
-            break;
-        case KEYCODE_UP:
-            _tree_selector.move_one_up();
             break;
         case KEYCODE_RIGHT:
             _tree_selector.explore_children_of_selection();
             break;
-        case KEYCODE_PREV:
-            _tree_selector.move_to_prev();
+        case KEYCODE_LEFT:
+            _tree_selector.move_one_up();
             break;
         case KEYCODE_BACK:
             is_finished = true;
