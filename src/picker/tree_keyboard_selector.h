@@ -140,7 +140,7 @@ void TreeKeyboardSelector<T>::print_tree(void) {
     getmaxyx(stdscr, window_height, std::ignore);
 
     // Print
-    _tree_printer.print(_out, _tree, should_nodes_be_search_filtered,
+    _tree_printer.print(_out, should_nodes_be_search_filtered,
                         _tree_selector.get_selection(), window_height);
     const bool should_search_bar_be_displayed =
         should_nodes_be_search_filtered or _mode == mode::MODE_EDIT_SEARCH;
