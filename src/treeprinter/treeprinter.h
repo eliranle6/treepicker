@@ -84,7 +84,7 @@ void TreePrinter<T>::init_pre_dfs_state(std::shared_ptr<treelib::Node<T>> select
                                         int window_height) {
     _next_printed_node_after_selected.reset();
     _printed_node_before_selected.reset();
-
+    _previously_printed_node.reset();
 
     // Determine the printed subtree root
     _printed_subtree_root = choose_printed_tree_root(_tree, selection);
@@ -184,8 +184,6 @@ void TreePrinter<T>::expand_dfs_to_children_of_node(std::shared_ptr<Node<T>> nod
 template <typename T>
 void TreePrinter<T>::update_mid_dfs_state(std::shared_ptr<Node<T>> node,
                                           std::shared_ptr<Node<T>> selection) {
-    // Update previously printed node
-    _previously_printed_node = node;
 
     // Update next printed node after selected
     const bool is_selection = node == selection;
@@ -196,6 +194,9 @@ void TreePrinter<T>::update_mid_dfs_state(std::shared_ptr<Node<T>> node,
         _next_printed_node_after_selected = node;
         _was_previously_printed_node_selected = false;
     }
+
+    // Update previously printed node
+    _previously_printed_node = node;
 }
 
 template <typename T>
