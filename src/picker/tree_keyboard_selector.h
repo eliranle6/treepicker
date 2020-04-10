@@ -19,7 +19,7 @@ enum {
     KEYCODE_CTRL_W = 23,
     KEYCODE_BACKSPACE = 127,
     KEYCODE_SLASH = 47,
-    KEYCODE_ENTER = 13,
+    KEYCODE_ENTER = 10,
     KEYCODE_H = 104,
     KEYCODE_J = 106,
     KEYCODE_K = 107,
@@ -79,48 +79,53 @@ bool TreeKeyboardSelector<T>::char_pressed(char c)
 {
     bool is_finished = false;
 
-    switch(c) {
-        case KEYCODE_PREV:
-            _tree_selector.move_to_prev();
-            break;
-        case KEYCODE_NEXT:
-            _tree_selector.move_to_next();
-            break;
-        case KEYCODE_RIGHT:
-            _tree_selector.explore_children_of_selection();
-            break;
-        case KEYCODE_LEFT:
-            _tree_selector.move_one_up();
-            break;
-        case KEYCODE_BACK:
-            is_finished = true;
-            break;
-        case KEYCODE_BACKSPACE:
-            if (not _search_keyword.empty()) {
-                _search_keyword = _search_keyword.substr(0, _search_keyword.size() - 1);
-            }
-            break;
-        case KEYCODE_CTRL_W:
-        case KEYCODE_CTRL_U:
-            if (_mode == mode::MODE_EDIT_SEARCH) {
-                _search_keyword = "";
-            }
-            break;
-        case KEYCODE_START_SEARCH:
-            if (_mode == mode::MODE_NAVIGATION) {
-                _search_keyword = "";
-                _mode = mode::MODE_EDIT_SEARCH;
-            }
-            break;
-        case KEYCODE_MOVE_FROM_SEARCH_TO_NAV_MODE:
-            _mode = mode::MODE_NAVIGATION;
-            break;
-        default:
-            if (_mode == mode::MODE_EDIT_SEARCH)
-                _search_keyword += c;
-            else {
-            }
-    };
+    syslog(LOG_NOTICE, "keycode: %d\n", c);
+    if (_mode == mode::MODE_NAVIGATION) {
+        switch(c) {
+            case KEYCODE_PREV:
+                _tree_selector.move_to_prev();
+                break;
+            case KEYCODE_NEXT:
+                _tree_selector.move_to_next();
+                break;
+            case KEYCODE_RIGHT:
+                _tree_selector.explore_children_of_selection();
+                break;
+            case KEYCODE_LEFT:
+                _tree_selector.move_one_up();
+                break;
+            case KEYCODE_BACK:
+                is_finished = true;
+                break;
+            case KEYCODE_START_SEARCH:
+                if (_mode == mode::MODE_NAVIGATION) {
+                    _mode = mode::MODE_EDIT_SEARCH;
+                }
+                break;
+        }
+    } else if (_mode == mode::MODE_EDIT_SEARCH) {
+        switch(c) {
+            case KEYCODE_BACKSPACE:
+                if (not _search_keyword.empty()) {
+                    _search_keyword = _search_keyword.substr(0, _search_keyword.size() - 1);
+                }
+                break;
+            case KEYCODE_CTRL_W:
+            case KEYCODE_CTRL_U:
+                if (_mode == mode::MODE_EDIT_SEARCH) {
+                    _search_keyword = "";
+                }
+                break;
+            case KEYCODE_MOVE_FROM_SEARCH_TO_NAV_MODE:
+                _mode = mode::MODE_NAVIGATION;
+                break;
+            default:
+                if (_mode == mode::MODE_EDIT_SEARCH)
+                    _search_keyword += c;
+                else {
+                }
+        }
+    }
     _tree.search(_search_keyword);
     print_tree();
 
