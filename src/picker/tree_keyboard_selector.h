@@ -79,7 +79,6 @@ bool TreeKeyboardSelector<T>::char_pressed(char c)
 {
     bool is_finished = false;
 
-    syslog(LOG_NOTICE, "keycode: %d\n", c);
     if (_mode == mode::MODE_NAVIGATION) {
         switch(c) {
             case KEYCODE_PREV:

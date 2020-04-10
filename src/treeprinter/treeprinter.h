@@ -57,9 +57,8 @@ private:
 
     std::stack<std::pair<node_t, int>> _dfs_stack;
     TreeWindowFitter<T> _tree_window_fitter;
-    std::shared_ptr<treelib::Node<T>> choose_printed_tree_root(
-        treelib::Tree<T> tree,
-        std::shared_ptr<treelib::Node<T>> selection);
+    void choose_printed_tree_root(std::shared_ptr<treelib::Node<T>> selection,
+                                  int window_height);
     Tree<T>& _tree;
     TreeAnalysisInfo info;
     std::shared_ptr< Node<T> > _printed_node_before_selected;
@@ -87,12 +86,7 @@ void TreePrinter<T>::init_pre_dfs_state(std::shared_ptr<treelib::Node<T>> select
     _previously_printed_node.reset();
 
     // Determine the printed subtree root
-    _printed_subtree_root = choose_printed_tree_root(_tree, selection);
-
-    _nr_levels_that_fit_in_window = _tree_window_fitter.get_nr_levels_that_fit_in_window(
-        _tree,
-        window_height,
-        _printed_subtree_root);
+    choose_printed_tree_root(selection, window_height);
 
     // Determine the number of depth layers, from root, that will be printed
     _paginate_last_level = _nr_levels_that_fit_in_window == 1;
@@ -307,15 +301,24 @@ void TreePrinter<T>::print_node(node_t node,
 }
 
 template<typename T>
-std::shared_ptr<treelib::Node<T>> TreePrinter<T>::choose_printed_tree_root(
-        treelib::Tree<T> tree,
-        std::shared_ptr<treelib::Node<T>> selection) {
-    return _printed_subtree_root;
-    //auto result = tree.get_root();
-    //if (selection != tree.get_root()) {
-    //    result = tree.get_node(selection->parent);
-    //}
-    //return result;
+void TreePrinter<T>::choose_printed_tree_root(std::shared_ptr<treelib::Node<T>> selection,
+                                              int window_height) {
+    // Adjust printed subtree root to make sure selection is visible
+    int selection_depth = _tree.get_node_depth(selection);
+    _nr_levels_that_fit_in_window = _tree_window_fitter.get_nr_levels_that_fit_in_window(
+        _tree,
+        window_height,
+        _printed_subtree_root);
+    int printed_subtree_root_depth = _tree.get_node_depth(_printed_subtree_root);
+    // Check if selection is within visible (printed) range. If not,
+    // change printed subtree root to parent of selection
+    int max_visible_depth = printed_subtree_root_depth + _nr_levels_that_fit_in_window - 1;
+    syslog(LOG_NOTICE, "sel depth %d, max visible depth %d\n", selection_depth,
+           max_visible_depth);
+    if (selection_depth > max_visible_depth
+        or selection_depth <= printed_subtree_root_depth) {
+        _printed_subtree_root = _tree.get_node(selection->parent);
+    }
 }
 
 template<typename T>
