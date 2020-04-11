@@ -86,7 +86,7 @@ void TreeSelector<T>::move_one_up(void) {
 template<typename T>
 void TreeSelector<T>::move_to_next(void) {
     auto next_node = _tree_printer.get_next_printed_node_after_selected();
-    if (next_node) {
+    if (next_node != nullptr) {
         _selection = next_node;
     }
 }

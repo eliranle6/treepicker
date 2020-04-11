@@ -35,7 +35,7 @@ public:
     friend std::ostream& operator << (std::ostream &os, const Tree<U> &tree);
 
     void search(std::string pattern);
-    int get_node_depth(std::shared_ptr< Node<T> > node);
+    int get_node_depth(std::shared_ptr<Node<T>> node);
 
 protected:
     std::map<std::string, node_t > node_map;
@@ -87,7 +87,7 @@ void Tree<T>::search(std::string pattern)
 }
 
 template <typename T>
-int Tree<T>::get_node_depth(std::shared_ptr< Node<T> > node) {
+int Tree<T>::get_node_depth(std::shared_ptr<Node<T>> node) {
     int depth = 0;
     while (node != get_root()) {
         node = get_node(node->parent);
