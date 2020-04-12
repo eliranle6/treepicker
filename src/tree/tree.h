@@ -36,6 +36,7 @@ public:
 
     void search(std::string pattern);
     int get_node_depth(std::shared_ptr<Node<T>> node);
+    int get_nr_nodes(void) { return node_map.size(); };
 
 protected:
     std::map<std::string, node_t > node_map;

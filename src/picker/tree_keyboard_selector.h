@@ -140,13 +140,22 @@ void TreeKeyboardSelector<T>::print_tree(void) {
     int window_height = 0;
     getmaxyx(stdscr, window_height, std::ignore);
 
-    // Print
-    _tree_printer.print(_out, should_nodes_be_search_filtered,
-                        _tree_selector.get_selection(), window_height);
+    // Determine whether to print search line
     const bool should_search_bar_be_displayed =
         should_nodes_be_search_filtered or _mode == mode::MODE_EDIT_SEARCH;
+    int tree_height = window_height - 2;
+
+    // Print tree
+    if (tree_height > 0) {
+        _tree_printer.print(_out, should_nodes_be_search_filtered,
+                            _tree_selector.get_selection(), tree_height);
+    }
+
+    // Print search line
+    _out << "TreePicker: " << _tree.get_nr_nodes() << " items" << std::endl;
+    //_out << std::endl;
     if (should_search_bar_be_displayed) {
-        _out << std::endl << "Search: " + _search_keyword;
+        _out << "Search: " << _search_keyword;
     }
     _out.refresh();
 }
