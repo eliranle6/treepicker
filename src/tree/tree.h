@@ -22,6 +22,7 @@ public:
 
     // Today i learned: nullptr
     Tree(void) :
+        _search(*this),
         root(nullptr)
     {}
     // Today i learned: shared_ptr
@@ -37,6 +38,9 @@ public:
     void search(std::string pattern);
     int get_node_depth(std::shared_ptr<Node<T>> node);
     int get_nr_nodes(void) { return node_map.size(); };
+    int get_nr_matching(void) { return _search.get_nr_matching(); };
+
+    Search<T> _search;
 
 protected:
     std::map<std::string, node_t > node_map;
@@ -83,8 +87,7 @@ const std::vector< std::shared_ptr< Node<T> > > & Tree<T>::children(std::string 
 template<typename T>
 void Tree<T>::search(std::string pattern)
 {
-    Search<T> search(*this);
-    search.search(pattern);
+    _search.search(pattern);
 }
 
 template <typename T>

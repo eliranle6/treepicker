@@ -16,8 +16,12 @@ public:
 
     void search(std::string &keyword);
 
+    std::size_t get_nr_matching(void) { return _nr_matching; };
+
 private:
     Tree<T> &_tree;
+
+    std::size_t _nr_matching;
 
     void mark_ancestors(std::string &identifier);
 
@@ -29,6 +33,7 @@ void Search<T>::search(std::string &keyword) {
     // Currently,  assume that there are no cycles.
     // Also, not using concurrency yet.
     std::stack< node_t > dfs_stack;
+    _nr_matching = 0;
 
     // Validate that the tree is not empty
     auto root = _tree.get_root();
@@ -53,6 +58,7 @@ void Search<T>::search(std::string &keyword) {
 
         if (found) {
             mark_ancestors(node->identifier);
+            ++_nr_matching;
         }
 
         // Add children

@@ -152,11 +152,13 @@ void TreeKeyboardSelector<T>::print_tree(void) {
     }
 
     // Print search line
-    _out << "TreePicker: " << _tree.get_nr_nodes() << " items" << std::endl;
+    _out << "Total: " << _tree.get_nr_nodes();
     //_out << std::endl;
     if (should_search_bar_be_displayed) {
+        _out << ", Matching: " << _tree.get_nr_matching() << std::endl;
         _out << "Search: " << _search_keyword;
     }
+    _out << std::endl;
     _out.refresh();
 }
 
