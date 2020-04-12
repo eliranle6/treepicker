@@ -4,6 +4,7 @@
 #include <ostream>
 #include <vector>
 
+#include "utils/guishell.h"
 #include "tree/node.h"
 #include "tree/tree.h"
 #include "pre_print_tree_analysis.h"
@@ -286,6 +287,7 @@ void TreePrinter<T>::print_node(node_t node,
     const bool is_selection = node == selection;
     if (is_selection) {
         out << ">";
+        out << guishell::Color(guishell::BLACK_ON_BLUE);
     } else {
         out << " ";
     }
@@ -309,9 +311,16 @@ void TreePrinter<T>::print_node(node_t node,
         else
             out << LAST_CHILD_CONNECTOR << HORIZONTAL_TREE_LINE << HORIZONTAL_TREE_LINE;
     }
+    if (is_selection) {
+        out << guishell::Color(guishell::WHITE_ON_BLUE);
+    }
 
     // Print node text
     out << " " << node->tag << std::endl;
+
+    if (is_selection) {
+        out << guishell::Color(guishell::DEFAULT);
+    }
 }
 
 template<typename T>

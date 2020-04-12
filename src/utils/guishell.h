@@ -26,7 +26,9 @@ enum Colors {
     LIGHT_BLUE = 94,
     LIGHT_MAGENTA = 95,
     LIGHT_CYAN = 96,
-    WHITE = 97
+    WHITE = 97,
+    WHITE_ON_BLUE = 98,
+    BLACK_ON_BLUE = 99
 };
 
 class NCursesSink : public boost::iostreams::sink
