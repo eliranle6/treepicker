@@ -44,7 +44,7 @@ private:
     void expand_dfs_to_children_of_node(std::shared_ptr<Node<T>> node,
                                    std::shared_ptr<Node<T>> selection,
                                    int window_height,
-                                   int depth);
+                                   int rel_depth);
     void update_depth_to_next_sibling_map(int previous_depth,
                                           int depth,
                                           std::shared_ptr<Node<T>> previous_node);
@@ -59,6 +59,8 @@ private:
     TreeWindowFitter<T> _tree_window_fitter;
     void choose_printed_tree_root(std::shared_ptr<treelib::Node<T>> selection,
                                   int window_height);
+    bool should_node_be_skipped(bool filter_search_nodes,
+                                std::shared_ptr<Node<T>> node);
     Tree<T>& _tree;
     TreeAnalysisInfo info;
     std::shared_ptr< Node<T> > _printed_node_before_selected;
@@ -68,9 +70,10 @@ private:
     int _nr_levels_that_fit_in_window;
     static constexpr std::size_t MAX_DEPTH = 512;
     int _selection_depth;
-    bool depth_to_next_sibling[MAX_DEPTH];
+    std::array<bool, MAX_DEPTH> depth_to_next_sibling;
     std::shared_ptr<Node<T>> _previously_printed_node;
     bool _was_previously_printed_node_selected;
+    bool _has_paginated_in_current_print;
 };
 
 template <typename T>
@@ -92,6 +95,16 @@ void TreePrinter<T>::init_pre_dfs_state(std::shared_ptr<treelib::Node<T>> select
     choose_printed_tree_root(selection, window_height);
 
     _was_previously_printed_node_selected = false;
+     _has_paginated_in_current_print = false;
+}
+
+template <typename T>
+bool TreePrinter<T>::should_node_be_skipped(
+                           bool filter_search_nodes,
+                           std::shared_ptr<Node<T>> node) {
+    return (filter_search_nodes
+        and not node->is_ancestor_of_matching_search
+        and not node->is_matching_search);
 }
 
 template <typename T>
@@ -106,40 +119,39 @@ void TreePrinter<T>::print(std::ostream &out,
     init_pre_dfs_state(selection, window_height);
 
     // Prepare variables for DFS scan for printing
-    int depth = 0;
+    int rel_depth = 0;
     auto node = _printed_subtree_root;
-    _dfs_stack.push(std::make_pair(node, depth));
+    _dfs_stack.push(std::make_pair(node, rel_depth));
 
     // DFS scan
     while (not _dfs_stack.empty()) {
         // Store previous values before reassigning new ones
-        auto previous_depth = depth;
+        auto previous_depth = rel_depth;
         auto previous_node = node;
 
         // Extract node from DFS stack
         node = std::get<0>(_dfs_stack.top());
-        depth = std::get<1>(_dfs_stack.top());
+        rel_depth = std::get<1>(_dfs_stack.top());
         _dfs_stack.pop();
 
         // Skip nodes that don't match an ongoing search
-        const bool skip_due_to_search_mismatch = (filter_search_nodes and
-            not node->is_ancestor_of_matching_search and not node->is_matching_search);
-        if (skip_due_to_search_mismatch) {
+        if (should_node_be_skipped(filter_search_nodes, node)) {
             continue;
         }
 
         // Print node
-        print_node(node, previous_node, depth, previous_depth, out, selection,
+        print_node(node, previous_node, rel_depth, previous_depth, out, selection,
                    _printed_subtree_root);
 
         // Add children to DFS stack
-        expand_dfs_to_children_of_node(node, selection, depth, window_height);
+        expand_dfs_to_children_of_node(node, selection, rel_depth, window_height);
 
         // Update state that requires update during iteration
         update_mid_dfs_state(node, selection);
     }
 }
 
+#include <syslog.h>
 template <typename T>
 void TreePrinter<T>::update_depth_to_next_sibling_map(int previous_depth,
                                                       int depth,
@@ -156,23 +168,36 @@ void TreePrinter<T>::update_depth_to_next_sibling_map(int previous_depth,
 template<typename T>
 void TreePrinter<T>::expand_dfs_to_children_of_node(std::shared_ptr<Node<T>> node,
         std::shared_ptr<Node<T>> selection,
-        int depth,
+        int rel_depth,
         int window_height) {
-    int children_depth = depth + 1;
-    const int highest_depth_that_fits_window = _nr_levels_that_fit_in_window - 1;
-    const bool depth_fits_window = children_depth <= highest_depth_that_fits_window;
-    int selection_rel_depth = _selection_depth - _printed_subtree_root_depth;
-    const bool should_paginate = not depth_fits_window
-        and selection_rel_depth == highest_depth_that_fits_window + 1
-        and children_depth == highest_depth_that_fits_window + 1;
+    // Determine whether printed subtree fits window
+    int children_rel_depth = rel_depth + 1;
+    const int highest_rel_depth_that_fits_window = _nr_levels_that_fit_in_window - 1;
+    const bool printed_subtree_fits_window =
+        children_rel_depth <= highest_rel_depth_that_fits_window;
 
-    if (depth_fits_window) {
-        populate_stack_with_all_children_of_node(node, children_depth);
-    } else if (should_paginate) {
-        populate_stack_with_paginated_children_of_node(node,
-                                                       selection,
-                                                       children_depth,
-                                                       window_height);
+    if (printed_subtree_fits_window) {
+        // Print whole subtree
+        populate_stack_with_all_children_of_node(node, children_rel_depth);
+    } else if (not _has_paginated_in_current_print) {
+        // Determine whether should paginate printed subtree
+        int selection_rel_depth = _selection_depth - _printed_subtree_root_depth;
+        bool should_paginate =
+            (// Selection is in the deepest printed level (which is to paginate)
+             // and so are the node's children that are to print
+             selection_rel_depth == highest_rel_depth_that_fits_window + 1
+             and children_rel_depth == highest_rel_depth_that_fits_window + 1)
+            or node == _printed_subtree_root;
+
+        // Print as paginated
+        if (should_paginate) {
+            syslog(LOG_NOTICE, "Paginating children of '%s'", node->tag.c_str());
+            _has_paginated_in_current_print = true;
+            populate_stack_with_paginated_children_of_node(node,
+                                                        selection,
+                                                        children_rel_depth,
+                                                        window_height);
+        }
     }
 }
 
@@ -218,6 +243,10 @@ void TreePrinter<T>::populate_stack_with_paginated_children_of_node(
     for (auto iter = node->children.begin();
              iter != node->children.end() and (*iter)->identifier != selection->identifier;
              ++iter, ++selection_idx_in_level);
+    if (selection_idx_in_level == node->children.size()) {
+        selection_idx_in_level = 0;
+    }
+    syslog(LOG_NOTICE, "selected child idx %lu", selection_idx_in_level);
 
     // Calculate number of children to hide from start and from end
     std::size_t nr_items_removed_at_the_beginning = 0;
