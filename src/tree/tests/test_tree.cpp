@@ -31,3 +31,8 @@ TEST(tree, node_path) {
     ASSERT_EQ(tree.get_node("rich-dumb")->path, std::string("/People/Dumb people/Rich dumb people"));
     ASSERT_EQ(tree.get_node("people")->path, std::string("/People"));
 }
+
+TEST(tree, parent_of_root_is_empty_string) {
+    auto tree = get_simple_tree();
+    assert(tree.get_root()->parent == std::string(""));
+}

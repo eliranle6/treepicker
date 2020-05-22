@@ -34,8 +34,8 @@ private:
                     int depth,
                     int previous_depth,
                     std::ostream &out,
-                    std::shared_ptr<treelib::Node<T>> selection,
-                    node_t _printed_subtree_root);
+                    std::shared_ptr<treelib::Node<T>> selection
+                    );
 
     void init_pre_dfs_state(std::shared_ptr<treelib::Node<T>> selection,
                             int window_height);
@@ -61,6 +61,7 @@ private:
                                   int window_height);
     bool should_node_be_skipped(bool filter_search_nodes,
                                 std::shared_ptr<Node<T>> node);
+    void print_breadcrumbs(std::ostream &out);
     Tree<T>& _tree;
     TreeAnalysisInfo info;
     std::shared_ptr< Node<T> > _printed_node_before_selected;
@@ -140,8 +141,7 @@ void TreePrinter<T>::print(std::ostream &out,
         }
 
         // Print node
-        print_node(node, previous_node, rel_depth, previous_depth, out, selection,
-                   _printed_subtree_root);
+        print_node(node, previous_node, rel_depth, previous_depth, out, selection);
 
         // Add children to DFS stack
         expand_dfs_to_children_of_node(node, selection, rel_depth, window_height);
@@ -303,8 +303,8 @@ void TreePrinter<T>::print_node(node_t node,
                                 int depth,
                                 int previous_depth,
                                 std::ostream &out,
-                                std::shared_ptr<treelib::Node<T>> selection,
-                                node_t _printed_subtree_root) {
+                                std::shared_ptr<treelib::Node<T>> selection
+                                ) {
 
     // Before printing, maintain the array of depth to -
     // [whether a next (=not printed yet) sibling exists]
@@ -344,12 +344,39 @@ void TreePrinter<T>::print_node(node_t node,
         out << guishell::Color(guishell::WHITE_ON_BLUE);
     }
 
-    // Print node text
-    out << " " << node->tag << std::endl;
+    // If printing root, print breadcrumbs up to node before printed subtree root
+    if (node == _printed_subtree_root) {
+        print_breadcrumbs(out);
+    } else {
+        // Print node text
+        out << " " << node->tag << std::endl;
+    }
 
     if (is_selection) {
         out << guishell::Color(guishell::DEFAULT);
     }
+}
+
+template<typename T>
+void TreePrinter<T>::print_breadcrumbs(std::ostream &out) {
+    std::string breadcrumbs;
+    std::shared_ptr<Node<T>> node = _printed_subtree_root;
+    std::string node_id = node->identifier;
+    syslog(LOG_NOTICE, "parent of subtree root (%s): %s", _printed_subtree_root->tag.c_str(),
+           node_id.c_str());
+
+    int counter = 0;
+    while (++counter <= 22) {
+        auto node = _tree.get_node(node_id);
+        breadcrumbs = node->tag + std::string(" > ") + breadcrumbs;
+        node_id = node->parent;
+        syslog(LOG_NOTICE, "parent of %s is %s", node->tag.c_str(), node->parent.c_str());
+        if (node == _tree.get_root()) {
+            break;
+        }
+    }
+
+    out << breadcrumbs << std::endl;
 }
 
 template<typename T>
