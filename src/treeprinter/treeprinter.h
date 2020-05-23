@@ -340,16 +340,25 @@ void TreePrinter<T>::print_node(node_t node,
         else
             out << LAST_CHILD_CONNECTOR << HORIZONTAL_TREE_LINE << HORIZONTAL_TREE_LINE;
     }
-    if (is_selection) {
-        out << guishell::Color(guishell::WHITE_ON_BLUE);
-    }
 
     // If printing root, print breadcrumbs up to node before printed subtree root
     if (node == _printed_subtree_root) {
         print_breadcrumbs(out);
     } else {
         // Print node text
-        out << " " << node->tag << std::endl;
+        out << " ";
+        if (node->children.size()) {
+            auto color = is_selection ? guishell::SELECTED_DIRECTORY :
+                guishell::NON_SELECTED_DIRECTORY;
+            out << guishell::Color(color) << guishell::Bold() <<
+                node->tag << guishell::Unbold() << guishell::Color(guishell::DEFAULT);
+        } else {
+            if (is_selection) {
+                out << guishell::Color(guishell::WHITE_ON_BLUE);
+            }
+            out << node->tag;
+        }
+        out << std::endl;
     }
 
     if (is_selection) {

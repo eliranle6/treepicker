@@ -28,7 +28,10 @@ enum Colors {
     LIGHT_CYAN = 96,
     WHITE = 97,
     WHITE_ON_BLUE = 98,
-    BLACK_ON_BLUE = 99
+    BLACK_ON_BLUE = 99,
+    DIRECTORY = 12,
+    SELECTED_DIRECTORY = 100,
+    NON_SELECTED_DIRECTORY = 101
 };
 
 class NCursesSink : public boost::iostreams::sink
@@ -61,11 +64,22 @@ class Color
 {
 public:
     Color(int code);
-
     friend std::ostream& operator<< (std::ostream &out, const Color &color);
 
 private:
     int _code;
+};
+
+class Bold
+{
+public:
+    friend std::ostream& operator<< (std::ostream &out, const Bold &color);
+};
+
+class Unbold
+{
+public:
+    friend std::ostream& operator<< (std::ostream &out, const Unbold &color);
 };
 
 }

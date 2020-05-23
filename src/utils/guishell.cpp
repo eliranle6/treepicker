@@ -33,6 +33,10 @@ GuiShell::GuiShell(NCursesSink &buff) :
     init_pair(MAGENTA, COLOR_MAGENTA, -1);
     init_pair(CYAN, COLOR_CYAN, -1);
     init_pair(WHITE, COLOR_WHITE, -1);
+
+    init_pair(NON_SELECTED_DIRECTORY, DIRECTORY, -1);
+    init_pair(SELECTED_DIRECTORY, DIRECTORY, COLOR_BLUE);
+
     init_pair(WHITE_ON_BLUE, COLOR_WHITE, COLOR_BLUE);
     init_pair(BLACK_ON_BLUE, COLOR_BLACK, COLOR_BLUE);
 }
@@ -59,8 +63,8 @@ void GuiShell::clear(void) {
 
 bool GuiShell::is_initialized = false;
 
-Color::Color(int code) : _code(code) {
-}
+Color::Color(int code) : _code(code)
+{}
 
 std::ostream& operator<< (std::ostream &out, const Color &color) {
     if (GuiShell::is_initialized) {
@@ -68,6 +72,27 @@ std::ostream& operator<< (std::ostream &out, const Color &color) {
         attron(COLOR_PAIR(color._code));
     } else {
         out << "\e[" << color._code << "m";
+    }
+    return out;
+}
+
+
+std::ostream& operator<< (std::ostream &out, const Bold &bold) {
+    if (GuiShell::is_initialized) {
+        out.flush();
+        attron(A_BOLD);
+    } else {
+        out << "\033[1m";
+    }
+    return out;
+}
+
+std::ostream& operator<< (std::ostream &out, const Unbold &unbold) {
+    if (GuiShell::is_initialized) {
+        out.flush();
+        attroff(A_BOLD);
+    } else {
+        out << "\033[0m";
     }
     return out;
 }
