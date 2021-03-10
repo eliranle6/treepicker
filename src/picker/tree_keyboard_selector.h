@@ -2,6 +2,7 @@
 #ifndef MENU_H__
 #define MENU_H__
 
+#include <string>
 #include "tree/tree.h"
 #include "treeprinter/treeprinter.h"
 #include "utils/guishell.h"
@@ -60,6 +61,7 @@ private:
     treelib::TreePrinter<T> _tree_printer;
     TreeSelector<T> _tree_selector;
     mode _mode;
+    WINDOW* subby;
 };
 
 
@@ -72,6 +74,7 @@ TreeKeyboardSelector<T>::TreeKeyboardSelector(treelib::Tree<T>& tree):
     _tree_selector(tree, _tree_printer),
     _mode(mode::MODE_NAVIGATION)
 {
+    curs_set(0);
 }
 
 template<typename T>
@@ -99,6 +102,7 @@ bool TreeKeyboardSelector<T>::char_pressed(char c)
             case KEYCODE_START_SEARCH:
                 if (_mode == mode::MODE_NAVIGATION) {
                     _mode = mode::MODE_EDIT_SEARCH;
+                    curs_set(1);
                 }
                 break;
         }
@@ -117,6 +121,7 @@ bool TreeKeyboardSelector<T>::char_pressed(char c)
                 break;
             case KEYCODE_MOVE_FROM_SEARCH_TO_NAV_MODE:
                 _mode = mode::MODE_NAVIGATION;
+                curs_set(0);
                 break;
             default:
                 if (_mode == mode::MODE_EDIT_SEARCH)
@@ -137,29 +142,46 @@ void TreeKeyboardSelector<T>::print_tree(void) {
     const bool should_nodes_be_search_filtered = not _search_keyword.empty();
 
     // Get window height
-    int window_height = 0;
-    getmaxyx(stdscr, window_height, std::ignore);
+    int window_height = 0, window_width = 0;
+    getmaxyx(stdscr, window_height, window_width);
 
     // Determine whether to print search line
     const bool should_search_bar_be_displayed =
         should_nodes_be_search_filtered or _mode == mode::MODE_EDIT_SEARCH;
-    int tree_height = window_height - 2;
+    int tree_max_height = window_height - 2;
+    int tree_height = 0;
 
     // Print tree
-    if (tree_height > 0) {
-        _tree_printer.print(_out, should_nodes_be_search_filtered,
-                            _tree_selector.get_selection(), tree_height);
+    if (tree_max_height > 0) {
+        tree_height = _tree_printer.print(_out, should_nodes_be_search_filtered,
+                            _tree_selector.get_selection(), tree_max_height);
     }
 
+    for (int i = 0; i < tree_max_height - tree_height; ++i) {
+      _out << std::endl;
+    }
+
+
+    if (subby != nullptr) {
+        delwin(subby);
+    }
+    subby = newwin(1, window_width - 1, window_height - 2, 0);
+    wbkgd(subby,COLOR_PAIR(::guishell::BLACK_ON_WHITE));
+
     // Print search line
-    _out << "Total: " << _tree.get_nr_nodes();
-    //_out << std::endl;
+    std::string stats_line = "Total: " + std::to_string(_tree.get_nr_nodes());
+    mvwprintw(subby, 0, 0, stats_line.c_str());
     if (should_search_bar_be_displayed) {
         _out << ", Matching: " << _tree.get_nr_matching() << std::endl;
-        _out << "Search: " << _search_keyword;
+        std::string search_line = "Search: " + _search_keyword;
+        _out << "Search: " << _search_keyword << std::endl;
+        //wmove(stdscr, window_height - 1, window_width - 1);
+        move(0, 0);
     }
-    _out << std::endl;
+
+    //_out << std::endl;
     _out.refresh();
+    wrefresh(subby);
 }
 
 

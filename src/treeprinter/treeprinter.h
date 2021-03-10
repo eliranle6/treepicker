@@ -23,8 +23,8 @@ public:
     // Today i learned: 'using' keyword (same as typedef)
     using node_t = const std::shared_ptr< Node<T> >;
     TreePrinter(Tree<T> &tree);
-    void print(std::ostream &out, bool filter_search_nodes = false,
-               node_t selection = nullptr, int window_height = 100);
+    int print(std::ostream &out, bool filter_search_nodes = false,
+              node_t selection = nullptr, int window_height = 100);
     std::shared_ptr<treelib::Node<T>> get_next_printed_node_after_selected(void);
     std::shared_ptr<treelib::Node<T>> get_printed_node_before_selected(void);
 
@@ -109,12 +109,12 @@ bool TreePrinter<T>::should_node_be_skipped(
 }
 
 template <typename T>
-void TreePrinter<T>::print(std::ostream &out,
-                           bool filter_search_nodes,
-                           std::shared_ptr<Node<T>> selection,
-                           int window_height) {
+int TreePrinter<T>::print(std::ostream &out,
+                          bool filter_search_nodes,
+                          std::shared_ptr<Node<T>> selection,
+                          int window_height) {
     if (nullptr == _tree.get_root()) {
-        return;
+        return 0;
     }
 
     init_pre_dfs_state(selection, window_height);
@@ -125,6 +125,7 @@ void TreePrinter<T>::print(std::ostream &out,
     _dfs_stack.push(std::make_pair(node, rel_depth));
 
     // DFS scan
+    int line_counter = 0;
     while (not _dfs_stack.empty()) {
         // Store previous values before reassigning new ones
         auto previous_depth = rel_depth;
@@ -141,6 +142,7 @@ void TreePrinter<T>::print(std::ostream &out,
         }
 
         // Print node
+        ++line_counter;
         print_node(node, previous_node, rel_depth, previous_depth, out, selection);
 
         // Add children to DFS stack
@@ -149,6 +151,8 @@ void TreePrinter<T>::print(std::ostream &out,
         // Update state that requires update during iteration
         update_mid_dfs_state(node, selection);
     }
+
+    return line_counter;
 }
 
 #include <syslog.h>
