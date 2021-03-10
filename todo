@@ -1,0 +1,1 @@
+* Search filter hides selection, and selection is not fixed. pagination is called from treeprinter, so treeprinter has to inform its inoker whether selection is not visible (and provide a 'recommendation' for a new selection?)

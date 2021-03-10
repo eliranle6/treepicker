@@ -54,6 +54,7 @@ void Search<T>::search(std::string &keyword) {
         // Visit node
         bool found = keyword.empty() or node->path.find(keyword) != std::string::npos;
         node->is_matching_search = found;
+        // Mark 'ancestor of matching' as false, by default, to be updated later
         node->is_ancestor_of_matching_search = false;
 
         if (found) {
