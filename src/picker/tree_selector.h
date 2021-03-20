@@ -27,6 +27,7 @@ private:
     NodePtr _selection;
 
     void _advance_selection_at_same_tree_level(int direction);
+    void select_node(std::shared_ptr<treelib::Node<T>> node);
 };
 
 template<typename T>
@@ -44,19 +45,18 @@ typename TreeSelector<T>::NodePtr TreeSelector<T>::get_selection(void) {
 
 template<typename T>
 void TreeSelector<T>::explore_children_of_selection(void) {
-    if (nullptr == _selection or _selection->children.size() == 0) {
-        return;
-    }
-    auto orig = _selection;
-    _selection = _selection->children[0];
-    if ((not (_selection)->is_matching_search
-         and not (_selection)->is_ancestor_of_matching_search)) {
-        _advance_selection_at_same_tree_level(1);
-    }
-
-    if (not (_selection)->is_matching_search
-        and not (_selection)->is_ancestor_of_matching_search) {
-        _selection = orig;
+    if (_selection == nullptr) {
+            syslog(LOG_NOTICE, "here1");
+    } else if (_selection->children.size() == 0) {
+            syslog(LOG_NOTICE, "here2");
+    } else {
+            syslog(LOG_NOTICE, "here4");
+        _selection = _selection->children[0];
+        if ((not (_selection)->is_matching_search
+            and not (_selection)->is_ancestor_of_matching_search)) {
+            syslog(LOG_NOTICE, "here3");
+            _advance_selection_at_same_tree_level(1);
+        }
     }
 }
 
@@ -78,37 +78,34 @@ void TreeSelector<T>::move_one_up(void) {
         return;
     }
     auto parent = _tree.get_node(_selection->parent);
-    if (parent != nullptr) {
-        _selection = parent;
-    }
+    select_node(parent);
 }
 
 template<typename T>
 void TreeSelector<T>::move_to_next(void) {
     auto next_node = _tree_printer.get_next_printed_node_after_selected();
-    if (next_node != nullptr) {
-        _selection = next_node;
-    }
+    select_node(next_node);
 }
 
 template<typename T>
 void TreeSelector<T>::move_to_prev(void) {
     auto prev_node = _tree_printer.get_printed_node_before_selected();
-    if (prev_node) {
-        _selection = prev_node;
-    }
+    select_node(prev_node);
 }
 
 template<typename T>
 void TreeSelector<T>::_advance_selection_at_same_tree_level(int difference) {
     if (nullptr == _selection.get()) {
+        select_node(nullptr);
         return;
     }
     if (_tree.get_root() == _selection) {
+        select_node(nullptr);
         return;
     }
     NodePtr parent = _tree.get_node(_selection->parent);
     if (parent.get() == nullptr) {
+        select_node(nullptr);
         return;
     }
     auto& children = parent->children;
@@ -142,7 +139,21 @@ void TreeSelector<T>::_advance_selection_at_same_tree_level(int difference) {
     }
 
     // Set selection
-    _selection = *position;
+    select_node(*position);
+}
+
+template<typename T>
+void TreeSelector<T>::select_node(std::shared_ptr<treelib::Node<T>> node) {
+    const bool is_new_selection_valid = node != nullptr
+            and _tree_printer.was_selection_printed();
+    if (is_new_selection_valid) {
+        _selection = node;
+    } else {
+        auto first_printed_node = _tree_printer.get_first_printed_node();
+        if (first_printed_node) {
+            _selection = first_printed_node;
+        }
+    }
 }
 
 }

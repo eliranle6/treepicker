@@ -3,6 +3,7 @@
 
 #include <ostream>
 #include <vector>
+#include <syslog.h>
 
 #include "utils/guishell.h"
 #include "tree/node.h"
@@ -27,6 +28,8 @@ public:
               node_t selection = nullptr, int window_height = 100);
     std::shared_ptr<treelib::Node<T>> get_next_printed_node_after_selected(void);
     std::shared_ptr<treelib::Node<T>> get_printed_node_before_selected(void);
+    bool was_selection_printed(void);
+    std::shared_ptr< Node<T> > get_first_printed_node(void);
 
 private:
     void print_node(node_t node,
@@ -62,11 +65,13 @@ private:
     bool should_node_be_skipped(bool filter_search_nodes,
                                 std::shared_ptr<Node<T>> node);
     void print_breadcrumbs(std::ostream &out);
+
     Tree<T>& _tree;
     TreeAnalysisInfo info;
     std::shared_ptr< Node<T> > _printed_node_before_selected;
     std::shared_ptr< Node<T> > _next_printed_node_after_selected;
     std::shared_ptr< Node<T> > _printed_subtree_root;
+    std::shared_ptr< Node<T> > _first_printed_node;
     int _printed_subtree_root_depth;
     int _nr_levels_that_fit_in_window;
     static constexpr std::size_t MAX_DEPTH = 512;
@@ -75,6 +80,7 @@ private:
     std::shared_ptr<Node<T>> _previously_printed_node;
     bool _was_previously_printed_node_selected;
     bool _has_paginated_in_current_print;
+    bool _was_selection_printed;
 };
 
 template <typename T>
@@ -96,7 +102,9 @@ void TreePrinter<T>::init_pre_dfs_state(std::shared_ptr<treelib::Node<T>> select
     choose_printed_tree_root(selection, window_height);
 
     _was_previously_printed_node_selected = false;
-     _has_paginated_in_current_print = false;
+    _has_paginated_in_current_print = false;
+    _was_selection_printed = false;
+    _first_printed_node = nullptr;
 }
 
 template <typename T>
@@ -214,6 +222,7 @@ void TreePrinter<T>::update_mid_dfs_state(std::shared_ptr<Node<T>> node,
     if (is_selection) {
         _was_previously_printed_node_selected = true;
         _printed_node_before_selected = _previously_printed_node;
+        _was_selection_printed = true;
     } else if (_was_previously_printed_node_selected) {
         _next_printed_node_after_selected = node;
         _was_previously_printed_node_selected = false;
@@ -368,6 +377,10 @@ void TreePrinter<T>::print_node(node_t node,
     if (is_selection) {
         out << guishell::Color(guishell::DEFAULT);
     }
+
+    if (_first_printed_node == nullptr) {
+        _first_printed_node = node;
+    }
 }
 
 template<typename T>
@@ -425,6 +438,16 @@ std::shared_ptr<treelib::Node<T>> TreePrinter<T>::get_next_printed_node_after_se
 template<typename T>
 std::shared_ptr<treelib::Node<T>> TreePrinter<T>::get_printed_node_before_selected(void) {
     return _printed_node_before_selected;
+}
+
+template<typename T>
+bool TreePrinter<T>::was_selection_printed(void) {
+    return _was_selection_printed;
+}
+
+template<typename T>
+std::shared_ptr<treelib::Node<T>> TreePrinter<T>::get_first_printed_node(void) {
+    return _first_printed_node;
 }
 
 } // namespace treelib
