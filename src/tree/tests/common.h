@@ -37,4 +37,22 @@ treelib::Tree<int> get_tree_with_countries(void) {
     return tree;
 }
 
+std::vector<std::string> split_string_by_newline(const std::string& str)
+{
+    auto result = std::vector<std::string>{};
+    auto ss = std::stringstream{str};
+
+    for (std::string line; std::getline(ss, line, '\n');)
+        result.push_back(line);
+
+    return result;
+}
+
+
+bool does_string_contain_substring(const std::string& string, const std::string& substring) {
+    auto pos = string.find(substring) != std::string::npos;
+    std::cout << pos << std::endl;
+    return pos;
+}
+
 #endif

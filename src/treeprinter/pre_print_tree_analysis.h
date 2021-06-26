@@ -9,19 +9,13 @@ template <typename T>
 class Tree;
 
 struct TreeAnalysisInfo {
-    std::map<std::string, bool> m_node_to_next_sibling_existance;
+    std::map<std::string, bool> m_node_to_next_sibling_existence;
     int m_max_depth;
-    bool m_copied;
 
-    TreeAnalysisInfo(int max_depth, std::map<std::string, bool> node_to_next_sibling_existance) :
-        m_node_to_next_sibling_existance(node_to_next_sibling_existance),
-        m_max_depth(max_depth),
-        m_copied(false)
+    TreeAnalysisInfo(int max_depth, std::map<std::string, bool> node_to_next_sibling_existence) :
+        m_node_to_next_sibling_existence(node_to_next_sibling_existence),
+        m_max_depth(max_depth)
     {
-    }
-    TreeAnalysisInfo(TreeAnalysisInfo& info) {
-        info.m_copied = true;
-        m_copied = true;
     }
 };
 
@@ -35,6 +29,7 @@ TreeAnalysisInfo analyze_tree_for_printing(std::shared_ptr< Node<T> > root) {
     int previous_depth = 0;
     std::map<std::string, bool> node_to_next_sibling;
     int max_depth = 0;
+    assert(root);
     while (not bfs_queue.empty()) {
         // Today i learned: Structured bindings (C++ 17)
         auto [node, depth] = bfs_queue.front();

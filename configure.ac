@@ -16,6 +16,9 @@ AC_CONFIG_MACRO_DIR([m4])
 m4_include([m4/ax_cxx_compile_stdcxx.m4])
 AX_CXX_COMPILE_STDCXX(11, noext, mandatory)
 
+# Compilation flags set globally (use this for debugging)
+AC_SUBST([AM_CXXFLAGS], [-g])
+
 # Header file for preprocessor directives (alternative for specifying -D flags when compiling)
 # The config.h file should be later included by the source code (if needed).
 AC_CONFIG_HEADERS([config.h])

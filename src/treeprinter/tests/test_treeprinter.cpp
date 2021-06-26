@@ -8,92 +8,106 @@
 #include "treeprinter/treeprinter.h"
 
 
-TEST(treeprinter, print_basic_tree) {
-    // // Store original cout buffer before mocking it
-    std::ostringstream out;
+static constexpr char SELECTED_ROW_FIRST_CHAR = '\x1B';
 
-    std::string expected = "> People\n"
-                           "  +-- Dumb people\n"
-                           "  |   +-- Poor dumb people\n"
-                           "  |   +-- Rich dumb people\n"
-                           "  +-- Smart people\n"
-                           "      +-- Poor smart people\n"
-                           "      +-- Rich smart people\n"
-                           ;
-    // Print tree
+
+TEST(treeprinter, print_basic_tree) {
+    // Setup
+    // Store original cout buffer before mocking it
+    std::ostringstream out;
     treelib::Tree<int> tree = get_simple_tree();
     treelib::TreePrinter<int> tree_printer(tree);
-    tree_printer.print(out, true);
 
-    // Test results
+    // Run
+    auto selection = tree.get_root();
+    tree_printer.print(out, true, selection);
+
+    // Validate
+    auto tree_lines = split_string_by_newline(out.str());
     std::string actual = out.str();
-    ASSERT_EQ(actual, expected);
+    ASSERT_TRUE(does_string_contain_substring(tree_lines[0], "People"));
+    ASSERT_TRUE(does_string_contain_substring(tree_lines[1], "Dumb"));
+    ASSERT_TRUE(does_string_contain_substring(tree_lines[2], "Poor dumb"));
+    ASSERT_TRUE(does_string_contain_substring(tree_lines[3], "Rich dumb"));
+    ASSERT_TRUE(does_string_contain_substring(tree_lines[4], "Smart"));
+    ASSERT_TRUE(does_string_contain_substring(tree_lines[5], "Poor smart"));
+    ASSERT_TRUE(does_string_contain_substring(tree_lines[6], "Rich smart"));
 }
 
 TEST(treeprinter, test_different_selection) {
-    // // Store original cout buffer before mocking it
-    std::ostringstream out;
+    // Choose 'dumb' intead of root should move the '>' char to the beginning of dumb
+    //  People
+    //> +-- Dumb people
+    //  |   +-- Poor dumb people
+    //  |   +-- Rich dumb people
+    //  +-- Smart people
+    //      +-- Poor smart people
+    //      +-- Rich smart people
 
-    std::string expected = "  People\n"
-                           "> +-- Dumb people\n"
-                           "  |   +-- Poor dumb people\n"
-                           "  |   +-- Rich dumb people\n"
-                           "  +-- Smart people\n"
-                           "      +-- Poor smart people\n"
-                           "      +-- Rich smart people\n"
-                           ;
-    // Print tree
-    treelib::Tree<int> tree = get_simple_tree();
-    treelib::TreePrinter<int> tree_printer(tree);
-    tree_printer.print(out, true, tree.get_node("dumb"));
-
-    // Test results
-    std::string actual = out.str();
-    ASSERT_EQ(actual, expected);
-}
-
-TEST(treeprinter, print_tree_in_window_smaller_than_tree_omits_levels) {
+    // Setup
     // Store original cout buffer before mocking it
     std::ostringstream out;
-
-    constexpr static int window_height = 6;
-    std::string expected = "> People\n"
-                           "  +-- Dumb people\n"
-                           "  +-- Smart people\n"
-                           ;
-    // Print tree
     treelib::Tree<int> tree = get_simple_tree();
     treelib::TreePrinter<int> tree_printer(tree);
-    tree_printer.print(out, true, tree.get_root(), window_height);
 
-    // Test results
+    // Run
+    // Select 'dumb' instead of root
+    auto selection = tree.get_node("dumb");
+    tree_printer.print(out, true, selection);
+
+    // Validate
     std::string actual = out.str();
-    ASSERT_EQ(actual, expected);
+    auto tree_lines = split_string_by_newline(out.str());
+    auto dumb_line = tree_lines[1];
+
+    ASSERT_EQ(dumb_line[1], SELECTED_ROW_FIRST_CHAR);
+    ASSERT_NE(dumb_line[0], SELECTED_ROW_FIRST_CHAR);
 }
 
-TEST(treeprinter, print_tree_in_window_the_size_of_tree_with_leaves_omitted_omits_trees) {
+TEST(treeprinter, printing_tree_smaller_than_window_omits_higher_levels) {
+    // Printed the following tree with window:
+    // -> People
+    // +-- Dumb people
+    // |   +-- Poor dumb people
+    // |   +-- Rich dumb people
+    // +-- Smart people
+    //     +-- Poor smart people
+    //     +-- Rich smart people
+    //
+    // with a window size of 3 will yield only these rows:
+    // -> People
+    // +-- Dumb people
+    // +-- Smart people
+
+    // Setup
     // Store original cout buffer before mocking it
     std::ostringstream out;
-
     constexpr static int window_height = 3;
-    std::string expected = "> People\n"
-                           "  +-- Dumb people\n"
-                           "  +-- Smart people\n"
-                           ;
-    // Print tree
-    treelib::Tree<int> tree;
-    tree.create_node("People", "people", "", 3);
-        tree.create_node("Dumb people", "dumb", "people", 3);
-        tree.create_node("Smart people", "smart", "people", 11);
+    treelib::Tree<int> tree = get_simple_tree();
     treelib::TreePrinter<int> tree_printer(tree);
+
+    // Run
     tree_printer.print(out, true, tree.get_root(), window_height);
 
-    // Test results
-    std::string actual = out.str();
-    ASSERT_EQ(actual, expected);
+    // Validate
+    auto tree_lines = split_string_by_newline(out.str());
+
+    ASSERT_TRUE(does_string_contain_substring(tree_lines[0], "People"));
+    ASSERT_TRUE(does_string_contain_substring(tree_lines[1], "Dumb people"));
+    ASSERT_TRUE(does_string_contain_substring(tree_lines[2], "Smart people"));
 }
 
 TEST(treeprinter, get_next_printed_node) {
+    // -> People
+    // +-- Dumb people
+    // |   +-- Poor dumb people
+    // |   +-- Rich dumb people
+    // +-- Smart people
+    //     +-- Poor smart people
+    //     +-- Rich smart people
+    //
+    // Selected is People, so next printed node should be 'Dumb people'
+
     treelib::Tree<int> tree = get_simple_tree();
     std::ostringstream out;
     treelib::TreePrinter<int> tree_printer(tree);
@@ -115,7 +129,5 @@ TEST(treeprinter, get_previously_printed_node) {
 
     auto actual = tree_printer.get_printed_node_before_selected();
     auto expected = tree.get_node("smart");
-    std::cout << "actual: " << actual->tag << std::endl;
-    std::cout << "expected: " << expected->tag << std::endl;
     ASSERT_EQ(expected, actual);
 }

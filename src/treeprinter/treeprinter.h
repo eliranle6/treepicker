@@ -121,6 +121,7 @@ int TreePrinter<T>::print(std::ostream &out,
                           bool filter_search_nodes,
                           std::shared_ptr<Node<T>> selection,
                           int window_height) {
+    assert(selection);
     if (nullptr == _tree.get_root()) {
         return 0;
     }
@@ -172,7 +173,7 @@ void TreePrinter<T>::update_depth_to_next_sibling_map(int previous_depth,
     const bool is_first_node_of_parent = previous_depth < depth;
     if (is_first_node_of_parent) {
         const bool next_sibling_of_parent_exists =
-            info.m_node_to_next_sibling_existance[previous_node->identifier];
+            info.m_node_to_next_sibling_existence[previous_node->identifier];
         depth_to_next_sibling[depth - 1] = next_sibling_of_parent_exists;
     }
 }
@@ -347,7 +348,7 @@ void TreePrinter<T>::print_node(node_t node,
     }
     // Connecting lines special case - if node is last node in level
     if (node->identifier != _printed_subtree_root->identifier) {
-        const auto is_last_child = info.m_node_to_next_sibling_existance[node->identifier];
+        const auto is_last_child = info.m_node_to_next_sibling_existence[node->identifier];
         if (is_last_child)
             out << MIDDLE_CHILD_CONNECTOR << HORIZONTAL_TREE_LINE << HORIZONTAL_TREE_LINE;
         else
@@ -419,8 +420,9 @@ void TreePrinter<T>::choose_printed_tree_root(std::shared_ptr<treelib::Node<T>> 
     // Check if selection is within visible (printed) range. If not,
     // change printed subtree root to parent of selection
     int max_visible_depth = _printed_subtree_root_depth + _nr_levels_that_fit_in_window - 1;
-    if (_selection_depth > max_visible_depth
-        or _selection_depth <= _printed_subtree_root_depth) {
+    const bool is_selection_too_deep_to_print = _selection_depth > max_visible_depth;
+    const bool is_selection_above_printed_root = _selection_depth < _printed_subtree_root_depth;
+    if (is_selection_too_deep_to_print or is_selection_above_printed_root) {
         _printed_subtree_root = _tree.get_node(selection->parent);
         _printed_subtree_root_depth = _tree.get_node_depth(_printed_subtree_root);
         _nr_levels_that_fit_in_window = _tree_window_fitter.get_nr_levels_that_fit_in_window(

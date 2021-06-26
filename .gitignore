@@ -49,3 +49,4 @@ m4/lt~obsolete.m4
 # binaries (TODO: find a better way for ignoring those)
 src/dirpicker/dirpicker
 src/picker/picker
+core

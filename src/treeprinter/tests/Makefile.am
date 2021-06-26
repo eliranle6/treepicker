@@ -1,6 +1,6 @@
-AM_CXXFLAGS=$(CXXFLAGS) -std=c++1z -Wall -Werror -I$(top_srcdir)/src/
+AM_CXXFLAGS=$(CXXFLAGS) -std=c++1z -Wall -Werror -I$(top_srcdir)/src/ -g
 AM_LDFLAGS = -pthread
-LDADD = -lstdc++ -lgtest -lgtest_main -lgmock -lgmock_main
+LDADD = -lstdc++ -lgtest -lgtest_main -lgmock -lgmock_main $(top_builddir)/src/utils/libguishell.la 
 EXEEXT=.bin
 
 TESTS = test_treeprinter.bin \
