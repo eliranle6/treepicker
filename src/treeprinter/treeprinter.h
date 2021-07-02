@@ -23,22 +23,38 @@ class TreePrinter
 public:
     // Today i learned: 'using' keyword (same as typedef)
     using node_t = const std::shared_ptr< Node<T> >;
+
+    struct PrintedNode {
+        PrintedNode(
+            std::shared_ptr<Node<T>> _node,
+            std::shared_ptr<Node<T>> _previous_node,
+            int _depth,
+            int _previous_depth):
+            node(_node),
+            previous_node(_previous_node),
+            depth(_depth),
+            previous_depth(_previous_depth)
+            {}
+
+        std::shared_ptr<Node<T>> node;
+        std::shared_ptr<Node<T>> previous_node;
+        int depth;
+        int previous_depth;
+    };
+
     TreePrinter(Tree<T> &tree);
     int print(std::ostream &out, bool filter_search_nodes = false,
               node_t selection = nullptr, int window_height = 100);
+    std::vector<PrintedNode> preprocess(std::ostream& out, bool filter_search_nodes,
+              node_t selection, int window_height);
     std::shared_ptr<treelib::Node<T>> get_next_printed_node_after_selected(void);
     std::shared_ptr<treelib::Node<T>> get_printed_node_before_selected(void);
     bool was_selection_printed(void);
     std::shared_ptr< Node<T> > get_first_printed_node(void);
 
 private:
-    void print_node(node_t node,
-                    node_t previous_node,
-                    int depth,
-                    int previous_depth,
-                    std::ostream &out,
-                    std::shared_ptr<treelib::Node<T>> selection
-                    );
+    void print_node(std::ostream &out, PrintedNode &printed_node, 
+        std::shared_ptr<treelib::Node<T>> selection);
 
     void init_pre_dfs_state(std::shared_ptr<treelib::Node<T>> selection,
                             int window_height);
@@ -121,9 +137,28 @@ int TreePrinter<T>::print(std::ostream &out,
                           bool filter_search_nodes,
                           std::shared_ptr<Node<T>> selection,
                           int window_height) {
+    std::vector<PrintedNode> nodes_to_print = preprocess(out,
+        filter_search_nodes,
+        selection,
+        window_height);
+
+    for (auto& printed_node: nodes_to_print) {
+        print_node(out, printed_node, selection);
+    }
+
+    return nodes_to_print.size();
+}
+
+template <typename T>
+std::vector<typename TreePrinter<T>::PrintedNode> TreePrinter<T>::preprocess(std::ostream &out,
+                          bool filter_search_nodes,
+                          std::shared_ptr<Node<T>> selection,
+                          int window_height) {
     assert(selection);
+
+    std::vector<PrintedNode> result;
     if (nullptr == _tree.get_root()) {
-        return 0;
+        return result;
     }
 
     init_pre_dfs_state(selection, window_height);
@@ -152,7 +187,7 @@ int TreePrinter<T>::print(std::ostream &out,
 
         // Print node
         ++line_counter;
-        print_node(node, previous_node, rel_depth, previous_depth, out, selection);
+        result.emplace_back(node, previous_node, rel_depth, previous_depth);
 
         // Add children to DFS stack
         expand_dfs_to_children_of_node(node, selection, rel_depth, window_height);
@@ -161,7 +196,7 @@ int TreePrinter<T>::print(std::ostream &out,
         update_mid_dfs_state(node, selection);
     }
 
-    return line_counter;
+    return result;
 }
 
 #include <syslog.h>
@@ -204,7 +239,6 @@ void TreePrinter<T>::expand_dfs_to_children_of_node(std::shared_ptr<Node<T>> nod
 
         // Print as paginated
         if (should_paginate) {
-            syslog(LOG_NOTICE, "Paginating children of '%s'", node->tag.c_str());
             _has_paginated_in_current_print = true;
             populate_stack_with_paginated_children_of_node(node,
                                                         selection,
@@ -225,6 +259,7 @@ void TreePrinter<T>::update_mid_dfs_state(std::shared_ptr<Node<T>> node,
         _printed_node_before_selected = _previously_printed_node;
         _was_selection_printed = true;
     } else if (_was_previously_printed_node_selected) {
+        std::cout << "_next_printed_node_after_selected " << node->identifier << std::endl;
         _next_printed_node_after_selected = node;
         _was_previously_printed_node_selected = false;
     }
@@ -260,7 +295,6 @@ void TreePrinter<T>::populate_stack_with_paginated_children_of_node(
     if (selection_idx_in_level == node->children.size()) {
         selection_idx_in_level = 0;
     }
-    syslog(LOG_NOTICE, "selected child idx %lu", selection_idx_in_level);
 
     // Calculate number of children to hide from start and from end
     std::size_t nr_items_removed_at_the_beginning = 0;
@@ -312,43 +346,47 @@ void TreePrinter<T>::populate_stack_with_paginated_children_of_node(
 #define LAST_CHILD_CONNECTOR  ("\xe2\x94\x94")
 
 template <typename T>
-void TreePrinter<T>::print_node(node_t node,
-                                node_t previous_node,
-                                int depth,
-                                int previous_depth,
-                                std::ostream &out,
-                                std::shared_ptr<treelib::Node<T>> selection
-                                ) {
+void TreePrinter<T>::print_node(std::ostream &out, PrintedNode& printed_node,
+        std::shared_ptr<Node<T>> selection) {
+    PrintedNode& pn = printed_node;
 
     // Before printing, maintain the array of depth to -
     // [whether a next (=not printed yet) sibling exists]
     // in order to know whether to print connecting lines to next sibling of that
     // depth (node depth corresponds to indentation level), if siblint such exists
-    update_depth_to_next_sibling_map(previous_depth, depth, previous_node);
+    update_depth_to_next_sibling_map(pn.previous_depth, pn.depth, pn.previous_node);
 
     // Print selection marker if node is selected node
-    const bool is_selection = node == selection;
+    const bool is_selection = pn.node == selection;
+
+    syslog(0, "\tPrinting '%s', is_selection=%d, pn.depth=%d",
+           pn.node->tag.c_str(),
+           is_selection,
+           pn.depth
+           );
     if (is_selection) {
         out << ">";
         out << guishell::Color(guishell::BLACK_ON_BLUE);
     } else {
         out << " ";
     }
-    if (node->identifier != _printed_subtree_root->identifier) {
+    if (pn.node->identifier != _printed_subtree_root->identifier) {
         out << " ";
     }
 
     // Print connecting lines for each depth (node depth is manifested by the indentation
     // level
-    for (int depth_idx = 1; depth_idx < depth; ++depth_idx) {
+    for (int depth_idx = 1; depth_idx < pn.depth; ++depth_idx) {
+        syslog(0, "\tdtns[%d] == %d", depth_idx, depth_to_next_sibling[depth_idx]);
         if (depth_to_next_sibling[depth_idx])
             out << VERTICAL_TREE_LINE << "   ";
         else
             out << "    ";
     }
     // Connecting lines special case - if node is last node in level
-    if (node->identifier != _printed_subtree_root->identifier) {
-        const auto is_last_child = info.m_node_to_next_sibling_existence[node->identifier];
+    if (pn.node->identifier != _printed_subtree_root->identifier) {
+        const auto is_last_child = info.m_node_to_next_sibling_existence[pn.node->identifier];
+        syslog(0, "\tis_last_child == %d", is_last_child);
         if (is_last_child)
             out << MIDDLE_CHILD_CONNECTOR << HORIZONTAL_TREE_LINE << HORIZONTAL_TREE_LINE;
         else
@@ -356,21 +394,22 @@ void TreePrinter<T>::print_node(node_t node,
     }
 
     // If printing root, print breadcrumbs up to node before printed subtree root
-    if (node == _printed_subtree_root) {
+    if (pn.node == _printed_subtree_root) {
         print_breadcrumbs(out);
     } else {
         // Print node text
         out << " ";
-        if (node->children.size()) {
+        if (pn.node->children.size()) {
             auto color = is_selection ? guishell::SELECTED_DIRECTORY :
                 guishell::NON_SELECTED_DIRECTORY;
             out << guishell::Color(color) << guishell::Bold() <<
-                node->tag << guishell::Unbold() << guishell::Color(guishell::DEFAULT);
+                pn.node->tag << guishell::Unbold() << guishell::Color(guishell::DEFAULT);
+
         } else {
             if (is_selection) {
                 out << guishell::Color(guishell::WHITE_ON_BLUE);
             }
-            out << node->tag;
+            out << pn.node->tag;
         }
         out << std::endl;
     }
@@ -380,7 +419,7 @@ void TreePrinter<T>::print_node(node_t node,
     }
 
     if (_first_printed_node == nullptr) {
-        _first_printed_node = node;
+        _first_printed_node = pn.node;
     }
 }
 
@@ -389,15 +428,12 @@ void TreePrinter<T>::print_breadcrumbs(std::ostream &out) {
     std::string breadcrumbs;
     std::shared_ptr<Node<T>> node = _printed_subtree_root;
     std::string node_id = node->identifier;
-    syslog(LOG_NOTICE, "parent of subtree root (%s): %s", _printed_subtree_root->tag.c_str(),
-           node_id.c_str());
 
     int counter = 0;
     while (++counter <= 22) {
         auto node = _tree.get_node(node_id);
         breadcrumbs = node->tag + std::string(" > ") + breadcrumbs;
         node_id = node->parent;
-        syslog(LOG_NOTICE, "parent of %s is %s", node->tag.c_str(), node->parent.c_str());
         if (node == _tree.get_root()) {
             break;
         }

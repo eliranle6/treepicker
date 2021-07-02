@@ -4,12 +4,12 @@
 #include "tree/tests/common.h"
 
 
-// TEST(tree_selector, default_selection) {
-//     auto tree = get_simple_tree();
-//     treelib::TreePrinter<int> tree_printer(tree);
-//     picker::TreeSelector tree_selector(tree, tree_printer);
-//     ASSERT_EQ(tree_selector.get_selection(), tree.get_root());
-// }
+TEST(tree_selector, default_selection) {
+    auto tree = get_simple_tree();
+    treelib::TreePrinter<int> tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    ASSERT_EQ(tree_selector.get_selection(), tree.get_root());
+}
 
 TEST(tree_selector, default_selection_in_empty_tree) {
     treelib::Tree<char> tree;
@@ -18,31 +18,41 @@ TEST(tree_selector, default_selection_in_empty_tree) {
     ASSERT_EQ(tree_selector.get_selection(), nullptr);
 }
 
-//TEST(tree_selector, explore_selection) {
-//    auto tree = get_simple_tree();
-//    treelib::TreePrinter<int> tree_printer(tree);
-//    picker::TreeSelector tree_selector(tree, tree_printer);
-//    tree_selector.explore_children_of_selection();
-//    ASSERT_EQ(tree_selector.get_selection()->identifier, "dumb");
-//}
-//
+TEST(tree_selector, explore_selection) {
+    auto tree = get_simple_tree();
+    treelib::TreePrinter<int> tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    tree_selector.explore_children_of_selection();
+    ASSERT_EQ(tree_selector.get_selection()->identifier, "dumb");
+}
+
 //TEST(tree_selector, explore_selection_in_empty_tree) {
-//    //treelib::Tree<char> tree(tree);
-//    //treelib::TreePrinter<char> tree_printer(tree);
-//    //picker::TreeSelector<char> tree_selector(tree, tree_printer);
-//    //tree_selector.explore_children_of_selection();
-//    //ASSERT_EQ(tree_selector.get_selection(), nullptr);
-//}
-//
-//TEST(tree_selector, move_one_next) {
-//    auto tree = get_simple_tree();
-//    treelib::TreePrinter<int> tree_printer(tree);
-//    picker::TreeSelector tree_selector(tree, tree_printer);
+//    treelib::Tree<char> tree(tree);
+//    treelib::TreePrinter<char> tree_printer(tree);
+//    picker::TreeSelector<char> tree_selector(tree, tree_printer);
 //    tree_selector.explore_children_of_selection();
-//    tree_selector.move_to_next();
-//    ASSERT_EQ(tree_selector.get_selection()->identifier, "smart");
+//    ASSERT_EQ(tree_selector.get_selection(), nullptr);
 //}
-//
+
+TEST(tree_selector, move_one_next) {
+    // Setup
+    auto tree = get_simple_tree();
+    treelib::TreePrinter<int> tree_printer(tree);
+    std::ostringstream out;
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    ASSERT_EQ(tree_selector.get_selection()->identifier, "people");
+    tree_printer.print(out, true, tree.get_root(), 100);
+    tree_selector.explore_children_of_selection();
+    ASSERT_EQ(tree_selector.get_selection()->identifier, "dumb");
+
+    // Run
+    tree_printer.print(std::cout, true, tree_selector.get_selection(), 100);
+    tree_selector.move_to_next();
+
+    // Validate
+    ASSERT_EQ(tree_selector.get_selection()->identifier, "poor-dumb");
+}
+
 //TEST(tree_selector, move_one_next__does_not_pass_bounds) {
 //    auto tree = get_simple_tree();
 //    treelib::TreePrinter<int> tree_printer(tree);
