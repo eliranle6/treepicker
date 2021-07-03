@@ -46,15 +46,11 @@ typename TreeSelector<T>::NodePtr TreeSelector<T>::get_selection(void) {
 template<typename T>
 void TreeSelector<T>::explore_children_of_selection(void) {
     if (_selection == nullptr) {
-            syslog(LOG_NOTICE, "here1");
     } else if (_selection->children.size() == 0) {
-            syslog(LOG_NOTICE, "here2");
     } else {
-            syslog(LOG_NOTICE, "here4");
         _selection = _selection->children[0];
         if ((not (_selection)->is_matching_search
             and not (_selection)->is_ancestor_of_matching_search)) {
-            syslog(LOG_NOTICE, "here3");
             _advance_selection_at_same_tree_level(1);
         }
     }

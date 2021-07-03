@@ -199,7 +199,6 @@ std::vector<typename TreePrinter<T>::PrintedNode> TreePrinter<T>::preprocess(std
     return result;
 }
 
-#include <syslog.h>
 template <typename T>
 void TreePrinter<T>::update_depth_to_next_sibling_map(int previous_depth,
                                                       int depth,
@@ -259,7 +258,6 @@ void TreePrinter<T>::update_mid_dfs_state(std::shared_ptr<Node<T>> node,
         _printed_node_before_selected = _previously_printed_node;
         _was_selection_printed = true;
     } else if (_was_previously_printed_node_selected) {
-        std::cout << "_next_printed_node_after_selected " << node->identifier << std::endl;
         _next_printed_node_after_selected = node;
         _was_previously_printed_node_selected = false;
     }
@@ -359,11 +357,6 @@ void TreePrinter<T>::print_node(std::ostream &out, PrintedNode& printed_node,
     // Print selection marker if node is selected node
     const bool is_selection = pn.node == selection;
 
-    syslog(0, "\tPrinting '%s', is_selection=%d, pn.depth=%d",
-           pn.node->tag.c_str(),
-           is_selection,
-           pn.depth
-           );
     if (is_selection) {
         out << ">";
         out << guishell::Color(guishell::BLACK_ON_BLUE);
@@ -377,7 +370,6 @@ void TreePrinter<T>::print_node(std::ostream &out, PrintedNode& printed_node,
     // Print connecting lines for each depth (node depth is manifested by the indentation
     // level
     for (int depth_idx = 1; depth_idx < pn.depth; ++depth_idx) {
-        syslog(0, "\tdtns[%d] == %d", depth_idx, depth_to_next_sibling[depth_idx]);
         if (depth_to_next_sibling[depth_idx])
             out << VERTICAL_TREE_LINE << "   ";
         else
@@ -386,7 +378,6 @@ void TreePrinter<T>::print_node(std::ostream &out, PrintedNode& printed_node,
     // Connecting lines special case - if node is last node in level
     if (pn.node->identifier != _printed_subtree_root->identifier) {
         const auto is_last_child = info.m_node_to_next_sibling_existence[pn.node->identifier];
-        syslog(0, "\tis_last_child == %d", is_last_child);
         if (is_last_child)
             out << MIDDLE_CHILD_CONNECTOR << HORIZONTAL_TREE_LINE << HORIZONTAL_TREE_LINE;
         else

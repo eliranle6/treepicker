@@ -21,13 +21,18 @@ struct TreeAnalysisInfo {
 
 template <typename T>
 TreeAnalysisInfo analyze_tree_for_printing(std::shared_ptr< Node<T> > root) {
+    std::map<std::string, bool> node_to_next_sibling;
+
+    if (not root) {
+        return TreeAnalysisInfo(0, node_to_next_sibling);
+    }
+
     using node_depth_pair = typename std::pair<std::shared_ptr< Node<T> >, int>;
     std::queue< node_depth_pair > bfs_queue;
     auto rootpair = std::make_pair(root, 0);
     bfs_queue.push(rootpair);
     std::shared_ptr< Node<T> > previous_node = nullptr;
     int previous_depth = 0;
-    std::map<std::string, bool> node_to_next_sibling;
     int max_depth = 0;
     assert(root);
     while (not bfs_queue.empty()) {
@@ -54,8 +59,7 @@ TreeAnalysisInfo analyze_tree_for_printing(std::shared_ptr< Node<T> > root) {
             max_depth = depth;
         }
     }
-    TreeAnalysisInfo result(max_depth, node_to_next_sibling);
-    return result;
+    return TreeAnalysisInfo(max_depth, node_to_next_sibling);
 }
 
 }
