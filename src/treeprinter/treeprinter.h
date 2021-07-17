@@ -390,17 +390,24 @@ void TreePrinter<T>::print_node(std::ostream &out, PrintedNode& printed_node,
     } else {
         // Print node text
         out << " ";
+
+        // Create current node text
+        auto tag = pn.node->tag;
+        if (pn.node->children.size()) {
+            tag += std::string(" (...)");
+        }
+
         if (pn.node->children.size()) {
             auto color = is_selection ? guishell::SELECTED_DIRECTORY :
                 guishell::NON_SELECTED_DIRECTORY;
             out << guishell::Color(color) << guishell::Bold() <<
-                pn.node->tag << guishell::Unbold() << guishell::Color(guishell::DEFAULT);
+                tag << guishell::Unbold() << guishell::Color(guishell::DEFAULT);
 
         } else {
             if (is_selection) {
                 out << guishell::Color(guishell::WHITE_ON_BLUE);
             }
-            out << pn.node->tag;
+            out << tag;
         }
         out << std::endl;
     }
