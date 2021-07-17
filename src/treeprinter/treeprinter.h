@@ -443,13 +443,18 @@ void TreePrinter<T>::choose_printed_tree_root(std::shared_ptr<treelib::Node<T>> 
         _printed_subtree_root);
     _printed_subtree_root_depth = _tree.get_node_depth(_printed_subtree_root);
 
-    // Adjust printed subtree root to make sure selection is visible
-    // Check if selection is within visible (printed) range. If not,
-    // change printed subtree root to parent of selection
+    // Set printed subtree root as the parent of selection, in one of the following cases:
+    // 1. Selection is too deep to print, given the current printed subtree root
+    // 2. Selection is above (closer to root) the printed subtree root, and therefore is invisible
+    // 3. Selection is the printed subtree root (not allowed, unless selection is the root node).
     int max_visible_depth = _printed_subtree_root_depth + _nr_levels_that_fit_in_window - 1;
     const bool is_selection_too_deep_to_print = _selection_depth > max_visible_depth;
     const bool is_selection_above_printed_root = _selection_depth < _printed_subtree_root_depth;
-    if (is_selection_too_deep_to_print or is_selection_above_printed_root) {
+    const bool is_selection_printed_subtree_root = _selection_depth == _printed_subtree_root_depth;
+    const bool should_move_printed_subtree_root = (
+        is_selection_too_deep_to_print or is_selection_above_printed_root
+        or is_selection_printed_subtree_root);
+    if (should_move_printed_subtree_root) {
         _printed_subtree_root = _tree.get_node(selection->parent);
         _printed_subtree_root_depth = _tree.get_node_depth(_printed_subtree_root);
         _nr_levels_that_fit_in_window = _tree_window_fitter.get_nr_levels_that_fit_in_window(
