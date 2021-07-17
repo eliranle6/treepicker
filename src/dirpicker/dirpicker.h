@@ -5,13 +5,8 @@
 #include "dirtree/dirtree.h"
 #include <boost/filesystem/path.hpp>
 
-namespace picker {
-template class Picker<dirtree::FileEntry>;
-}
-
 namespace dirpicker {
 
-using DirPicker = picker::Picker<dirtree::FileEntry>;
 
 } // namespace dirpicker
 

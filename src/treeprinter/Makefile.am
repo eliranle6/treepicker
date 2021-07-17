@@ -3,7 +3,8 @@ SUBDIRS = tests
 
 lib_LTLIBRARIES = libtreeprinter.la libpaginator.la
 
-libtreeprinter_la_SOURCES = treeprinter.cpp paginator.cpp
-libtreeprinter_la_LIBADD = -lncursesw
+libtreeprinter_la_SOURCES = treeprinter.cpp paginator.cpp pre_print_tree_analysis.cpp treewindowfitter.cpp
+libtreeprinter_la_LIBADD = -lncursesw $(top_builddir)/src/utils/libguishell.la
 
 libpaginator_la_SOURCES = paginator.cpp
+libpaginator_la_LIBADD = $(top_builddir)/src/tree/libtree.la

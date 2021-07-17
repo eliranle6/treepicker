@@ -10,23 +10,7 @@
 
 namespace dirtree {
 
-class FileEntry
-{
-};
-
-}
-
-// Template instantiation must be inside the namespace in which the template class
-// was defined.
-namespace treelib {
-template class Tree<dirtree::FileEntry>;
-}
-
-namespace dirtree {
-
-using FileEntryTree = treelib::Tree<FileEntry>;
-
-class DirTree : public FileEntryTree
+class DirTree : public treelib::Tree
 {
 public:
     boost::filesystem::path path;

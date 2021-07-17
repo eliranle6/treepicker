@@ -9,4 +9,4 @@ TESTS = test_tree_selector.bin
 check_PROGRAMS = test_tree_selector
 
 test_tree_selector_SOURCES = test_tree_selector.cpp
-test_tree_selector_LDADD = $(LDADD) $(top_builddir)/src/treeprinter/libpaginator.la
+test_tree_selector_LDADD = $(LDADD) $(top_builddir)/src/treeprinter/libpaginator.la $(top_builddir)/src/treeprinter/libtreeprinter.la $(top_builddir)/src/picker/libpicker.la

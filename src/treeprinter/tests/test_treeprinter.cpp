@@ -15,8 +15,8 @@ TEST(treeprinter, print_basic_tree) {
     // Setup
     // Store original cout buffer before mocking it
     std::ostringstream out;
-    treelib::Tree<int> tree = get_simple_tree();
-    treelib::TreePrinter<int> tree_printer(tree);
+    treelib::Tree tree = get_simple_tree();
+    treelib::TreePrinter tree_printer(tree);
 
     // Run
     auto selection = tree.get_root();
@@ -47,8 +47,8 @@ TEST(treeprinter, test_different_selection) {
     // Setup
     // Store original cout buffer before mocking it
     std::ostringstream out;
-    treelib::Tree<int> tree = get_simple_tree();
-    treelib::TreePrinter<int> tree_printer(tree);
+    treelib::Tree tree = get_simple_tree();
+    treelib::TreePrinter tree_printer(tree);
 
     // Run
     // Select 'dumb' instead of root
@@ -83,8 +83,8 @@ TEST(treeprinter, printing_tree_smaller_than_window_omits_higher_levels) {
     // Store original cout buffer before mocking it
     std::ostringstream out;
     constexpr static int window_height = 3;
-    treelib::Tree<int> tree = get_simple_tree();
-    treelib::TreePrinter<int> tree_printer(tree);
+    treelib::Tree tree = get_simple_tree();
+    treelib::TreePrinter tree_printer(tree);
 
     // Run
     tree_printer.print(out, true, tree.get_root(), window_height);
@@ -108,9 +108,9 @@ TEST(treeprinter, get_next_printed_node) {
     //
     // Selected is People, so next printed node should be 'Dumb people'
 
-    treelib::Tree<int> tree = get_simple_tree();
+    treelib::Tree tree = get_simple_tree();
     std::ostringstream out;
-    treelib::TreePrinter<int> tree_printer(tree);
+    treelib::TreePrinter tree_printer(tree);
     constexpr static int window_height = 6;
     tree_printer.print(out, true, tree.get_root(), window_height);
 
@@ -121,9 +121,9 @@ TEST(treeprinter, get_next_printed_node) {
 }
 
 TEST(treeprinter, get_previously_printed_node) {
-    treelib::Tree<int> tree = get_simple_tree();
+    treelib::Tree tree = get_simple_tree();
     std::ostringstream out;
-    treelib::TreePrinter<int> tree_printer(tree);
+    treelib::TreePrinter tree_printer(tree);
     constexpr static int window_height = 6;
     tree_printer.print(out, true, tree.get_node("poor-smart"), window_height);
 

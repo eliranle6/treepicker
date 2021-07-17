@@ -19,8 +19,7 @@ void DirTree::update_from_filesystem(void) {
     //throw std::runtime_error(root_tag_ptr);
     free(realpath_ret_value);
     std::string root_tag = std::string(basename(realpath_ret_value));
-    FileEntry root_dir;
-    create_node(root_tag, "", "", root_dir);
+    create_node(root_tag, "", "", nullptr);
 
     // Execute the `find` command to explore the dir contents
     char const *argv[] = {"/usr/bin/find", path.string().c_str(),
@@ -45,11 +44,10 @@ void DirTree::update_from_filesystem(void) {
         }
 
         bpath entry_bpath(entry_path);
-        FileEntry entry;
         create_node(entry_bpath.filename().string(),
                     entry_path,
                     entry_bpath.parent_path().string(),
-                    entry);
+                    nullptr);
     }
 }
 

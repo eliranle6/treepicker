@@ -3,37 +3,37 @@
 
 #include "tree/tree.h"
 
-treelib::Tree<int> get_simple_tree(void) {
-    treelib::Tree<int> tree;
-    tree.create_node("People", "people", "", 3);
-        tree.create_node("Dumb people", "dumb", "people", 3);
-            tree.create_node("Rich dumb people", "rich-dumb", "dumb", 6);
-            tree.create_node("Poor dumb people", "poor-dumb", "dumb", 8);
-        tree.create_node("Smart people", "smart", "people", 11);
-            tree.create_node("Rich smart people", "rich-smart", "smart", 12);
-            tree.create_node("Poor smart people", "poor-smart", "smart", 13);
+treelib::Tree get_simple_tree(void) {
+    treelib::Tree tree;
+    tree.create_node("People", "people", "", nullptr);
+        tree.create_node("Dumb people", "dumb", "people", nullptr);
+            tree.create_node("Rich dumb people", "rich-dumb", "dumb", nullptr);
+            tree.create_node("Poor dumb people", "poor-dumb", "dumb", nullptr);
+        tree.create_node("Smart people", "smart", "people", nullptr);
+            tree.create_node("Rich smart people", "rich-smart", "smart", nullptr);
+            tree.create_node("Poor smart people", "poor-smart", "smart", nullptr);
     return tree;
 }
 
-treelib::Tree<int> get_simple_tree_informative_nodes(void) {
-    treelib::Tree<int> tree;
-    tree.create_node("root", "root", "", 3);
-    tree.create_node("child1", "child1", "root", 3);
-    tree.create_node("child1.1", "child1.1", "child1", 6);
-    tree.create_node("child1.2", "child1.2", "child1", 8);
-    tree.create_node("child2", "child2", "root", 11);
-    tree.create_node("child2.1", "child2.1", "child2", 12);
+treelib::Tree get_simple_tree_informative_nodes(void) {
+    treelib::Tree tree;
+    tree.create_node("root", "root", "", nullptr);
+    tree.create_node("child1", "child1", "root", nullptr);
+    tree.create_node("child1.1", "child1.1", "child1", nullptr);
+    tree.create_node("child1.2", "child1.2", "child1", nullptr);
+    tree.create_node("child2", "child2", "root", nullptr);
+    tree.create_node("child2.1", "child2.1", "child2", nullptr);
     return tree;
 }
 
-treelib::Tree<int> get_tree_with_countries(void) {
-    treelib::Tree<int> tree;
-    tree.create_node("Countries", "countries", "", 3);
-        tree.create_node("Jewish majority countries", "jewish_majority", "countries", 3);
-            tree.create_node("Israel", "israel", "jewish_majority", 3);
-        tree.create_node("Non Jewish majority countries", "nonjewish_majority", "countries", 3);
-            tree.create_node("Bangladesh", "bangladesh", "nonjewish_majority", 6);
-            tree.create_node("India", "india", "nonjewish_majority", 6);
+treelib::Tree get_tree_with_countries(void) {
+    treelib::Tree tree;
+    tree.create_node("Countries", "countries", "", nullptr);
+        tree.create_node("Jewish majority countries", "jewish_majority", "countries", nullptr);
+            tree.create_node("Israel", "israel", "jewish_majority", nullptr);
+        tree.create_node("Non Jewish majority countries", "nonjewish_majority", "countries", nullptr);
+            tree.create_node("Bangladesh", "bangladesh", "nonjewish_majority", nullptr);
+            tree.create_node("India", "india", "nonjewish_majority", nullptr);
     return tree;
 }
 

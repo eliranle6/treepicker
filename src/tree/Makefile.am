@@ -3,4 +3,4 @@ SUBDIRS = tests
 
 lib_LTLIBRARIES = libtree.la
 
-libtree_la_SOURCES = tree.cpp
+libtree_la_SOURCES = tree.cpp search.cpp node.cpp
