@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <sstream>
+#include <iostream>
 #include <boost/algorithm/string/replace.hpp>
 #include <gtest/gtest.h>
 

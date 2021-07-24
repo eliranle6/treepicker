@@ -1,5 +1,7 @@
 #include "treeprinter.h"
 #include "paginator.h"
+#include "printnode.h"
+#include "treewindowfitter.h"
 
 namespace treelib {
 
@@ -17,7 +19,15 @@ void TreePrinter::init_pre_dfs_state(std::shared_ptr<treelib::Node> selection,
     _selection_depth = _tree.get_node_depth(selection);
 
     // Determine the printed subtree root
-    choose_printed_tree_root(selection, window_height);
+    auto printed_subtree_root_info = 
+        choose_printed_subtree_root(_tree,
+            selection,
+            _selection_depth,
+            window_height,
+            _printed_subtree_root);
+    _printed_subtree_root = std::get<0>(printed_subtree_root_info);
+    _printed_subtree_root_depth = std::get<1>(printed_subtree_root_info);
+    _nr_levels_that_fit_in_window = std::get<2>(printed_subtree_root_info);
 
     _was_previously_printed_node_selected = false;
     _has_paginated_in_current_print = false;
@@ -37,19 +47,32 @@ int TreePrinter::print(std::ostream &out,
                           bool filter_search_nodes,
                           std::shared_ptr<Node> selection,
                           int window_height) {
-    std::vector<PrintedNode> nodes_to_print = preprocess(out,
+    std::vector<PrintedNode> nodes_to_print = scan_nodes_to_print(out,
         filter_search_nodes,
         selection,
         window_height);
 
     for (auto& printed_node: nodes_to_print) {
-        print_node(out, printed_node, selection);
+        // Before printing, maintain the array of depth to -
+        // [whether a next (=not printed yet) sibling exists]
+        // in order to know whether to print connecting lines to next sibling of that
+        // depth (node depth corresponds to indentation level), if siblint such exists
+        update_depth_to_next_sibling_map(
+				printed_node.previous_depth,
+				printed_node.depth,
+                printed_node.previous_node);
+
+        print_node(out, printed_node, selection, _printed_subtree_root, info, _tree,
+			&depth_to_next_sibling[0]);
+        if (_first_printed_node == nullptr) {
+            _first_printed_node = printed_node.node;
+        }
     }
 
     return nodes_to_print.size();
 }
 
-std::vector<typename TreePrinter::PrintedNode> TreePrinter::preprocess(std::ostream &out,
+std::vector<PrintedNode> TreePrinter::scan_nodes_to_print(std::ostream &out,
                           bool filter_search_nodes,
                           std::shared_ptr<Node> selection,
                           int window_height) {
@@ -219,147 +242,6 @@ void TreePrinter::populate_stack_with_paginated_children_of_node(
         if (next_item_exists) {
             _next_printed_node_after_selected = node->children[selection_idx_in_level + 1];
         }
-    }
-}
-// --
-//
-#define HORIZONTAL_TREE_LINE ("\xe2\x94\x80")
-// |
-// |
-// |
-#define VERTICAL_TREE_LINE ("\xe2\x94\x82")
-// |
-// |--
-// |
-#define MIDDLE_CHILD_CONNECTOR ("\xe2\x94\x9c")
-// |
-// |--
-//
-#define LAST_CHILD_CONNECTOR  ("\xe2\x94\x94")
-
-void TreePrinter::print_node(std::ostream &out, PrintedNode& printed_node,
-        std::shared_ptr<Node> selection) {
-    PrintedNode& pn = printed_node;
-
-    // Before printing, maintain the array of depth to -
-    // [whether a next (=not printed yet) sibling exists]
-    // in order to know whether to print connecting lines to next sibling of that
-    // depth (node depth corresponds to indentation level), if siblint such exists
-    update_depth_to_next_sibling_map(pn.previous_depth, pn.depth, pn.previous_node);
-
-    // Print selection marker if node is selected node
-    const bool is_selection = pn.node == selection;
-
-    if (is_selection) {
-        out << ">";
-        out << guishell::Color(guishell::BLACK_ON_BLUE);
-    } else {
-        out << " ";
-    }
-    if (pn.node->identifier != _printed_subtree_root->identifier) {
-        out << " ";
-    }
-
-    // Print connecting lines for each depth (node depth is manifested by the indentation
-    // level
-    for (int depth_idx = 1; depth_idx < pn.depth; ++depth_idx) {
-        if (depth_to_next_sibling[depth_idx])
-            out << VERTICAL_TREE_LINE << "   ";
-        else
-            out << "    ";
-    }
-    // Connecting lines special case - if node is last node in level
-    if (pn.node->identifier != _printed_subtree_root->identifier) {
-        const auto is_last_child = info.m_node_to_next_sibling_existence[pn.node->identifier];
-        if (is_last_child)
-            out << MIDDLE_CHILD_CONNECTOR << HORIZONTAL_TREE_LINE << HORIZONTAL_TREE_LINE;
-        else
-            out << LAST_CHILD_CONNECTOR << HORIZONTAL_TREE_LINE << HORIZONTAL_TREE_LINE;
-    }
-
-    // If printing root, print breadcrumbs up to node before printed subtree root
-    if (pn.node == _printed_subtree_root) {
-        print_breadcrumbs(out);
-    } else {
-        // Print node text
-        out << " ";
-
-        // Create current node text
-        auto tag = pn.node->tag;
-        if (pn.node->children.size()) {
-            tag += std::string(" (...)");
-        }
-
-        if (pn.node->children.size()) {
-            auto color = is_selection ? guishell::SELECTED_DIRECTORY :
-                guishell::NON_SELECTED_DIRECTORY;
-            out << guishell::Color(color) << guishell::Bold() <<
-                tag << guishell::Unbold() << guishell::Color(guishell::DEFAULT);
-
-        } else {
-            if (is_selection) {
-                out << guishell::Color(guishell::WHITE_ON_BLUE);
-            }
-            out << tag;
-        }
-        out << std::endl;
-    }
-
-    if (is_selection) {
-        out << guishell::Color(guishell::DEFAULT);
-    }
-
-    if (_first_printed_node == nullptr) {
-        _first_printed_node = pn.node;
-    }
-}
-
-void TreePrinter::print_breadcrumbs(std::ostream &out) {
-    std::string breadcrumbs;
-    std::shared_ptr<Node> node = _printed_subtree_root;
-    std::string node_id = node->identifier;
-
-    int counter = 0;
-    while (++counter <= 22) {
-        auto node = _tree.get_node(node_id);
-        breadcrumbs = node->tag + std::string(" > ") + breadcrumbs;
-        node_id = node->parent;
-        if (node == _tree.get_root()) {
-            break;
-        }
-    }
-
-    out << breadcrumbs << std::endl;
-}
-
-void TreePrinter::choose_printed_tree_root(std::shared_ptr<treelib::Node> selection,
-                                              int window_height) {
-    // Update state regarding printed subtree root
-    _nr_levels_that_fit_in_window = _tree_window_fitter.get_nr_levels_that_fit_in_window(
-        _tree,
-        window_height,
-        _printed_subtree_root);
-    _printed_subtree_root_depth = _tree.get_node_depth(_printed_subtree_root);
-
-    // Set printed subtree root as the parent of selection, if selection is not the root node, and
-    // if one or more of the following conditions satisfies:
-    // 1. Selection is too deep to print, given the current printed subtree root
-    // 2. Selection is above (closer to root) the printed subtree root, and therefore is invisible
-    // 3. Selection is the printed subtree root (not allowed, unless selection is the root node).
-    int max_visible_depth = _printed_subtree_root_depth + _nr_levels_that_fit_in_window - 1;
-    const bool is_selection_too_deep_to_print = _selection_depth > max_visible_depth;
-    const bool is_selection_above_printed_root = _selection_depth < _printed_subtree_root_depth;
-    const bool is_selection_printed_subtree_root = _selection_depth == _printed_subtree_root_depth;
-    const bool should_move_printed_subtree_root = selection != _tree.get_root() and (
-        is_selection_too_deep_to_print or is_selection_above_printed_root
-        or is_selection_printed_subtree_root);
-    if (should_move_printed_subtree_root) {
-        _printed_subtree_root = _tree.get_node(selection->parent);
-        _printed_subtree_root_depth = _tree.get_node_depth(_printed_subtree_root);
-        _nr_levels_that_fit_in_window = _tree_window_fitter.get_nr_levels_that_fit_in_window(
-            _tree,
-            window_height,
-            _printed_subtree_root);
     }
 }
 

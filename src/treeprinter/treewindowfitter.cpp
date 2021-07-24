@@ -2,14 +2,17 @@
 #include "tree/node.h"
 #include "treewindowfitter.h"
 
-int TreeWindowFitter::get_nr_levels_that_fit_in_window(treelib::Tree tree,
+namespace treelib {
+
+int get_nr_levels_that_fit_in_window(
+        Tree& tree,
         int window_size,
-        std::shared_ptr<treelib::Node> selected) {
-    using NodeP = std::shared_ptr<treelib::Node>;
+        std::shared_ptr<Node> printed_subtree_root) {
+    using NodeP = std::shared_ptr<Node>;
 
     using NodeDepth = std::pair<NodeP, int>;
     std::queue<NodeDepth> bfs_queue;
-    bfs_queue.push(std::make_pair(selected, 0));
+    bfs_queue.push(std::make_pair(printed_subtree_root, 0));
     int nr_nodes_to_print_until_previous_level = 0;
     int nr_nodes_in_current_depth = 0;
     int nr_depths_to_print = 0;
@@ -45,4 +48,49 @@ int TreeWindowFitter::get_nr_levels_that_fit_in_window(treelib::Tree tree,
         }
     }
     return nr_depths_to_print;
+}
+
+
+std::tuple<std::shared_ptr<Node>, int, int> choose_printed_subtree_root(
+        Tree& tree,
+        std::shared_ptr<Node> selection,
+        int selection_depth,
+        int window_height,
+        std::shared_ptr<Node> current_printed_subtree_root
+        ) {
+    // Update state regarding printed subtree root
+    auto printed_subtree_root = current_printed_subtree_root;
+    auto nr_levels_that_fit_in_window = get_nr_levels_that_fit_in_window(
+        tree,
+        window_height,
+        printed_subtree_root);
+    auto printed_subtree_root_depth = tree.get_node_depth(printed_subtree_root);
+
+    // Set printed subtree root as the parent of selection, if selection is not the root node, and
+    // if one or more of the following conditions satisfies:
+    // 1. Selection is too deep to print, given the current printed subtree root
+    // 2. Selection is above (closer to root) the printed subtree root, and therefore is invisible
+    // 3. Selection is the printed subtree root (not allowed, unless selection is the root node).
+    int max_visible_depth = printed_subtree_root_depth + nr_levels_that_fit_in_window - 1;
+    const bool is_selection_too_deep_to_print = selection_depth > max_visible_depth;
+    const bool is_selection_above_printed_root = selection_depth < printed_subtree_root_depth;
+    const bool is_selection_printed_subtree_root = selection_depth == printed_subtree_root_depth;
+    const bool should_move_printed_subtree_root = selection != tree.get_root() and (
+        is_selection_too_deep_to_print or is_selection_above_printed_root
+        or is_selection_printed_subtree_root);
+    if (should_move_printed_subtree_root) {
+        printed_subtree_root = tree.get_node(selection->parent);
+        printed_subtree_root_depth = tree.get_node_depth(printed_subtree_root);
+        nr_levels_that_fit_in_window = get_nr_levels_that_fit_in_window(
+            tree,
+            window_height,
+            printed_subtree_root);
+    }
+
+    return std::make_tuple(
+			printed_subtree_root,
+			printed_subtree_root_depth,
+			nr_levels_that_fit_in_window);
+}
+
 }

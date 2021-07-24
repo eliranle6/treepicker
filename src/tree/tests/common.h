@@ -51,7 +51,6 @@ std::vector<std::string> split_string_by_newline(const std::string& str)
 
 bool does_string_contain_substring(const std::string& string, const std::string& substring) {
     auto pos = string.find(substring) != std::string::npos;
-    std::cout << pos << std::endl;
     return pos;
 }
 
