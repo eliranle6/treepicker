@@ -30,7 +30,6 @@ void print_node(
         PrintedNode& printed_node,
         const std::shared_ptr<Node> selection,
         std::shared_ptr<Node> printed_subtree_root,
-        TreeAnalysisInfo& info,
         Tree& tree,
 		bool* depth_to_next_sibling
         ) {
@@ -66,7 +65,7 @@ void print_node(
     }
     // Connecting lines special case - if node is last node in level
     if (pn.node->identifier != printed_subtree_root->identifier) {
-        const auto is_last_child = info.m_node_to_next_sibling_existence[pn.node->identifier];
+        const auto is_last_child = depth_to_next_sibling[pn.depth];
         if (is_last_child)
             out << MIDDLE_CHILD_CONNECTOR << HORIZONTAL_TREE_LINE << HORIZONTAL_TREE_LINE;
         else

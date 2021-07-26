@@ -4,20 +4,15 @@ LDADD = -lstdc++ -lgtest -lgtest_main -lgmock -lgmock_main $(top_builddir)/src/t
 EXEEXT=.bin
 
 TESTS = test_treeprinter.bin \
-		test_pre_print_tree_analysis.bin \
 		test_treewindowfitter.bin \
 		test_paginator.bin
 
 check_PROGRAMS = test_treeprinter \
-				 test_pre_print_tree_analysis \
 			     test_treewindowfitter \
 				 test_paginator
 
 test_treeprinter_SOURCES = test_treeprinter.cpp
 test_treeprinter_LDADD = -lncursesw $(LDADD)
-
-test_pre_print_tree_analysis_SOURCES = test_pre_print_tree_analysis.cpp
-test_pre_print_tree_analysis_LDADD = $(LDADD)
 
 test_treewindowfitter_SOURCES = test_treewindowfitter.cpp
 test_treewindowfitter_LDADD = -lncursesw $(LDADD)

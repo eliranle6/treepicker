@@ -6,7 +6,6 @@
 namespace treelib {
 
 TreePrinter::TreePrinter(Tree& tree): _tree(tree),
-                                            info(analyze_tree_for_printing(_tree.get_root())),
                                             _printed_subtree_root(tree.get_root())
 {}
 
@@ -19,7 +18,7 @@ void TreePrinter::init_pre_dfs_state(std::shared_ptr<treelib::Node> selection,
     _selection_depth = _tree.get_node_depth(selection);
 
     // Determine the printed subtree root
-    auto printed_subtree_root_info = 
+    auto printed_subtree_root_info =
         choose_printed_subtree_root(_tree,
             selection,
             _selection_depth,
@@ -33,6 +32,7 @@ void TreePrinter::init_pre_dfs_state(std::shared_ptr<treelib::Node> selection,
     _has_paginated_in_current_print = false;
     _was_selection_printed = false;
     _first_printed_node = nullptr;
+    _depth_to_prev_printed_node.clear();
 }
 
 bool TreePrinter::should_node_be_skipped(
@@ -57,12 +57,8 @@ int TreePrinter::print(std::ostream &out,
         // [whether a next (=not printed yet) sibling exists]
         // in order to know whether to print connecting lines to next sibling of that
         // depth (node depth corresponds to indentation level), if siblint such exists
-        update_depth_to_next_sibling_map(
-				printed_node.previous_depth,
-				printed_node.depth,
-                printed_node.previous_node);
-
-        print_node(out, printed_node, selection, _printed_subtree_root, info, _tree,
+        depth_to_next_sibling[printed_node.depth] = printed_node.next_sibling_exists;
+        print_node(out, printed_node, selection, _printed_subtree_root, _tree,
 			&depth_to_next_sibling[0]);
         if (_first_printed_node == nullptr) {
             _first_printed_node = printed_node.node;
@@ -86,20 +82,15 @@ std::vector<PrintedNode> TreePrinter::scan_nodes_to_print(std::ostream &out,
     init_pre_dfs_state(selection, window_height);
 
     // Prepare variables for DFS scan for printing
-    int rel_depth = 0;
+    int depth = 0;
     auto node = _printed_subtree_root;
-    _dfs_stack.push(std::make_pair(node, rel_depth));
+    _dfs_stack.push(std::make_pair(node, depth));
 
     // DFS scan
-    int line_counter = 0;
     while (not _dfs_stack.empty()) {
-        // Store previous values before reassigning new ones
-        auto previous_depth = rel_depth;
-        auto previous_node = node;
-
         // Extract node from DFS stack
         node = std::get<0>(_dfs_stack.top());
-        rel_depth = std::get<1>(_dfs_stack.top());
+        depth = std::get<1>(_dfs_stack.top());
         _dfs_stack.pop();
 
         // Skip nodes that don't match an ongoing search
@@ -107,30 +98,17 @@ std::vector<PrintedNode> TreePrinter::scan_nodes_to_print(std::ostream &out,
             continue;
         }
 
-        // Print node
-        ++line_counter;
-        result.emplace_back(node, previous_node, rel_depth, previous_depth);
+        // Print ('visit') node
+        result.emplace_back(node, depth);
 
         // Add children to DFS stack
-        expand_dfs_to_children_of_node(node, selection, rel_depth, window_height);
+        expand_dfs_to_children_of_node(node, selection, depth, window_height);
 
         // Update state that requires update during iteration
-        update_mid_dfs_state(node, selection);
+        update_mid_dfs_state(node, selection, depth, result);
     }
 
     return result;
-}
-
-void TreePrinter::update_depth_to_next_sibling_map(int previous_depth,
-                                                      int depth,
-                                                      std::shared_ptr<Node> previous_node) {
-    // Maintain the depth-to-next-sibnling map
-    const bool is_first_node_of_parent = previous_depth < depth;
-    if (is_first_node_of_parent) {
-        const bool next_sibling_of_parent_exists =
-            info.m_node_to_next_sibling_existence[previous_node->identifier];
-        depth_to_next_sibling[depth - 1] = next_sibling_of_parent_exists;
-    }
 }
 
 void TreePrinter::expand_dfs_to_children_of_node(std::shared_ptr<Node> node,
@@ -168,7 +146,31 @@ void TreePrinter::expand_dfs_to_children_of_node(std::shared_ptr<Node> node,
 }
 
 void TreePrinter::update_mid_dfs_state(std::shared_ptr<Node> node,
-                                          std::shared_ptr<Node> selection) {
+        std::shared_ptr<Node> selection,
+        int depth,
+        std::vector<PrintedNode>& result) {
+    // Set the 'whether a next sibling exists' for previous sibling,
+    // if such exists (=current node is not a first sibling), to true.
+    // Current node is first sibling iff its depth is bigger than
+    // previously iterated-on node (since it's DFS)
+    const bool is_root = depth == 0;
+    if (not is_root) {
+        assert(result.size() >= 2); // root and at least another node
+        auto prev_node_idx = result.size() - 2;
+        auto previous_depth = result[prev_node_idx].depth;
+        const bool is_first_sibling = depth == previous_depth + 1;
+        if (not is_first_sibling) {
+            assert(depth <= previous_depth);
+            auto& prev_node = result[_depth_to_prev_printed_node[depth]];
+            prev_node.next_sibling_exists = true;
+        }
+    }
+    // Maintain the depth to previously-printed-node vector
+    // (which is used for above logic of setting the 'whether a next
+    // sibling exists')
+    unsigned int required_size = depth + 1;
+    _depth_to_prev_printed_node.resize(required_size);
+    _depth_to_prev_printed_node[depth] = result.size() - 1;
 
     // Update next printed node after selected
     const bool is_selection = node == selection;

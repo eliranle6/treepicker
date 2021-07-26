@@ -6,7 +6,6 @@ lib_LTLIBRARIES = libtreeprinter.la libpaginator.la
 libtreeprinter_la_SOURCES = \
 	treeprinter.cpp \
 	paginator.cpp \
-	pre_print_tree_analysis.cpp \
 	treewindowfitter.cpp \
 	printnode.cpp
 

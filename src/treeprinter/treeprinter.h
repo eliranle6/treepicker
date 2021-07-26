@@ -7,7 +7,6 @@
 
 #include "tree/node.h"
 #include "tree/tree.h"
-#include "pre_print_tree_analysis.h"
 #include "printnode.h"
 
 namespace treelib {
@@ -34,14 +33,17 @@ private:
     void init_pre_dfs_state(std::shared_ptr<treelib::Node> selection,
                             int window_height);
     void update_mid_dfs_state(std::shared_ptr<Node> node,
-                              std::shared_ptr<Node> selection);
+        std::shared_ptr<Node> selection,
+        int depth,
+        std::vector<PrintedNode>& result);
     void expand_dfs_to_children_of_node(std::shared_ptr<Node> node,
                                    std::shared_ptr<Node> selection,
                                    int window_height,
                                    int rel_depth);
     void update_depth_to_next_sibling_map(int previous_depth,
                                           int depth,
-                                          std::shared_ptr<Node> previous_node);
+                                          std::shared_ptr<Node> previous_node,
+        std::vector<PrintedNode>& nodes_to_print);
     void populate_stack_with_paginated_children_of_node(node_t node,
                                        node_t selection,
                                        int child_depth,
@@ -55,7 +57,6 @@ private:
     void print_breadcrumbs(std::ostream &out);
 
     Tree& _tree;
-    TreeAnalysisInfo info;
     std::shared_ptr< Node > _printed_node_before_selected;
     std::shared_ptr< Node > _next_printed_node_after_selected;
     std::shared_ptr< Node > _printed_subtree_root;
@@ -64,7 +65,12 @@ private:
     int _nr_levels_that_fit_in_window;
     int _selection_depth;
     static constexpr std::size_t MAX_DEPTH = 512;
+
+    // To be used during first iteration (DFS) in order to populate PrintedNode.next_sibling
+    std::vector<int> _depth_to_prev_printed_node;
+    // To be used during second iteration
     std::array<bool, MAX_DEPTH> depth_to_next_sibling;
+
     std::shared_ptr<Node> _previously_printed_node;
     bool _was_previously_printed_node_selected;
     bool _has_paginated_in_current_print;
