@@ -81,7 +81,7 @@ void print_node(
 
         // Create current node text
         auto tag = pn.node->tag;
-        if (pn.node->children.size()) {
+        if (pn.node->children.size() and not pn.are_children_printed) {
             tag += std::string(" (...)");
         }
 

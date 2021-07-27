@@ -99,7 +99,7 @@ std::vector<PrintedNode> TreePrinter::scan_nodes_to_print(std::ostream &out,
         }
 
         // Print ('visit') node
-        result.emplace_back(node, depth);
+        result.emplace_back(node, depth, will_children_of_node_be_printed(depth));
 
         // Add children to DFS stack
         expand_dfs_to_children_of_node(node, selection, depth, window_height);
@@ -261,6 +261,11 @@ bool TreePrinter::was_selection_printed(void) {
 
 std::shared_ptr<treelib::Node> TreePrinter::get_first_printed_node(void) {
     return _first_printed_node;
+}
+
+bool TreePrinter::will_children_of_node_be_printed(int depth) {
+    const int highest_rel_depth_that_fits_window = _nr_levels_that_fit_in_window - 1;
+    return depth < highest_rel_depth_that_fits_window;
 }
 
 }

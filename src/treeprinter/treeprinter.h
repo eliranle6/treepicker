@@ -55,6 +55,7 @@ private:
     bool should_node_be_skipped(bool filter_search_nodes,
                                 std::shared_ptr<Node> node);
     void print_breadcrumbs(std::ostream &out);
+    bool will_children_of_node_be_printed(int depth);
 
     Tree& _tree;
     std::shared_ptr< Node > _printed_node_before_selected;
@@ -75,6 +76,7 @@ private:
     bool _was_previously_printed_node_selected;
     bool _has_paginated_in_current_print;
     bool _was_selection_printed;
+    bool _will_children_of_node_be_printed;
 };
 } // namespace treelib
 
