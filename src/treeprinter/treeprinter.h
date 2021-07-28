@@ -22,12 +22,13 @@ public:
     TreePrinter(Tree &tree);
     int print(std::ostream &out, bool filter_search_nodes = false,
               node_t selection = nullptr, int window_height = 100);
-    std::vector<PrintedNode> scan_nodes_to_print(std::ostream& out, bool filter_search_nodes,
+    void scan_nodes_to_print(std::ostream& out, bool filter_search_nodes,
               node_t selection, int window_height);
     std::shared_ptr<treelib::Node> get_next_printed_node_after_selected(void);
     std::shared_ptr<treelib::Node> get_printed_node_before_selected(void);
     bool was_selection_printed(void);
     std::shared_ptr< Node > get_first_printed_node(void);
+    std::shared_ptr< Node > get_last_printed_node(void);
 
 private:
     void init_pre_dfs_state(std::shared_ptr<treelib::Node> selection,
@@ -71,6 +72,7 @@ private:
     std::vector<int> _depth_to_prev_printed_node;
     // To be used during second iteration
     std::array<bool, MAX_DEPTH> depth_to_next_sibling;
+    std::vector<PrintedNode> _nodes_to_print;
 
     std::shared_ptr<Node> _previously_printed_node;
     bool _was_previously_printed_node_selected;

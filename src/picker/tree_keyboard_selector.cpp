@@ -21,12 +21,33 @@ bool TreeKeyboardSelector::char_pressed(char c)
     bool is_finished = false;
 
     if (_mode == mode::MODE_NAVIGATION) {
+        syslog(LOG_NOTICE, "%d", c);
         switch(c) {
-            case KEYCODE_PREV:
+            case KEYCODE_UP:
                 _tree_selector.move_to_prev();
+                print_tree();
                 break;
-            case KEYCODE_NEXT:
+            case KEYCODE_DOWN:
                 _tree_selector.move_to_next();
+                print_tree();
+                break;
+            case KEYCODE_PAGE_DOWN:
+                {
+                auto last_node = _tree_printer.get_last_printed_node();
+                for (int i = 0; i < 10 && _tree_selector.get_selection() != last_node; ++i) {
+                    _tree_selector.move_to_next();
+                    print_tree();
+                }
+                }
+                break;
+            case KEYCODE_PAGE_UP:
+                {
+                auto last_node = _tree_printer.get_first_printed_node();
+                for (int i = 0; i < 10 && _tree_selector.get_selection() != last_node; ++i) {
+                    _tree_selector.move_to_prev();
+                    print_tree();
+                }
+                }
                 break;
             case KEYCODE_RIGHT:
                 _tree_selector.explore_children_of_selection();
@@ -50,12 +71,14 @@ bool TreeKeyboardSelector::char_pressed(char c)
                 if (not _search_keyword.empty()) {
                     _search_keyword = _search_keyword.substr(0, _search_keyword.size() - 1);
                 }
+                _search.search(_search_keyword);
                 break;
             case KEYCODE_CTRL_W:
             case KEYCODE_CTRL_U:
                 if (_mode == mode::MODE_EDIT_SEARCH) {
                     _search_keyword = "";
                 }
+                _search.search(_search_keyword);
                 break;
             case KEYCODE_MOVE_FROM_SEARCH_TO_NAV_MODE:
                 _mode = mode::MODE_NAVIGATION;
@@ -66,9 +89,9 @@ bool TreeKeyboardSelector::char_pressed(char c)
                     _search_keyword += c;
                 else {
                 }
+                _search.search(_search_keyword);
         }
     }
-    _search.search(_search_keyword);
     print_tree();
 
     return is_finished;
