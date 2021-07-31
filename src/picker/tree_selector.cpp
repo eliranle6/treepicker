@@ -25,24 +25,12 @@ void TreeSelector::explore_children_of_selection(void) {
     }
 }
 
-//void TreeSelector::go_next_until_reaching_a_matching_node(void) {
-//    auto position = _selection->children.begin();
-//    for (; position != _selection->children.end() &&
-//            (not (*position)->is_matching_search
-//             and not (*position)->is_ancestor_of_matching_search);
-//            ++position);
-//
-//    if (position != _selection->children.end()) {
-//        _selection = (*position);
-//    }
-//}
-
 void TreeSelector::move_one_up(void) {
     if (nullptr == _selection) {
         return;
     }
     auto parent = _tree.get_node(_selection->parent);
-    select_node(parent);
+    _selection = parent;
 }
 
 void TreeSelector::move_to_next(void) {
@@ -68,21 +56,20 @@ void TreeSelector::move_to_next(void) {
 
 void TreeSelector::move_to_prev(void) {
     auto prev_node = _tree_printer.get_printed_node_before_selected();
-    select_node(prev_node);
+    if (prev_node != nullptr) {
+        _selection = prev_node;
+    }
 }
 
 void TreeSelector::_advance_selection_at_same_tree_level(int difference) {
     if (nullptr == _selection.get()) {
-        select_node(nullptr);
         return;
     }
     if (_tree.get_root() == _selection) {
-        select_node(nullptr);
         return;
     }
     NodePtr parent = _tree.get_node(_selection->parent);
     if (parent.get() == nullptr) {
-        select_node(nullptr);
         return;
     }
     auto& children = parent->children;
@@ -116,15 +103,7 @@ void TreeSelector::_advance_selection_at_same_tree_level(int difference) {
     }
 
     // Set selection
-    select_node(*position);
-}
-
-void TreeSelector::select_node(std::shared_ptr<treelib::Node> node) {
-    const bool is_new_selection_valid = node != nullptr
-            and _tree_printer.was_selection_printed();
-    if (is_new_selection_valid) {
-        _selection = node;
-    }
+    _selection = *position;
 }
 
 }

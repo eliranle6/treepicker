@@ -252,11 +252,19 @@ bool TreePrinter::was_selection_printed(void) {
 }
 
 std::shared_ptr<treelib::Node> TreePrinter::get_first_printed_node(void) {
-    return _nodes_to_print[0].node;
+    std::shared_ptr<treelib::Node> result;
+    if (_nodes_to_print.size()) {
+        result = _nodes_to_print[0].node;
+    }
+    return result;
 }
 
 std::shared_ptr<treelib::Node> TreePrinter::get_last_printed_node(void) {
-    return _nodes_to_print[_nodes_to_print.size() - 1].node;
+    std::shared_ptr<treelib::Node> result;
+    if (_nodes_to_print.size()) {
+        result = _nodes_to_print[_nodes_to_print.size() - 1].node;
+    }
+    return result;
 }
 
 bool TreePrinter::will_children_of_node_be_printed(int depth) {
