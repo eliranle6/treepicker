@@ -29,6 +29,7 @@ public:
     bool was_selection_printed(void);
     std::shared_ptr< Node > get_first_printed_node(void);
     std::shared_ptr< Node > get_last_printed_node(void);
+    std::shared_ptr<treelib::Node> get_printed_subtree_root(void);
 
 private:
     void init_pre_dfs_state(std::shared_ptr<treelib::Node> selection,

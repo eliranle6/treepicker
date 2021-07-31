@@ -33,8 +33,8 @@ bool TreeKeyboardSelector::char_pressed(char c)
                 break;
             case KEYCODE_PAGE_DOWN:
                 {
-                auto last_node = _tree_printer.get_last_printed_node();
-                for (int i = 0; i < 10 && _tree_selector.get_selection() != last_node; ++i) {
+                int i = 0;
+                for (; i < 10; ++i) {
                     _tree_selector.move_to_next();
                     print_tree();
                 }

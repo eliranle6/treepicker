@@ -47,7 +47,23 @@ void TreeSelector::move_one_up(void) {
 
 void TreeSelector::move_to_next(void) {
     auto next_node = _tree_printer.get_next_printed_node_after_selected();
-    select_node(next_node);
+
+    if (next_node == nullptr) {
+        // There can be few cases for next node being null:
+        // 1. Printed tree is empty - do nothing
+        // 2. Selection isn't visible but root is - select root
+        // 3. Selected node is the selected node is the last printed node - do nothing
+        const bool selection_isnt_visible_but_root_is =  (
+                not _tree_printer.was_selection_printed()
+                and _tree_printer.get_last_printed_node() != nullptr);
+        if (selection_isnt_visible_but_root_is) {
+            next_node = _tree_printer.get_printed_subtree_root();
+        }
+    }
+
+    if (next_node != nullptr) {
+        _selection = next_node;
+    }
 }
 
 void TreeSelector::move_to_prev(void) {
@@ -108,11 +124,6 @@ void TreeSelector::select_node(std::shared_ptr<treelib::Node> node) {
             and _tree_printer.was_selection_printed();
     if (is_new_selection_valid) {
         _selection = node;
-    } else {
-        auto first_printed_node = _tree_printer.get_first_printed_node();
-        if (first_printed_node) {
-            _selection = first_printed_node;
-        }
     }
 }
 

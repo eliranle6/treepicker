@@ -264,4 +264,8 @@ bool TreePrinter::will_children_of_node_be_printed(int depth) {
     return depth < highest_rel_depth_that_fits_window;
 }
 
+std::shared_ptr<treelib::Node> TreePrinter::get_printed_subtree_root(void) {
+    return _printed_subtree_root;
+}
+
 }
