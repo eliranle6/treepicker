@@ -38,32 +38,45 @@ bool TreeKeyboardSelector::char_pressed(char c)
                     _tree_selector.move_to_next();
                     print_tree();
                 }
+                if (i == 0) {
+                    print_tree();
+                }
                 }
                 break;
             case KEYCODE_PAGE_UP:
                 {
                 auto first_node = _tree_printer.get_first_printed_node();
-                for (int i = 0; i < 10 && _tree_selector.get_selection() != first_node; ++i) {
+                int i = 0;
+                for (; i < 10 && _tree_selector.get_selection() != first_node; ++i) {
                     _tree_selector.move_to_prev();
+                    print_tree();
+                }
+                if (i == 0) {
                     print_tree();
                 }
                 }
                 break;
             case KEYCODE_RIGHT:
                 _tree_selector.explore_children_of_selection();
+                print_tree();
                 break;
             case KEYCODE_LEFT:
                 _tree_selector.move_one_up();
+                print_tree();
                 break;
             case KEYCODE_BACK:
                 is_finished = true;
+                print_tree();
                 break;
             case KEYCODE_START_SEARCH:
                 if (_mode == mode::MODE_NAVIGATION) {
                     _mode = mode::MODE_EDIT_SEARCH;
                     curs_set(1);
+                    print_tree();
                 }
                 break;
+            default:
+                print_tree();
         }
     } else if (_mode == mode::MODE_EDIT_SEARCH) {
         switch(c) {
@@ -75,6 +88,7 @@ bool TreeKeyboardSelector::char_pressed(char c)
                     _search_keyword = _search_keyword.substr(0, _search_keyword.size() - 1);
                     _search.search(_search_keyword);
                 }
+                print_tree();
                 break;
             case KEYCODE_CTRL_W:
             case KEYCODE_CTRL_U:
@@ -82,10 +96,12 @@ bool TreeKeyboardSelector::char_pressed(char c)
                     _search_keyword = "";
                 }
                 _search.search(_search_keyword);
+                print_tree();
                 break;
             case KEYCODE_MOVE_FROM_SEARCH_TO_NAV_MODE:
                 _mode = mode::MODE_NAVIGATION;
                 curs_set(0);
+                print_tree();
                 break;
             default:
                 if (_mode == mode::MODE_EDIT_SEARCH)
@@ -93,9 +109,9 @@ bool TreeKeyboardSelector::char_pressed(char c)
                 else {
                 }
                 _search.search(_search_keyword);
+                print_tree();
         }
     }
-    print_tree();
 
     return is_finished;
 }
