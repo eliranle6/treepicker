@@ -8,7 +8,7 @@ namespace treelib {
 class Search
 {
 public:
-    Search(Tree &tree) : _tree(tree) {};
+    Search(Tree &tree) : _tree(tree), _nr_matching(_tree.get_nr_nodes()) {};
 
     void search(std::string keyword);
 
