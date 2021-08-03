@@ -56,6 +56,14 @@ void TreeSelector::move_to_next(void) {
 
 void TreeSelector::move_to_prev(void) {
     auto prev_node = _tree_printer.get_printed_node_before_selected();
+
+    // Avoid jumping to parent on moving to 'previously printed',
+    // (use 'move_one_up' instead)
+    if (prev_node == _tree_printer.get_printed_subtree_root()
+            and prev_node != _tree.get_root()) {
+        return;
+    }
+
     if (prev_node != nullptr) {
         _selection = prev_node;
     }
