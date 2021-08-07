@@ -76,6 +76,8 @@ private:
     std::vector<PrintedNode> _nodes_to_print;
 
     std::shared_ptr<Node> _previously_printed_node;
+    std::shared_ptr<Node> _first_sibling_in_pagination;
+    std::shared_ptr<Node> _last_sibling_in_pagination;
     bool _was_previously_printed_node_selected;
     bool _has_paginated_in_current_print;
     bool _was_selection_printed;

@@ -14,6 +14,8 @@ void TreePrinter::init_pre_dfs_state(std::shared_ptr<treelib::Node> selection,
     _next_printed_node_after_selected.reset();
     _printed_node_before_selected.reset();
     _previously_printed_node.reset();
+    _last_sibling_in_pagination.reset();
+    _first_sibling_in_pagination.reset();
 
     _selection_depth = _tree.get_node_depth(selection);
 
@@ -54,9 +56,16 @@ int TreePrinter::print(std::ostream &out,
         // [whether a next (=not printed yet) sibling exists]
         // in order to know whether to print connecting lines to next sibling of that
         // depth (node depth corresponds to indentation level), if siblint such exists
+        if (printed_node.node == _first_sibling_in_pagination) {
+            out << "(...)" << std::endl;
+        }
         depth_to_next_sibling[printed_node.depth] = printed_node.next_sibling_exists;
         print_node(out, printed_node, selection, _printed_subtree_root, _tree,
-			&depth_to_next_sibling[0]);
+            &depth_to_next_sibling[0]);
+        if (printed_node.node == _last_sibling_in_pagination) {
+            out << "(...)";
+        }
+
     }
 
     return _nodes_to_print.size();
@@ -222,6 +231,19 @@ void TreePrinter::populate_stack_with_paginated_children_of_node(
         - nr_items_removed_at_the_end;
     for (counter = 0; counter < nr_items_to_print and iter != node->children.rend();
              ++counter, ++iter) {
+
+        // Update the first/last sibling pointers, in order for the print loop to
+        // know when to add '(... x more)' rows at the beginning and/or end.
+        const bool is_last_sibling = counter == 0;
+        if (is_last_sibling and nr_items_removed_at_the_end > 0) {
+            _last_sibling_in_pagination = *iter;
+        } else if (nr_items_removed_at_the_beginning) {
+            const bool is_first_sibling = counter == nr_items_to_print - 1;
+            if (is_first_sibling and not is_last_sibling) {
+                _first_sibling_in_pagination = *iter;
+            }
+        }
+
         _dfs_stack.push(std::make_pair(*iter, child_depth));
     }
 

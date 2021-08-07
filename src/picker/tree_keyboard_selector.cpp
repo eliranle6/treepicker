@@ -151,6 +151,8 @@ void TreeKeyboardSelector::print_tree(void) {
     if (should_search_bar_be_displayed) {
         stats_line += std::string(", Matching: ") + std::to_string(_search.get_nr_matching());
     }
+    stats_line += std::string(", selected: ") +
+            _tree_selector.get_selection()->tag;
     mvwprintw(subby, 0, 0, stats_line.c_str());
     wrefresh(subby);
 
