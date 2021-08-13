@@ -78,6 +78,8 @@ private:
     std::shared_ptr<Node> _previously_printed_node;
     std::shared_ptr<Node> _first_sibling_in_pagination;
     std::shared_ptr<Node> _last_sibling_in_pagination;
+    std::size_t _nr_items_removed_at_the_beginning;
+    std::size_t _nr_items_removed_at_the_end;
     bool _was_previously_printed_node_selected;
     bool _has_paginated_in_current_print;
     bool _was_selection_printed;

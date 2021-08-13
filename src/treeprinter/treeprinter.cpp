@@ -56,14 +56,16 @@ int TreePrinter::print(std::ostream &out,
         // [whether a next (=not printed yet) sibling exists]
         // in order to know whether to print connecting lines to next sibling of that
         // depth (node depth corresponds to indentation level), if siblint such exists
-        if (printed_node.node == _first_sibling_in_pagination) {
-            out << "(...)" << std::endl;
+        const bool is_first_in_pagination = printed_node.node == _first_sibling_in_pagination;
+        const bool is_last_in_pagination = printed_node.node == _last_sibling_in_pagination;
+        if (is_first_in_pagination) {
+            print_top_scroll_indicator(out, _nr_items_removed_at_the_beginning);
         }
         depth_to_next_sibling[printed_node.depth] = printed_node.next_sibling_exists;
         print_node(out, printed_node, selection, _printed_subtree_root, _tree,
-            &depth_to_next_sibling[0]);
-        if (printed_node.node == _last_sibling_in_pagination) {
-            out << "(...)";
+            &depth_to_next_sibling[0], is_last_in_pagination);
+        if (is_last_in_pagination) {
+            print_top_scroll_indicator(out, _nr_items_removed_at_the_end);
         }
 
     }
@@ -215,29 +217,27 @@ void TreePrinter::populate_stack_with_paginated_children_of_node(
     }
 
     // Calculate number of children to hide from start and from end
-    std::size_t nr_items_removed_at_the_beginning = 0;
-    std::size_t nr_items_removed_at_the_end = 0;
-    std::tie(nr_items_removed_at_the_beginning, nr_items_removed_at_the_end) =
+    std::tie(_nr_items_removed_at_the_beginning, _nr_items_removed_at_the_end) =
         paginate(nr_children, window_height - 1, selection_idx_in_level);
 
     // Skip invisible children
     std::size_t counter = 0;
     auto iter = node->children.rbegin();
-    for (;iter != node->children.rend() and counter < nr_items_removed_at_the_end;
+    for (;iter != node->children.rend() and counter < _nr_items_removed_at_the_end;
              ++iter, ++counter);
 
     // Iterate on visible children and push them to stack
-    std::size_t nr_items_to_print = nr_children - nr_items_removed_at_the_beginning
-        - nr_items_removed_at_the_end;
+    std::size_t nr_items_to_print = nr_children - _nr_items_removed_at_the_beginning
+        - _nr_items_removed_at_the_end;
     for (counter = 0; counter < nr_items_to_print and iter != node->children.rend();
              ++counter, ++iter) {
 
         // Update the first/last sibling pointers, in order for the print loop to
         // know when to add '(... x more)' rows at the beginning and/or end.
         const bool is_last_sibling = counter == 0;
-        if (is_last_sibling and nr_items_removed_at_the_end > 0) {
+        if (is_last_sibling and _nr_items_removed_at_the_end > 0) {
             _last_sibling_in_pagination = *iter;
-        } else if (nr_items_removed_at_the_beginning) {
+        } else if (_nr_items_removed_at_the_beginning) {
             const bool is_first_sibling = counter == nr_items_to_print - 1;
             if (is_first_sibling and not is_last_sibling) {
                 _first_sibling_in_pagination = *iter;
@@ -251,7 +251,7 @@ void TreePrinter::populate_stack_with_paginated_children_of_node(
     // selected node is the last printed node (in which case it won't be
     // updated in update_mid_dfs_state)
     const bool is_selecting_last_item = selection_idx_in_level >=
-        nr_items_removed_at_the_beginning + nr_items_to_print - 1;
+        _nr_items_removed_at_the_beginning + nr_items_to_print - 1;
     if (is_selecting_last_item) {
         std::size_t next_item_idx = selection_idx_in_level + 1;
         const bool next_item_exists = next_item_idx < nr_children;

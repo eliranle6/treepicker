@@ -31,9 +31,10 @@ void print_node(
         const std::shared_ptr<Node> selection,
         std::shared_ptr<Node> printed_subtree_root,
         Tree& tree,
-		bool* depth_to_next_sibling
+        bool* depth_to_next_sibling,
+        bool is_last_in_pagination
         ) {
-	assert(depth_to_next_sibling != nullptr);
+    assert(depth_to_next_sibling != nullptr);
     PrintedNode& pn = printed_node;
 
     // Before printing, maintain the array of depth to -
@@ -68,6 +69,8 @@ void print_node(
         const auto is_last_child = depth_to_next_sibling[pn.depth];
         if (is_last_child)
             out << MIDDLE_CHILD_CONNECTOR << HORIZONTAL_TREE_LINE << HORIZONTAL_TREE_LINE;
+        else if (is_last_in_pagination)
+            out << MIDDLE_CHILD_CONNECTOR << HORIZONTAL_TREE_LINE;
         else
             out << LAST_CHILD_CONNECTOR << HORIZONTAL_TREE_LINE << HORIZONTAL_TREE_LINE;
     }
@@ -124,6 +127,10 @@ void _print_breadcrumbs(
     }
 
     out << breadcrumbs << std::endl;
+}
+
+void print_top_scroll_indicator(std::ostream &out, std::size_t nr_hidden_items) {
+    out << "  " << VERTICAL_TREE_LINE << "(" << nr_hidden_items << " more ...)" << std::endl;
 }
 
 }
