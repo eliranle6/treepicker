@@ -53,5 +53,5 @@ TEST_F(TreePaginatorTest, paginate) {
         paginate(nr_lines, window_height, selection_idx);
 
     ASSERT_EQ(nr_items_removed_at_the_beginning, 0);
-    ASSERT_EQ(nr_items_removed_at_the_end, 5);
+    ASSERT_EQ(nr_items_removed_at_the_end, 6);
 }

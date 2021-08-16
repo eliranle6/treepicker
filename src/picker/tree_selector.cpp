@@ -29,6 +29,9 @@ void TreeSelector::move_one_up(void) {
     if (nullptr == _selection) {
         return;
     }
+    if (_tree.get_root() == _selection) {
+        return;
+    }
     auto parent = _tree.get_node(_selection->parent);
     _selection = parent;
 }
