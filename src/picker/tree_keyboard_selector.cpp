@@ -10,6 +10,9 @@ TreeKeyboardSelector::TreeKeyboardSelector(treelib::Tree& tree, const PickerOpti
     _tree(tree),
     _out(guishell::GuiShell::get_instance()),
     _search_keyword(),
+    _applied_keyword(),
+    _is_search_on_enter(false),
+    _is_filtering(true),
     _tree_printer(tree),
     _tree_selector(tree, _tree_printer),
     _mode(mode::MODE_NAVIGATION),
@@ -111,11 +114,24 @@ bool TreeKeyboardSelector::char_pressed(int c)
                 break;
             case KEYCODE_CANCEL_SEARCH:
                 // Like while editing the keyword: drop it, unfiltering the tree
-                if (not _search_keyword.empty()) {
+                if (not _applied_keyword.empty()) {
                     _search_keyword = "";
                     search();
                     print_tree();
                 }
+                break;
+            case KEYCODE_TOGGLE_FILTER:
+                _is_filtering = not _is_filtering;
+                if (not _applied_keyword.empty()) {
+                    search();
+                }
+                print_tree();
+                break;
+            case KEYCODE_START_SEARCH_ON_ENTER:
+                _mode = mode::MODE_EDIT_SEARCH;
+                _is_search_on_enter = true;
+                curs_set(1);
+                print_tree();
                 break;
             case KEYCODE_START_SEARCH:
                 if (_mode == mode::MODE_NAVIGATION) {
@@ -132,34 +148,32 @@ bool TreeKeyboardSelector::char_pressed(int c)
             case KEYCODE_BACKSPACE:
             case KEY_BACKSPACE:
                 if (_search_keyword.empty()) {
-                    _mode = mode::MODE_NAVIGATION;
-                    curs_set(0);
+                    stop_editing_keyword();
                 } else {
-                    _search_keyword = _search_keyword.substr(0, _search_keyword.size() - 1);
-                    search();
+                    _search_keyword.pop_back();
+                    keyword_changed();
                 }
                 print_tree();
                 break;
             case KEYCODE_CTRL_W:
             case KEYCODE_CTRL_U:
-                if (_mode == mode::MODE_EDIT_SEARCH) {
-                    _search_keyword = "";
-                }
-                search();
+                _search_keyword = "";
+                keyword_changed();
                 print_tree();
                 break;
             case KEYCODE_CANCEL_SEARCH:
                 // Like in vim: drop the keyword (unlike Enter, which keeps filtering by it)
                 _search_keyword = "";
                 search();
-                _mode = mode::MODE_NAVIGATION;
-                curs_set(0);
+                stop_editing_keyword();
                 print_tree();
                 break;
             case KEYCODE_MOVE_FROM_SEARCH_TO_NAV_MODE:
             case KEY_ENTER:
-                _mode = mode::MODE_NAVIGATION;
-                curs_set(0);
+                if (_is_search_on_enter) {
+                    search();
+                }
+                stop_editing_keyword();
                 print_tree();
                 break;
             default:
@@ -169,7 +183,7 @@ bool TreeKeyboardSelector::char_pressed(int c)
                 const bool is_text = c >= ' ' and c <= 0xff and c != KEYCODE_BACKSPACE;
                 if (is_text) {
                     _search_keyword += static_cast<char>(c);
-                    search();
+                    keyword_changed();
                 }
                 print_tree();
         }
@@ -209,7 +223,7 @@ void TreeKeyboardSelector::print_tree(void) {
     move(layout.nr_header_rows, 0);
     if (layout.tree_height > 0) {
         // The screen's last column stays empty (see NCursesSink::write)
-        _tree_printer.print(_out, not _search_keyword.empty(), _tree_selector.get_selection(),
+        _tree_printer.print(_out, not _applied_keyword.empty(), _tree_selector.get_selection(),
                             layout.tree_height, window_width - 1);
     }
     _out.flush();
@@ -217,8 +231,11 @@ void TreeKeyboardSelector::print_tree(void) {
     // Print stats line
     if (layout.stats_row >= 0) {
         std::string stats_line = "Total: " + std::to_string(_tree.get_nr_nodes());
-        if (is_search_line_shown()) {
+        if (not _applied_keyword.empty()) {
             stats_line += std::string(", Matching: ") + std::to_string(_search.get_nr_matching());
+            if (not _is_filtering) {
+                stats_line += " (highlighted)";
+            }
         }
         if (_options.is_multi) {
             stats_line += ", picked: " + std::to_string(_tree_selector.get_nr_picked());
@@ -232,13 +249,22 @@ void TreeKeyboardSelector::print_tree(void) {
 
     // Print search line (last, so that the cursor stays at its end while editing it)
     if (layout.search_row >= 0) {
-        print_line(layout.search_row, "/" + _search_keyword, window_width, false);
+        const bool is_waiting_for_enter = _mode == mode::MODE_EDIT_SEARCH and _is_search_on_enter;
+        // With the hint after the keyword, the cursor wouldn't be at the keyword's end
+        if (is_waiting_for_enter) {
+            print_line(layout.search_row, "/" + _search_keyword + "    (Enter: search)",
+                       window_width, false);
+            move(layout.search_row, std::min(guishell::display_width("/" + _search_keyword),
+                                             std::max(0, window_width - 2)));
+        } else {
+            print_line(layout.search_row, "/" + _search_keyword, window_width, false);
+        }
     }
     refresh();
 }
 
 bool TreeKeyboardSelector::is_search_line_shown(void) {
-    return not _search_keyword.empty() or _mode == mode::MODE_EDIT_SEARCH;
+    return not _applied_keyword.empty() or _mode == mode::MODE_EDIT_SEARCH;
 }
 
 TreeKeyboardSelector::Layout TreeKeyboardSelector::get_layout(void) {
@@ -269,13 +295,28 @@ TreeKeyboardSelector::Layout TreeKeyboardSelector::get_layout(void) {
 void TreeKeyboardSelector::layout_tree(void) {
     const int tree_max_height = get_layout().tree_height;
     if (tree_max_height > 0) {
-        _tree_printer.scan_nodes_to_print(_out, not _search_keyword.empty(),
+        _tree_printer.scan_nodes_to_print(_out, not _applied_keyword.empty(),
                                           _tree_selector.get_selection(), tree_max_height);
     }
 }
 
+void TreeKeyboardSelector::keyword_changed(void) {
+    if (not _is_search_on_enter) {
+        search();
+    }
+}
+
+void TreeKeyboardSelector::stop_editing_keyword(void) {
+    // A keyword that waited for Enter, and didn't get it, isn't the one searched for
+    _search_keyword = _applied_keyword;
+    _is_search_on_enter = false;
+    _mode = mode::MODE_NAVIGATION;
+    curs_set(0);
+}
+
 void TreeKeyboardSelector::search(void) {
-    _search.search(_search_keyword);
+    _applied_keyword = _search_keyword;
+    _search.search(_applied_keyword, _is_filtering);
     // The new filter may hide the selected node
     _tree_selector.select_visible_ancestor();
 }

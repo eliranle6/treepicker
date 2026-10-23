@@ -9,6 +9,7 @@ Node::Node(std::string _tag, std::string _identifier, void* _data, std::string _
         data(_data),
         is_matching_search(true),
         is_ancestor_of_matching_search(true),
+        is_search_highlighted(false),
         is_picked(false)
 {
 }

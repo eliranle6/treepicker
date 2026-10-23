@@ -101,18 +101,23 @@ void print_node(
                 guishell::NON_SELECTED_DIRECTORY;
             if (is_picked) {
                 color = is_selection ? guishell::RED_ON_BLUE : guishell::RED;
+            } else if (pn.node->is_search_highlighted and not is_selection) {
+                color = guishell::YELLOW;
             }
             out << guishell::Color(color) << guishell::Bold() <<
                 tag << guishell::Unbold() << guishell::Color(guishell::DEFAULT);
 
         } else {
+            const bool is_highlighted = pn.node->is_search_highlighted and not is_selection;
             if (is_picked) {
                 out << guishell::Color(is_selection ? guishell::RED_ON_BLUE : guishell::RED);
             } else if (is_selection) {
                 out << guishell::Color(guishell::WHITE_ON_BLUE);
+            } else if (is_highlighted) {
+                out << guishell::Color(guishell::YELLOW);
             }
             out << tag;
-            if (is_picked and not is_selection) {
+            if ((is_picked or is_highlighted) and not is_selection) {
                 out << guishell::Color(guishell::DEFAULT);
             }
         }

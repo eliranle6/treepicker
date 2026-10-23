@@ -20,6 +20,8 @@ public:
 
     bool is_matching_search;
     bool is_ancestor_of_matching_search;
+    // Whether it matches an ongoing search's (non-empty) keyword, to be shown highlighted
+    bool is_search_highlighted;
 
     // Whether the user picked this node (when picking several)
     bool is_picked;

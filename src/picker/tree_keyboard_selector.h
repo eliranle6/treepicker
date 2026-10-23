@@ -33,6 +33,8 @@ enum {
     KEYCODE_K = 107,
     KEYCODE_L = 108,
     KEYCODE_LOWER_G = 103,
+    KEYCODE_F = 102,
+    KEYCODE_CTRL_SLASH = 31,  // What terminals send for Ctrl-/ (and Ctrl-_)
     KEYCODE_UPPER_G = 71,
     KEYCODE_Q = 113
 };
@@ -51,6 +53,11 @@ enum {
     KEYCODE_FIRST_SIBLING = KEYCODE_LOWER_G,
     KEYCODE_LAST_SIBLING = KEYCODE_UPPER_G,
     KEYCODE_START_SEARCH = KEYCODE_SLASH,
+    // Search, but only once Enter is pressed rather than as the keyword is typed
+    KEYCODE_START_SEARCH_ON_ENTER = KEYCODE_CTRL_SLASH,
+    // Switch between showing only the matches (and their ancestors), and the whole tree with
+    // the matches highlighted
+    KEYCODE_TOGGLE_FILTER = KEYCODE_F,
     KEYCODE_MOVE_FROM_SEARCH_TO_NAV_MODE = KEYCODE_ENTER,
     KEYCODE_CANCEL_SEARCH = KEYCODE_ESCAPE
 };
@@ -79,8 +86,14 @@ private:
     // Number of nodes that page up/down move
     static constexpr int PAGE_SIZE = 10;
 
-    // Filter the tree by the current search keyword
+    // Search for the keyword being edited, filtering or highlighting
     void search(void);
+
+    // After the keyword being edited changed: search for it, unless searching waits for Enter
+    void keyword_changed(void);
+
+    // Leave search mode, back to navigation
+    void stop_editing_keyword(void);
 
     // Lines the tree needs to show the selection: the root, the selection, and a '... (N more)'
     // line on each side of it
@@ -105,7 +118,14 @@ private:
 
     treelib::Tree& _tree;
     guishell::GuiShell& _out;
+    // The keyword shown in the search line, maybe being edited
     std::string _search_keyword;
+    // The keyword last searched for, so the one the tree is filtered by (or highlighted by)
+    std::string _applied_keyword;
+    // Whether the keyword being edited is searched for only on Enter
+    bool _is_search_on_enter;
+    // Whether a search hides the nodes that don't match, or only highlights the ones that do
+    bool _is_filtering;
     treelib::TreePrinter _tree_printer;
     TreeSelector _tree_selector;
     mode _mode;

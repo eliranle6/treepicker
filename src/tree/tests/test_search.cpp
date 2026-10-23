@@ -127,3 +127,33 @@ TEST(treesearch, search_tree_without_nodes) {
     search.search("anything");
     ASSERT_EQ(search.get_nr_matching(), 0);
 }
+
+TEST(treesearch, search_without_hiding_highlights_the_matches) {
+    treelib::Tree tree = get_example_tree();
+    treelib::Search search(tree);
+    search.search("child1.1", false);
+
+    ASSERT_EQ(search.get_nr_matching(), 1);
+    for (auto id : {"root_id", "child1_id", "child1.1_id", "child1.2_id", "child2_id", "child2.2_id"}) {
+        ASSERT_TRUE(tree.get_node(id)->is_search_visible()) << id;
+    }
+    ASSERT_TRUE(tree.get_node("child1.1_id")->is_search_highlighted);
+    ASSERT_FALSE(tree.get_node("child1.2_id")->is_search_highlighted);
+    ASSERT_FALSE(tree.get_node("child1_id")->is_search_highlighted);
+}
+
+TEST(treesearch, matches_are_highlighted_when_hiding_too) {
+    treelib::Tree tree = get_example_tree();
+    treelib::Search(tree).search("child1.1");
+    ASSERT_TRUE(tree.get_node("child1.1_id")->is_search_highlighted);
+    // Shown since a node under it matches, but doesn't match itself
+    ASSERT_FALSE(tree.get_node("child1_id")->is_search_highlighted);
+}
+
+TEST(treesearch, empty_keyword_highlights_nothing) {
+    treelib::Tree tree = get_example_tree();
+    treelib::Search search(tree);
+    search.search("child1.1");
+    search.search("");
+    ASSERT_FALSE(tree.get_node("child1.1_id")->is_search_highlighted);
+}

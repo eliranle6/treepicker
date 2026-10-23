@@ -21,7 +21,7 @@ static bool does_text_match(const std::string& text, const std::string& keyword,
                        equal_ignoring_case) != text.end();
 }
 
-void Search::search(std::string keyword) {
+void Search::search(std::string keyword, bool hide_non_matching) {
     // Currently, assume that there are no cycles (create_node can't make any).
     // Also, not using concurrency yet.
     std::stack< node_t > dfs_stack;
@@ -45,8 +45,10 @@ void Search::search(std::string keyword) {
         // everything under it match too, and the root's name matched every node.
         bool found = keyword.empty() or does_text_match(node->tag, keyword, ignore_case);
         node->is_matching_search = found;
-        // Mark 'ancestor of matching' as false, by default, to be updated later
-        node->is_ancestor_of_matching_search = false;
+        node->is_search_highlighted = found and not keyword.empty();
+        // Mark 'ancestor of matching' as false, by default, to be updated later. Not hiding
+        // anything: mark every node, so all are shown.
+        node->is_ancestor_of_matching_search = not hide_non_matching;
 
         if (found) {
             mark_ancestors(node->identifier);

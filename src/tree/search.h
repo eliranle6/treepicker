@@ -10,7 +10,9 @@ class Search
 public:
     Search(Tree &tree) : _tree(tree), _nr_matching(_tree.get_nr_nodes()) {};
 
-    void search(std::string keyword);
+    // Mark the nodes matching keyword (and their ancestors), so the others are hidden. Without
+    // hide_non_matching, every node stays shown, and the matching ones are only highlighted.
+    void search(std::string keyword, bool hide_non_matching = true);
 
     std::size_t get_nr_matching(void) { return _nr_matching; };
 

@@ -308,3 +308,21 @@ TEST(treeprinter, picked_nodes_are_marked) {
     ASSERT_EQ(lines[3].substr(0, 2), "  ");
     ASSERT_EQ(lines[4].substr(0, 2), "  ");
 }
+
+TEST(treeprinter, search_matches_are_highlighted) {
+    auto tree = get_simple_tree();
+    treelib::Search(tree).search("Rich", false);
+    treelib::TreePrinter tree_printer(tree);
+    std::ostringstream out;
+    tree_printer.print(out, false, tree.get_root(), 10);
+
+    // Yellow, before the matching names only
+    const std::string yellow = "\x1B[33m";
+    auto lines = split_string_by_newline(out.str());
+    ASSERT_EQ(lines.size(), 7);
+    for (auto& line : lines) {
+        const bool is_match = does_string_contain_substring(line, "Rich");
+        ASSERT_EQ(does_string_contain_substring(line, yellow + (is_match ? "Rich" : "")), is_match)
+            << line;
+    }
+}
