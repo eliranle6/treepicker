@@ -49,8 +49,8 @@ void DirTree::update_from_filesystem(void) {
     // Reap the find process
     wait(nullptr);
 
-    // Sorted paths list each dir before what's in it, and each dir's entries in the order that
-    // Node::add_child keeps them, so adding them is quick
+    // Show each dir's entries sorted by name (the tree keeps them in the order they're added).
+    // Sorted paths also list each dir before what's in it, which create_node needs.
     std::sort(entry_paths.begin(), entry_paths.end());
 
     // Populate dirtree

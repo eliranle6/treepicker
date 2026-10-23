@@ -50,28 +50,30 @@ TEST(tree, missing_parent_throws) {
                  std::invalid_argument);
 }
 
-TEST(tree, children_are_sorted_by_tag_whatever_the_creation_order) {
-    std::vector<std::string> tags;
-    for (int i = 0; i < 500; ++i) {
-        tags.push_back("tag" + std::to_string(i * 7919 % 500));  // Shuffled
-    }
+TEST(tree, children_keep_the_creation_order) {
     treelib::Tree tree;
     tree.create_node("root", "root", "", nullptr);
-    for (auto& tag : tags) {
+    for (auto tag : {"b", "c", "a"}) {
         tree.create_node(tag, tag, "root", nullptr);
     }
 
     auto& children = tree.get_root()->children;
-    ASSERT_EQ(children.size(), 500);
-    for (std::size_t i = 1; i < children.size(); ++i) {
-        ASSERT_LE(children[i - 1]->tag, children[i]->tag);
-    }
+    ASSERT_EQ(children.size(), 3);
+    ASSERT_EQ(children[0]->tag, "b");
+    ASSERT_EQ(children[1]->tag, "c");
+    ASSERT_EQ(children[2]->tag, "a");
 }
 
-TEST(tree, building_a_big_flat_tree_in_sorted_order_is_fast) {
-    // Children used to be inserted with a linear scan: 100k files in one dir took a minute
+TEST(tree, building_a_big_flat_tree_in_any_order_is_fast) {
+    // Children were once kept sorted, which made adding them in random order quadratic: 200k
+    // children took about 10 seconds
+    treelib::Tree tree;
+    tree.create_node("root", "root", "", nullptr);
     auto start = std::chrono::steady_clock::now();
-    auto tree = get_flat_tree(200000);
+    for (int i = 0; i < 200000; ++i) {
+        const std::string tag = std::to_string(i * 7919 % 200000);  // Shuffled
+        tree.create_node(tag, tag, "root", nullptr);
+    }
     auto elapsed = std::chrono::steady_clock::now() - start;
 
     ASSERT_EQ(tree.get_root()->children.size(), 200000);
