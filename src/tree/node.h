@@ -2,6 +2,7 @@
 #define __NODE_H
 
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace treelib {

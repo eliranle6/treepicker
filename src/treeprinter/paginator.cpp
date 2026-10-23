@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <tuple>
 #include "paginator.h"
 #include <syslog.h>

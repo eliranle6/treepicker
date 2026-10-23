@@ -1,6 +1,7 @@
 #ifndef __TREE_PRINTER_H
 #define __TREE_PRINTER_H
 
+#include <array>
 #include <ostream>
 #include <vector>
 #include <syslog.h>

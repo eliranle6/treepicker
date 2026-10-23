@@ -17,8 +17,8 @@ void DirTree::update_from_filesystem(void) {
 
     char* realpath_ret_value = realpath(path.c_str(), nullptr);
     //throw std::runtime_error(root_tag_ptr);
-    free(realpath_ret_value);
     std::string root_tag = std::string(basename(realpath_ret_value));
+    free(realpath_ret_value);
     create_node(root_tag, "", "", nullptr);
 
     // Execute the `find` command to explore the dir contents
