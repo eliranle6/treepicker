@@ -6,11 +6,8 @@
 #include <sstream>
 #include <stdexcept>
 #include <vector>
-#include <boost/filesystem/path.hpp>
 #include "dirtree.h"
 #include "utils/subprocess.h"
-
-using bpath = boost::filesystem::path;
 
 namespace dirtree {
 
@@ -31,8 +28,10 @@ void DirTree::update_from_filesystem(void) {
 
     // Execute the `find` command to explore the dir contents. Entries end with '\0' rather
     // than '\n', since file names may contain newlines.
-    char const *argv[] = {"/usr/bin/find", path.string().c_str(),
-        "!", "-path", path.string().c_str(), "-printf", "%y %P\\0", nullptr};
+    // A named string, since path.string() returns a temporary, which the pointers would outlive
+    const std::string path_string = path.string();
+    char const *argv[] = {"/usr/bin/find", path_string.c_str(),
+        "!", "-path", path_string.c_str(), "-printf", "%y %P\\0", nullptr};
     auto entries_stream = utils::subprocess_read_output("/usr/bin/find", argv);
 
     // Read the dirs and files (skipping other types, e.g. symlinks)
@@ -53,13 +52,16 @@ void DirTree::update_from_filesystem(void) {
     // Sorted paths also list each dir before what's in it, which create_node needs.
     std::sort(entry_paths.begin(), entry_paths.end());
 
-    // Populate dirtree
+    // Populate dirtree. find's paths are relative and never end with '/', so the name is what
+    // follows the last '/', and the parent's path (its id) what precedes it.
     for (auto& entry_path : entry_paths) {
-        bpath entry_bpath(entry_path);
-        create_node(entry_bpath.filename().string(),
-                    entry_path,
-                    entry_bpath.parent_path().string(),
-                    nullptr);
+        const auto last_slash = entry_path.rfind('/');
+        if (last_slash == std::string::npos) {
+            create_node(entry_path, entry_path, "", nullptr);
+        } else {
+            create_node(entry_path.substr(last_slash + 1), entry_path,
+                        entry_path.substr(0, last_slash), nullptr);
+        }
     }
 }
 

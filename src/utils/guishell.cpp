@@ -5,7 +5,6 @@
 #include <iostream>
 #include <curses.h>
 #include <unistd.h>
-#include <boost/iostreams/stream.hpp>
 
 #include "guishell.h"
 
@@ -85,8 +84,27 @@ std::streamsize NCursesSink::write(const char *s, std::streamsize n) {
     return n;
 }
 
+NCursesSink::int_type NCursesSink::overflow(int_type c) {
+    write_buffer();
+    if (not traits_type::eq_int_type(c, traits_type::eof())) {
+        *pptr() = traits_type::to_char_type(c);
+        pbump(1);
+    }
+    return traits_type::not_eof(c);
+}
+
+int NCursesSink::sync(void) {
+    write_buffer();
+    return 0;
+}
+
+void NCursesSink::write_buffer(void) {
+    write(pbase(), pptr() - pbase());
+    setp(_data, _data + sizeof(_data));
+}
+
 GuiShell::GuiShell(NCursesSink &buff) :
-    GuiShellStream(buff)
+    std::ostream(&buff)
 {
     initscr();
     // Get each key as it's pressed (Ctrl-C included, as a key rather than a signal), without

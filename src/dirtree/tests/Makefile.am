@@ -1,6 +1,6 @@
 AM_CXXFLAGS=$(CXXFLAGS) -std=c++1z -Wall -Werror -I$(top_srcdir)/src/
 AM_LDFLAGS = -pthread
-LDADD = -lstdc++ -lboost_iostreams -lgtest -lgtest_main -lgmock -lgmock_main -lboost_system -lboost_filesystem
+LDADD = -lstdc++ -lgtest -lgtest_main -lgmock -lgmock_main
 EXEEXT=.bin
 
 TESTS = test_dirtree.bin

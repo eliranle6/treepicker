@@ -8,7 +8,7 @@
 #include <assert.h>
 #include "gtest/gtest.h"
 
-#include <boost/filesystem/operations.hpp>
+#include <filesystem>
 
 #include "dirtree/dirtree.h"
 
@@ -20,10 +20,10 @@ public:
         path = mkdtemp(path_template);
     }
     ~TempDir(void) {
-        boost::filesystem::remove_all(path);
+        std::filesystem::remove_all(path);
     }
     void make_dir(const std::string& relative_path) {
-        boost::filesystem::create_directories(path + "/" + relative_path);
+        std::filesystem::create_directories(path + "/" + relative_path);
     }
     void make_file(const std::string& relative_path) {
         std::ofstream(path + "/" + relative_path);

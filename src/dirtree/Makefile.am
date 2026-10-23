@@ -1,6 +1,5 @@
 AM_CXXFLAGS=$(CXXFLAGS) -std=c++1z -Wall -Werror -I$(top_srcdir)/src/
 SUBDIRS = tests
-LIBADD = -lboost_filesystem
 
 lib_LTLIBRARIES = libdirtree.la
 

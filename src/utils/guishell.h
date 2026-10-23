@@ -6,7 +6,7 @@
 #include <iostream>
 #include <curses.h>
 #include <unistd.h>
-#include <boost/iostreams/stream.hpp>
+#include <ostream>
 
 namespace guishell {
 
@@ -43,16 +43,28 @@ std::size_t nr_bytes_that_fit(const char *s, std::size_t n, int nr_columns);
 // The number of screen columns that s (UTF-8) takes
 int display_width(const std::string& s);
 
-class NCursesSink : public boost::iostreams::sink
+// A stream buffer that writes to the curses screen, when flushed (std::endl, a Color...) or full
+class NCursesSink : public std::streambuf
 {
 public:
+    NCursesSink(void) {
+        setp(_data, _data + sizeof(_data));
+    }
+
+protected:
+    int_type overflow(int_type c) override;
+    int sync(void) override;
+
+private:
+    void write_buffer(void);
     std::streamsize write(const char* s, std::streamsize n);
+
+    char _data[4096];
 };
 
 
-using GuiShellStream = boost::iostreams::stream<NCursesSink>;
 
-class GuiShell : public GuiShellStream
+class GuiShell : public std::ostream
 {
 public:
   static bool is_initialized;

@@ -5,8 +5,6 @@
 #include <sys/wait.h>
 #include <assert.h>
 #include <gtest/gtest.h>
-#include <boost/iostreams/stream.hpp>
-#include <boost/iostreams/device/file_descriptor.hpp>
 
 #include "utils/subprocess.h"
 

@@ -4,7 +4,6 @@ SUBDIRS = tests
 lib_LTLIBRARIES = libsubprocess.la libguishell.la
 
 libsubprocess_la_SOURCES = subprocess.cpp
-libsubprocess_la_LIBADD = -lboost_iostreams
 
 libguishell_la_SOURCES = guishell.cpp
-libguishell_la_LIBADD = -lncursesw -lboost_filesystem
+libguishell_la_LIBADD = -lncursesw

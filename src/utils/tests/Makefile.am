@@ -1,6 +1,6 @@
 AM_CXXFLAGS=$(CXXFLAGS) -std=c++1z -Wall -Werror -I$(top_srcdir)/src/ -g
 AM_LDFLAGS=-pthread
-LDADD = -lstdc++ -lgtest -lgtest_main -lgmock -lgmock_main -lboost_iostreams
+LDADD = -lstdc++ -lgtest -lgtest_main -lgmock -lgmock_main
 EXEEXT=.bin
 
 TESTS = test_subprocess.bin test_guishell.bin

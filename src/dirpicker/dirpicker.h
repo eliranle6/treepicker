@@ -3,7 +3,6 @@
 
 #include "picker/picker.h"
 #include "dirtree/dirtree.h"
-#include <boost/filesystem/path.hpp>
 
 namespace dirpicker {
 

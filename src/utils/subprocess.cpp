@@ -2,8 +2,7 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <iostream>
-#include <boost/iostreams/stream.hpp>
-#include <boost/iostreams/device/file_descriptor.hpp>
+#include <cerrno>
 
 #include "subprocess.h"
 
@@ -15,20 +14,34 @@ typedef struct {
 } pipe_fds_t;
 
 
+FdInputStream::Buffer::int_type FdInputStream::Buffer::underflow(void) {
+    ssize_t nr_bytes;
+    do {
+        nr_bytes = ::read(_fd, _data, sizeof(_data));
+    } while (nr_bytes < 0 and errno == EINTR);
+    if (nr_bytes <= 0) {
+        return traits_type::eof();
+    }
+    setg(_data, _data, _data + nr_bytes);
+    return traits_type::to_int_type(_data[0]);
+}
+
+FdInputStream::FdInputStream(int fd) :
+    // The buffer is a member, which isn't constructed yet when the base class is, so it's set
+    // below
+    std::istream(nullptr),
+    _buffer(fd)
+{
+    rdbuf(&_buffer);
+}
+
+FdInputStream::~FdInputStream(void) {
+    ::close(_buffer.fd());
+}
+
 fds_istreamp subprocess_read_output(const char *filename, char const *argv[]) {
-
-    // The following implementation causes a segfault
-    //int proc_output_fd = utils::subprocess_get_fd(filename, argv);
-    //fd_objp_t proc_output_fd_obj =
-    //    std::make_unique<fd_obj_t>(proc_output_fd, boost::iostreams::never_close_handle);
-    //fd_bufferp_t fd_stream_buffer = std::make_unique<fd_buffer_t>(*proc_output_fd_obj);
-    //istreamp proc_output_stream = std::make_unique< std::istream > (&(*fd_stream_buffer));
-    //return proc_output_stream;
-
     int proc_output_fd = utils::subprocess_get_fd(filename, argv);
-    // The stream keeps its own copy of the device, and closes the fd when it's destroyed
-    fd_obj_t proc_output_fd_obj(proc_output_fd, boost::iostreams::close_handle);
-    return std::make_unique<fds_istream> (proc_output_fd_obj);
+    return std::make_unique<fds_istream>(proc_output_fd);
 }
 
 static void redirect_pipe_to_stdout(int fd) {

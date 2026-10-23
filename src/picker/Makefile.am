@@ -1,7 +1,7 @@
 AM_CXXFLAGS = $(CXXFLAGS) -std=c++1z -Wall -Werror -I$(top_srcdir)/src/ -pthread
 SUBDIRS = tests
 EXEXT=bin
-LDADD= $(top_builddir)/src/utils/libsubprocess.la $(top_builddir)/src/tree/libtree.la $(top_builddir)/src/treeprinter/libtreeprinter.la -lboost_system -lboost_filesystem -lboost_iostreams
+LDADD= $(top_builddir)/src/utils/libsubprocess.la $(top_builddir)/src/tree/libtree.la $(top_builddir)/src/treeprinter/libtreeprinter.la
 
 bin_PROGRAMS = picker
 lib_LTLIBRARIES = libpicker.la
