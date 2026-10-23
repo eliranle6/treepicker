@@ -21,6 +21,8 @@ struct CliOptions {
     std::string root_name;
     // --list: the input is a flat list of options (one per line), rather than paths
     bool is_list = false;
+    // --max-depth N: when scanning a dir, go at most N levels below it (-1: no limit)
+    int max_depth = -1;
 
     bool is_help_requested = false;
     // Set if the command line isn't valid

@@ -15,7 +15,7 @@ DirTree::DirTree(std::string _path) : path(_path)
 {
 }
 
-void DirTree::update_from_filesystem(void) {
+void DirTree::update_from_filesystem(int max_depth) {
     // Create root node
     char* realpath_ret_value = realpath(path.c_str(), nullptr);
     if (realpath_ret_value == nullptr) {
@@ -30,9 +30,13 @@ void DirTree::update_from_filesystem(void) {
     // than '\n', since file names may contain newlines.
     // A named string, since path.string() returns a temporary, which the pointers would outlive
     const std::string path_string = path.string();
-    char const *argv[] = {"/usr/bin/find", path_string.c_str(),
-        "!", "-path", path_string.c_str(), "-printf", "%y %P\\0", nullptr};
-    auto entries_stream = utils::subprocess_read_output("/usr/bin/find", argv);
+    const std::string max_depth_string = std::to_string(max_depth);
+    std::vector<char const*> argv = {"/usr/bin/find", path_string.c_str()};
+    if (max_depth >= 0) {
+        argv.insert(argv.end(), {"-maxdepth", max_depth_string.c_str()});
+    }
+    argv.insert(argv.end(), {"!", "-path", path_string.c_str(), "-printf", "%y %P\\0", nullptr});
+    auto entries_stream = utils::subprocess_read_output("/usr/bin/find", argv.data());
 
     // Read the dirs and files (skipping other types, e.g. symlinks)
     std::vector<std::string> entry_paths;

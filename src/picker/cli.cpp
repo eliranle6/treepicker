@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <iostream>
 
 #include "picker/cli.h"
@@ -32,6 +33,15 @@ CliOptions parse_cli(int argc, char* argv[]) {
             } else {
                 (arg == "--header" ? options.header : options.root_name) = argv[++i];
             }
+        } else if (arg == "--max-depth") {
+            char* end = nullptr;
+            const long value = i + 1 < argc ? std::strtol(argv[i + 1], &end, 10) : -1;
+            if (i + 1 == argc or end == argv[i + 1] or *end != '\0' or value < 0) {
+                options.error = "--max-depth needs a number (0 or more)";
+            } else {
+                options.max_depth = value;
+            }
+            ++i;
         } else if (arg == "--list") {
             options.is_list = true;
         } else if (arg == "-0") {

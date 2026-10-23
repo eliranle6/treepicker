@@ -17,8 +17,9 @@ public:
     std::filesystem::path path;
     DirTree(std::string _path);
 
-    // Add the dir's contents (found with `find`), sorted by name
-    void update_from_filesystem(void);
+    // Add the dir's contents (found with `find`), sorted by name, down to max_depth levels below
+    // the dir (-1: all)
+    void update_from_filesystem(int max_depth = -1);
 
     // Add the paths read from in, each ending with delimiter (or the end of input), in the order
     // they're read. Paths are relative to the tree's root, '/'-separated; see add_path().

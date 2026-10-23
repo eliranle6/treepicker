@@ -253,3 +253,16 @@ TEST(dirtree, empty_stream) {
     auto dir = tree_from_text("");
     ASSERT_EQ(dir.get_nr_nodes(), 1);
 }
+
+TEST(dirtree, max_depth) {
+    TempDir temp;
+    temp.make_dir("a/b/c");
+    temp.make_file("a/b/c/deep.txt");
+    temp.make_file("top.txt");
+    dirtree::DirTree dir(temp.path);
+    dir.update_from_filesystem(2);
+
+    ASSERT_NE(dir.get_node("a/b"), nullptr);
+    ASSERT_EQ(dir.get_node("a/b/c"), nullptr);
+    ASSERT_NE(dir.get_node("top.txt"), nullptr);
+}

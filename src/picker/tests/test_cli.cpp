@@ -78,3 +78,13 @@ TEST(cli, add_list_from_stream) {
     ASSERT_EQ(options[0]->identifier, "Copy from /a to /b");
     ASSERT_EQ(options[1]->tag, "Quit");
 }
+
+TEST(cli, max_depth) {
+    ASSERT_EQ(parse({}).max_depth, -1);
+    ASSERT_EQ(parse({"--max-depth", "3", "dir"}).max_depth, 3);
+    ASSERT_EQ(parse({"--max-depth", "3", "dir"}).args, std::vector<std::string>({"dir"}));
+    ASSERT_FALSE(parse({"--max-depth"}).error.empty());
+    ASSERT_FALSE(parse({"--max-depth", "x"}).error.empty());
+    ASSERT_FALSE(parse({"--max-depth", "-1"}).error.empty());
+    ASSERT_FALSE(parse({"--max-depth", ""}).error.empty());
+}
