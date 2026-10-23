@@ -15,3 +15,18 @@ $ make test       # builds and runs the tests
 $ make install    # copies the programs to /usr/local/bin (or: make install PREFIX=~/.local)
 $ make clean      # removes build/
 ```
+
+## dirpicker
+A fast tree picker for the terminal, like fzf but for trees: it shows a tree, lets you move around
+and search it, and prints what you picked.
+
+```
+$ dirpicker [DIR]                  # pick under DIR (default: .); prints the picked path
+$ find . -name '*.mp3' | dirpicker -       # pick from paths read from stdin
+$ dirpicker -m -0 --header 'Pick files' - < paths   # several nodes, '\0'-separated
+$ printf 'Copy\nRemove\n' | dirpicker --list         # a menu
+```
+
+It draws on the terminal (`/dev/tty`), so stdin and stdout are free for the tree and the result.
+It exits with 0 if something was picked, and 1 if the user quit. `dirpicker --help` lists the
+options and keys. dirdelta (github.com/levioctl/dirdelta) uses it for all of its pickers.
