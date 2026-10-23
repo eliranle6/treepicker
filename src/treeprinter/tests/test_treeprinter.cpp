@@ -152,6 +152,19 @@ TEST(treeprinter, tags_are_printed_as_is) {
     ASSERT_TRUE(does_string_contain_substring(lines[1], "100%_%s%n.txt"));
 }
 
+TEST(treeprinter, control_characters_in_tags_are_printed_as_question_marks) {
+    treelib::Tree tree;
+    tree.create_node("ro\tot", "root", "", nullptr);
+    tree.create_node("line\nbreak\x1b[31m", "file", "root", nullptr);
+    treelib::TreePrinter tree_printer(tree);
+
+    auto lines = print_lines(tree_printer, tree.get_root(), 10);
+
+    ASSERT_EQ(lines.size(), 2);
+    ASSERT_TRUE(does_string_contain_substring(lines[0], "ro?ot"));
+    ASSERT_TRUE(does_string_contain_substring(lines[1], "line?break?[31m"));
+}
+
 TEST(treeprinter, search_hides_nodes_that_dont_match) {
     auto tree = get_simple_tree();
     treelib::Search(tree).search("Rich smart");

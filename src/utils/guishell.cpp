@@ -61,6 +61,17 @@ int display_width(const std::string& s) {
 // into the stream, so this lives outside it.
 static bool is_screen_full = false;
 
+std::string printable(const std::string& s) {
+    std::string result = s;
+    for (auto& c : result) {
+        const auto byte = static_cast<unsigned char>(c);
+        if (byte < ' ' or byte == 0x7f) {
+            c = '?';
+        }
+    }
+    return result;
+}
+
 std::streamsize NCursesSink::write(const char *s, std::streamsize n) {
     // Print line by line, cutting each line at the right edge of the screen, since a wrapped line
     // would push the rest of the tree down. The last column is left empty, since writing to it

@@ -14,6 +14,13 @@ TEST(guishell, color_without_curses) {
     ASSERT_EQ(out.str(), "\x1B[34mtext\x1B[39m");
 }
 
+TEST(guishell, printable) {
+    ASSERT_EQ(guishell::printable("plain"), "plain");
+    ASSERT_EQ(guishell::printable("a\nb\tc\x1b\x7f"), "a?b?c??");
+    // UTF-8 bytes aren't control characters
+    ASSERT_EQ(guishell::printable("\xd7\xa9"), "\xd7\xa9");
+}
+
 TEST(guishell, bold_without_curses) {
     std::ostringstream out;
     out << guishell::Bold() << "text" << guishell::Unbold();

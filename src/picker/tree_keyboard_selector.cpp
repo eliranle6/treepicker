@@ -167,7 +167,8 @@ void TreeKeyboardSelector::print_tree(void) {
         if (is_search_line_shown()) {
             stats_line += std::string(", Matching: ") + std::to_string(_search.get_nr_matching());
         }
-        stats_line += std::string(", selected: ") + _tree_selector.get_selection()->tag;
+        stats_line += std::string(", selected: ") +
+            guishell::printable(_tree_selector.get_selection()->tag);
         attron(COLOR_PAIR(::guishell::BLACK_ON_WHITE));
         print_line(layout.stats_row, stats_line, window_width, true);
         attroff(COLOR_PAIR(::guishell::BLACK_ON_WHITE));

@@ -86,7 +86,7 @@ void print_node(
         out << " ";
 
         // Create current node text
-        auto tag = pn.node->tag;
+        auto tag = guishell::printable(pn.node->tag);
         if (pn.node->children.size() and not pn.are_children_printed) {
             tag += std::string(" (...)");
         }
@@ -125,7 +125,7 @@ void _print_breadcrumbs(
     std::string node_id = node->identifier;
     while (true) {
         auto current = tree.get_node(node_id);
-        tags.push_back(current->tag);
+        tags.push_back(guishell::printable(current->tag));
         if (current == tree.get_root()) {
             break;
         }

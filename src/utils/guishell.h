@@ -43,6 +43,10 @@ std::size_t nr_bytes_that_fit(const char *s, std::size_t n, int nr_columns);
 // The number of screen columns that s (UTF-8) takes
 int display_width(const std::string& s);
 
+// s with each control character (newline, tab, escape...) replaced by '?', like ls does, since
+// printing them would move the cursor, or be taken as terminal commands
+std::string printable(const std::string& s);
+
 // A stream buffer that writes to the curses screen, when flushed (std::endl, a Color...) or full
 class NCursesSink : public std::streambuf
 {
