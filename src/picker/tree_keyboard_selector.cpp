@@ -147,8 +147,9 @@ void TreeKeyboardSelector::print_tree(void) {
 
     // Print tree
     if (tree_max_height > 0) {
+        // The screen's last column stays empty (see NCursesSink::write)
         tree_height = _tree_printer.print(_out, should_nodes_be_search_filtered,
-                            _tree_selector.get_selection(), tree_max_height);
+                            _tree_selector.get_selection(), tree_max_height, window_width - 1);
     }
     for (int i = 0; i < tree_max_height - tree_height; ++i) {
       _out << std::endl;

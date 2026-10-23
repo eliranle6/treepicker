@@ -56,3 +56,10 @@ TEST_F(TextWidthTest, character_cut_at_the_end_of_the_buffer) {
     // A buffer can end in the middle of a character (the stream flushes in chunks)
     ASSERT_EQ(guishell::nr_bytes_that_fit("a\xd7\xa9", 2, 10), 2);
 }
+
+TEST_F(TextWidthTest, display_width) {
+    ASSERT_EQ(guishell::display_width(""), 0);
+    ASSERT_EQ(guishell::display_width("hello"), 5);
+    ASSERT_EQ(guishell::display_width("\xd7\xa9\xd7\x9c\xd7\x95\xd7\x9d"), 4);
+    ASSERT_EQ(guishell::display_width("\xe4\xb8\xad\xe6\x96\x87"), 4);
+}

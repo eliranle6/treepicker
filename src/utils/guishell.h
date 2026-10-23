@@ -2,6 +2,7 @@
 #define GUISHELL_H__
 
 #include <streambuf>
+#include <string>
 #include <iostream>
 #include <curses.h>
 #include <unistd.h>
@@ -38,6 +39,9 @@ enum Colors {
 // The number of bytes from the start of s (n bytes of UTF-8, with no newline) that fit in
 // nr_columns screen columns, without splitting a character
 std::size_t nr_bytes_that_fit(const char *s, std::size_t n, int nr_columns);
+
+// The number of screen columns that s (UTF-8) takes
+int display_width(const std::string& s);
 
 class NCursesSink : public boost::iostreams::sink
 {

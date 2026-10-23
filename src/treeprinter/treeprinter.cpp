@@ -49,7 +49,8 @@ bool TreePrinter::should_node_be_skipped(
 int TreePrinter::print(std::ostream &out,
                           bool filter_search_nodes,
                           std::shared_ptr<Node> selection,
-                          int window_height) {
+                          int window_height,
+                          int window_width) {
     scan_nodes_to_print(out, filter_search_nodes, selection, window_height);
 
     for (auto& printed_node: _nodes_to_print) {
@@ -64,7 +65,7 @@ int TreePrinter::print(std::ostream &out,
         }
         depth_to_next_sibling[printed_node.depth] = printed_node.next_sibling_exists;
         print_node(out, printed_node, selection, _printed_subtree_root, _tree,
-            &depth_to_next_sibling[0], is_last_in_pagination);
+            &depth_to_next_sibling[0], is_last_in_pagination, window_width);
         if (is_last_in_pagination) {
             print_top_scroll_indicator(out, _nr_items_removed_at_the_end);
         }

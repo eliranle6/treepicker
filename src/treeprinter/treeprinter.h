@@ -21,8 +21,9 @@ public:
     using node_t = const std::shared_ptr< Node >;
 
     TreePrinter(Tree &tree);
+    // window_width (0: no limit) keeps the breadcrumbs from being cut by the screen's edge
     int print(std::ostream &out, bool filter_search_nodes = false,
-              node_t selection = nullptr, int window_height = 100);
+              node_t selection = nullptr, int window_height = 100, int window_width = 0);
     void scan_nodes_to_print(std::ostream& out, bool filter_search_nodes,
               node_t selection, int window_height);
     std::shared_ptr<treelib::Node> get_next_printed_node_after_selected(void);

@@ -1,6 +1,8 @@
 #include <memory>
 #include <iostream>
 #include <string>
+#include <vector>
+#include <algorithm>
 
 #include "tree/tree.h"
 #include "utils/guishell.h"
@@ -32,7 +34,8 @@ void print_node(
         std::shared_ptr<Node> printed_subtree_root,
         Tree& tree,
         bool* depth_to_next_sibling,
-        bool is_last_in_pagination
+        bool is_last_in_pagination,
+        int window_width
         ) {
     assert(depth_to_next_sibling != nullptr);
     PrintedNode& pn = printed_node;
@@ -75,7 +78,9 @@ void print_node(
 
     // If printing root, print breadcrumbs up to node before printed subtree root
     if (pn.node == printed_subtree_root) {
-        _print_breadcrumbs(out, printed_subtree_root, tree);
+        // After the one-column selection marker
+        _print_breadcrumbs(out, printed_subtree_root, tree,
+                           window_width > 0 ? std::max(1, window_width - 1) : 0);
     } else {
         // Print node text
         out << " ";
@@ -109,18 +114,37 @@ void print_node(
 void _print_breadcrumbs(
         std::ostream &out,
         const std::shared_ptr<Node> node,
-        Tree& tree
+        Tree& tree,
+        int max_width
         ) {
-    std::string breadcrumbs;
-    std::string node_id = node->identifier;
+    static const std::string SEPARATOR = " > ";
+    static const std::string ELLIPSIS = "...";
 
+    // Tags from the node up to the root
+    std::vector<std::string> tags;
+    std::string node_id = node->identifier;
     while (true) {
-        auto node = tree.get_node(node_id);
-        breadcrumbs = node->tag + std::string(" > ") + breadcrumbs;
-        node_id = node->parent;
-        if (node == tree.get_root()) {
+        auto current = tree.get_node(node_id);
+        tags.push_back(current->tag);
+        if (current == tree.get_root()) {
             break;
         }
+        node_id = current->parent;
+    }
+
+    // Join from the root down, leaving out the tags closest to the root while it's too wide.
+    // The nearest dirs say more about where the selection is.
+    std::size_t nr_tags = tags.size();
+    auto join = [&](std::size_t nr_tags_to_join) {
+        std::string breadcrumbs = nr_tags_to_join < tags.size() ? ELLIPSIS + SEPARATOR : "";
+        for (std::size_t i = nr_tags_to_join; i > 0; --i) {
+            breadcrumbs += tags[i - 1] + SEPARATOR;
+        }
+        return breadcrumbs;
+    };
+    std::string breadcrumbs = join(nr_tags);
+    while (max_width > 0 and nr_tags > 1 and guishell::display_width(breadcrumbs) > max_width) {
+        breadcrumbs = join(--nr_tags);
     }
 
     out << breadcrumbs << std::endl;

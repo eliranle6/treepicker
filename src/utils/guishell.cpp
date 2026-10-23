@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cwchar>
+#include <limits>
 #include <streambuf>
 #include <iostream>
 #include <curses.h>
@@ -10,10 +11,13 @@
 
 namespace guishell {
 
-std::size_t nr_bytes_that_fit(const char *s, std::size_t n, int nr_columns) {
+// Walk s (n bytes of UTF-8) while it fits in max_nr_columns screen columns; return the number of
+// bytes walked, and set nr_columns_used to their width
+static std::size_t measure(const char *s, std::size_t n, int max_nr_columns,
+                           int& nr_columns_used) {
     std::mbstate_t state = std::mbstate_t();
     std::size_t nr_bytes = 0;
-    int nr_columns_used = 0;
+    nr_columns_used = 0;
     while (nr_bytes < n) {
         wchar_t wc;
         std::size_t char_size = std::mbrtowc(&wc, s + nr_bytes, n - nr_bytes, &state);
@@ -30,13 +34,24 @@ std::size_t nr_bytes_that_fit(const char *s, std::size_t n, int nr_columns) {
             // Non-printable characters take no columns
             char_width = std::max(0, wcwidth(wc));
         }
-        if (nr_columns_used + char_width > nr_columns) {
+        if (nr_columns_used + char_width > max_nr_columns) {
             break;
         }
         nr_columns_used += char_width;
         nr_bytes += char_size;
     }
     return nr_bytes;
+}
+
+std::size_t nr_bytes_that_fit(const char *s, std::size_t n, int nr_columns) {
+    int nr_columns_used;
+    return measure(s, n, nr_columns, nr_columns_used);
+}
+
+int display_width(const std::string& s) {
+    int nr_columns_used;
+    measure(s.data(), s.size(), std::numeric_limits<int>::max(), nr_columns_used);
+    return nr_columns_used;
 }
 
 std::streamsize NCursesSink::write(const char *s, std::streamsize n) {

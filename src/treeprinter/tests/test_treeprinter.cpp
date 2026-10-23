@@ -245,3 +245,39 @@ TEST(treeprinter, print_deep_tree) {
     ASSERT_TRUE(tree_printer.was_selection_printed());
     ASSERT_TRUE(does_string_contain_substring(lines.back(), "d150"));
 }
+
+TEST(treeprinter, breadcrumbs_that_fit) {
+    auto tree = get_chain_tree(5);
+    treelib::TreePrinter tree_printer(tree);
+    std::ostringstream out;
+
+    tree_printer.print(out, false, tree.get_node("d5"), 3, 80);
+
+    auto lines = split_string_by_newline(strip_escape_codes(out.str()));
+    ASSERT_EQ(lines[0], " d0 > d1 > d2 > d3 > d4 > ");
+}
+
+TEST(treeprinter, breadcrumbs_too_wide_drop_the_dirs_closest_to_the_root) {
+    auto tree = get_chain_tree(50);
+    treelib::TreePrinter tree_printer(tree);
+    std::ostringstream out;
+
+    tree_printer.print(out, false, tree.get_node("d50"), 3, 30);
+
+    auto lines = split_string_by_newline(strip_escape_codes(out.str()));
+    // The selection marker column, then the breadcrumbs
+    ASSERT_LE(lines[0].size(), 30);
+    ASSERT_EQ(lines[0].substr(0, 7), " ... > ");
+    ASSERT_EQ(lines[0].substr(lines[0].size() - 6), "d49 > ");
+}
+
+TEST(treeprinter, breadcrumbs_without_width_limit) {
+    auto tree = get_chain_tree(50);
+    treelib::TreePrinter tree_printer(tree);
+    std::ostringstream out;
+
+    tree_printer.print(out, false, tree.get_node("d50"), 3);
+
+    auto lines = split_string_by_newline(strip_escape_codes(out.str()));
+    ASSERT_EQ(lines[0].substr(0, 8), " d0 > d1");
+}
