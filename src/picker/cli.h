@@ -32,7 +32,7 @@ struct CliOptions {
 };
 
 // The options' part of a program's usage text
-extern const char CLI_OPTIONS_USAGE[];
+extern const std::string CLI_OPTIONS_USAGE;
 
 CliOptions parse_cli(int argc, char* argv[]);
 

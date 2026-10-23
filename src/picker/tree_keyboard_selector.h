@@ -34,6 +34,7 @@ enum {
     KEYCODE_L = 108,
     KEYCODE_LOWER_G = 103,
     KEYCODE_F = 102,
+    KEYCODE_QUESTION_MARK = 63,
     KEYCODE_CTRL_SLASH = 31,  // What terminals send for Ctrl-/ (and Ctrl-_)
     KEYCODE_UPPER_G = 71,
     KEYCODE_Q = 113
@@ -58,13 +59,16 @@ enum {
     // Switch between showing only the matches (and their ancestors), and the whole tree with
     // the matches highlighted
     KEYCODE_TOGGLE_FILTER = KEYCODE_F,
+    KEYCODE_HELP = KEYCODE_QUESTION_MARK,
     KEYCODE_MOVE_FROM_SEARCH_TO_NAV_MODE = KEYCODE_ENTER,
     KEYCODE_CANCEL_SEARCH = KEYCODE_ESCAPE
 };
 
 enum mode {
     MODE_NAVIGATION,
-    MODE_EDIT_SEARCH
+    MODE_EDIT_SEARCH,
+    // Showing the keys, until any key is pressed
+    MODE_HELP
 };
 
 class TreeKeyboardSelector
@@ -111,6 +115,9 @@ private:
     Layout get_layout(void);
 
     bool is_search_line_shown(void);
+
+    // Draw the keys' help instead of the tree
+    void print_help(void);
 
     // Lay the tree out without drawing it, so the selection can move relative to what would
     // be printed

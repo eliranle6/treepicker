@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 #include "tree_keyboard_selector.h"
+#include "picker/keys_help.h"
 #include "dirtree/dirtree.h"
 
 namespace picker {
@@ -34,6 +35,15 @@ TreeKeyboardSelector::TreeKeyboardSelector(treelib::Tree& tree, const PickerOpti
 bool TreeKeyboardSelector::char_pressed(int c)
 {
     bool is_finished = false;
+
+    // The help stays until a key is pressed, which only takes it away (a resize redraws it)
+    if (_mode == mode::MODE_HELP) {
+        if (c != KEY_RESIZE) {
+            _mode = mode::MODE_NAVIGATION;
+        }
+        print_tree();
+        return false;
+    }
 
     if (_mode == mode::MODE_NAVIGATION) {
         switch(c) {
@@ -119,6 +129,10 @@ bool TreeKeyboardSelector::char_pressed(int c)
                     search();
                     print_tree();
                 }
+                break;
+            case KEYCODE_HELP:
+                _mode = mode::MODE_HELP;
+                print_tree();
                 break;
             case KEYCODE_TOGGLE_FILTER:
                 _is_filtering = not _is_filtering;
@@ -209,8 +223,26 @@ static void print_line(int row, const std::string& text, int window_width, bool 
     }
 }
 
+void TreeKeyboardSelector::print_help(void) {
+    const int window_height = getmaxy(stdscr);
+    const int window_width = getmaxx(stdscr);
+    std::vector<std::string> lines = {"Keys (press any key to go back):", ""};
+    std::istringstream keys(KEYS_HELP);
+    for (std::string line; std::getline(keys, line);) {
+        lines.push_back(line);
+    }
+    for (int row = 0; row < window_height and row < static_cast<int>(lines.size()); ++row) {
+        print_line(row, lines[row], window_width, false);
+    }
+    refresh();
+}
+
 void TreeKeyboardSelector::print_tree(void) {
     _out.clear();
+    if (_mode == mode::MODE_HELP) {
+        print_help();
+        return;
+    }
     const int window_width = getmaxx(stdscr);
     const Layout layout = get_layout();
 
@@ -242,6 +274,16 @@ void TreeKeyboardSelector::print_tree(void) {
         }
         stats_line += std::string(", selected: ") +
             guishell::printable(_tree_selector.get_selection()->tag);
+        // With a reminder of the help key at the right end, which the stats give way to
+        static const std::string HELP_HINT = "?: help";
+        const int width = window_width - 1;
+        const int stats_width = width - guishell::display_width(HELP_HINT) - 1;
+        if (stats_width > 0) {
+            stats_line.resize(guishell::nr_bytes_that_fit(stats_line.data(), stats_line.size(),
+                                                          stats_width));
+            stats_line += std::string(stats_width + 1 - guishell::display_width(stats_line), ' ') +
+                HELP_HINT;
+        }
         attron(COLOR_PAIR(::guishell::BLACK_ON_WHITE));
         print_line(layout.stats_row, stats_line, window_width, true);
         attroff(COLOR_PAIR(::guishell::BLACK_ON_WHITE));

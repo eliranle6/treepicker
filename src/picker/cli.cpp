@@ -2,11 +2,12 @@
 #include <iostream>
 
 #include "picker/cli.h"
+#include "picker/keys_help.h"
 #include "picker/picker.h"
 
 namespace picker {
 
-const char CLI_OPTIONS_USAGE[] =
+const std::string CLI_OPTIONS_USAGE = std::string(
     "  -m, --multi    pick several nodes: Space picks the selected node and everything under\n"
     "                 it (or unpicks them), and Enter finishes\n"
     "  --header TEXT  show TEXT (one or more lines) above the tree\n"
@@ -14,17 +15,7 @@ const char CLI_OPTIONS_USAGE[] =
     "  -0             paths end with '\\0' rather than a newline (read ones and printed ones)\n"
     "  -h, --help     show this help\n"
     "\n"
-    "Keys:\n"
-    "  h/j/k/l, arrows  move\n"
-    "  g/G, Home/End    first/last sibling\n"
-    "  Ctrl-D/Ctrl-U    page down/up\n"
-    "  /                search as you type (Enter keeps the filter, Esc drops it)\n"
-    "  Ctrl-/           search when Enter is pressed\n"
-    "  f                switch between showing only the matches, and the whole tree with the\n"
-    "                   matches in yellow\n"
-    "  Space            pick or unpick (with -m)\n"
-    "  Enter            pick (with -m: finish)\n"
-    "  q, Ctrl-C        quit\n"
+    "Keys:\n") + KEYS_HELP +
     "\n"
     "Prints the picked nodes' paths, in the tree's order. Exits with 0 if a node was picked, 1 if\n"
     "not.\n";
