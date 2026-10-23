@@ -16,6 +16,9 @@ TreeKeyboardSelector::TreeKeyboardSelector(treelib::Tree& tree, const PickerOpti
     _search(tree),
     _options(options)
 {
+    if (options.is_first_child_selected_first) {
+        _tree_selector.explore_children_of_selection();
+    }
     if (not options.header.empty()) {
         std::istringstream header(options.header);
         for (std::string line; std::getline(header, line);) {
@@ -75,8 +78,11 @@ bool TreeKeyboardSelector::char_pressed(int c)
             case KEYCODE_PICK:
             case KEY_ENTER:
                 if (not _options.is_multi) {
-                    _picked = {_tree_selector.get_selection()};
-                    is_finished = true;
+                    if (_options.is_root_pickable or
+                            _tree_selector.get_selection() != _tree.get_root()) {
+                        _picked = {_tree_selector.get_selection()};
+                        is_finished = true;
+                    }
                 } else if (_tree_selector.get_nr_picked() > 0) {
                     _picked = _tree_selector.get_picked_nodes();
                     is_finished = true;

@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
         std::cout << USAGE << picker::CLI_OPTIONS_USAGE;
         return 0;
     }
-    if (not options.error.empty() or not options.args.empty()) {
+    if (not options.error.empty() or not options.args.empty() or options.is_list) {
         std::cerr << "picker: " << (options.error.empty() ? "too many arguments" : options.error)
                   << "\n\n" << USAGE << picker::CLI_OPTIONS_USAGE;
         return 2;

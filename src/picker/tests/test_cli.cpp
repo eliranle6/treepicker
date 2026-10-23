@@ -1,3 +1,4 @@
+#include <sstream>
 #include <vector>
 #include "gtest/gtest.h"
 
@@ -58,4 +59,22 @@ TEST(cli, header_without_value) {
 TEST(cli, root_name) {
     ASSERT_EQ(parse({"--root", "/some/dir"}).root_name, "/some/dir");
     ASSERT_FALSE(parse({"--root"}).error.empty());
+}
+
+TEST(cli, list) {
+    ASSERT_FALSE(parse({}).is_list);
+    ASSERT_TRUE(parse({"--list"}).is_list);
+}
+
+TEST(cli, add_list_from_stream) {
+    // Labels may have '/' in them: they're not paths
+    treelib::Tree tree;
+    std::istringstream in("Copy from /a to /b\n\nQuit\nQuit\n");
+    picker::add_list_from_stream(tree, in, '\n');
+
+    auto& options = tree.get_root()->children;
+    ASSERT_EQ(options.size(), 2);
+    ASSERT_EQ(options[0]->tag, "Copy from /a to /b");
+    ASSERT_EQ(options[0]->identifier, "Copy from /a to /b");
+    ASSERT_EQ(options[1]->tag, "Quit");
 }
