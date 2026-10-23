@@ -8,17 +8,17 @@
 namespace treelib {
 
 // Smartcase, like vim: ignore case unless the keyword has an uppercase letter (ASCII only)
-static bool does_path_match(const std::string& path, const std::string& keyword,
+static bool does_text_match(const std::string& text, const std::string& keyword,
                             bool ignore_case) {
     if (not ignore_case) {
-        return path.find(keyword) != std::string::npos;
+        return text.find(keyword) != std::string::npos;
     }
     auto equal_ignoring_case = [](char a, char b) {
         return std::tolower(static_cast<unsigned char>(a)) ==
                std::tolower(static_cast<unsigned char>(b));
     };
-    return std::search(path.begin(), path.end(), keyword.begin(), keyword.end(),
-                       equal_ignoring_case) != path.end();
+    return std::search(text.begin(), text.end(), keyword.begin(), keyword.end(),
+                       equal_ignoring_case) != text.end();
 }
 
 void Search::search(std::string keyword) {
@@ -41,8 +41,9 @@ void Search::search(std::string keyword) {
         node_t node = dfs_stack.top();
         dfs_stack.pop();
 
-        // Visit node
-        bool found = keyword.empty() or does_path_match(node->path, keyword, ignore_case);
+        // Visit node. Match its name rather than its path: with paths, a dir that matched made
+        // everything under it match too, and the root's name matched every node.
+        bool found = keyword.empty() or does_text_match(node->tag, keyword, ignore_case);
         node->is_matching_search = found;
         // Mark 'ancestor of matching' as false, by default, to be updated later
         node->is_ancestor_of_matching_search = false;

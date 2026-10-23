@@ -145,7 +145,7 @@ static std::vector<std::string> print(treelib::TreePrinter& tree_printer,
 
 TEST(tree_selector, explore_selection_without_visible_children_stays) {
     auto tree = get_simple_tree();
-    treelib::Search(tree).search("Smart");
+    treelib::Search(tree).search("smart");
     treelib::TreePrinter tree_printer(tree);
     picker::TreeSelector tree_selector(tree, tree_printer);
     tree_selector.explore_children_of_selection();

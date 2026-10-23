@@ -43,24 +43,19 @@ TEST(treesearch, simple_search_ancestors_of_matching_nodes) {
     ASSERT_FALSE(tree.get_node("child2.2_id")->is_ancestor_of_matching_search);
 }
 
-TEST(treesearch, search_by_path) {
+TEST(treesearch, search_matches_names_not_paths) {
     treelib::Tree tree = get_example_tree();
-    treelib::Search(tree).search("child1_tag/");
-    ASSERT_FALSE(tree.get_node("root_id")->is_matching_search);
-    ASSERT_FALSE(tree.get_node("child1_id")->is_matching_search);
-    ASSERT_TRUE(tree.get_node("child1.1_id")->is_matching_search);
-    ASSERT_TRUE(tree.get_node("child1.2_id")->is_matching_search);
-    ASSERT_FALSE(tree.get_node("child2_id")->is_matching_search);
-    ASSERT_FALSE(tree.get_node("child2.1_id")->is_matching_search);
-    ASSERT_FALSE(tree.get_node("child2.2_id")->is_matching_search);
+    treelib::Search search(tree);
 
-    ASSERT_TRUE(tree.get_node("root_id")->is_ancestor_of_matching_search);
-    ASSERT_TRUE(tree.get_node("child1_id")->is_ancestor_of_matching_search);
-    ASSERT_FALSE(tree.get_node("child1.1_id")->is_ancestor_of_matching_search);
-    ASSERT_FALSE(tree.get_node("child1.2_id")->is_ancestor_of_matching_search);
-    ASSERT_FALSE(tree.get_node("child2_id")->is_ancestor_of_matching_search);
-    ASSERT_FALSE(tree.get_node("child2.1_id")->is_ancestor_of_matching_search);
-    ASSERT_FALSE(tree.get_node("child2.2_id")->is_ancestor_of_matching_search);
+    // Under child1_tag, but not named so
+    search.search("child1_tag/");
+    ASSERT_EQ(search.get_nr_matching(), 0);
+
+    // The root's name is part of every path
+    search.search("root");
+    ASSERT_EQ(search.get_nr_matching(), 1);
+    ASSERT_TRUE(tree.get_node("root_id")->is_matching_search);
+    ASSERT_FALSE(tree.get_node("child1_id")->is_matching_search);
 }
 
 TEST(treesearch, lowercase_keyword_ignores_case) {
@@ -98,7 +93,7 @@ TEST(treesearch, nr_matching) {
     treelib::Tree tree = get_example_tree();
     treelib::Search search(tree);
     search.search("child2");
-    // child2 and the 2 nodes under it (their path contains child2)
+    // child2_tag, child2.1_tag and child2.2_tag
     ASSERT_EQ(search.get_nr_matching(), 3);
     search.search("no such node");
     ASSERT_EQ(search.get_nr_matching(), 0);

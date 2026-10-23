@@ -91,7 +91,7 @@ TEST(treewindowfitter, fitting_nodes_that_match_search_may_change_nr_levels_to_f
     auto expected = 2;
     ASSERT_EQ(actual, expected);
 
-    treelib::Search(tree).search(std::string("Dumb"));
+    treelib::Search(tree).search(std::string("dumb"));
 
     actual = get_nr_levels_that_fit_in_window(tree, window_size, tree.get_root());
     expected = 3;
