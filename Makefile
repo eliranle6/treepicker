@@ -48,17 +48,21 @@ $(BUILD)/dirpicker: $(call objects,$(DIRPICKER_SOURCES)) $(LIB)
 $(BUILD)/picker: $(call objects,$(PICKER_SOURCES)) $(LIB)
 	$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
-# A test's source is found by its name, in whichever src/*/tests dir it is
-.SECONDEXPANSION:
-$(TESTS): $(BUILD)/tests/%: $$(call objects,$$(filter %/$$*.cpp,$(TEST_SOURCES))) $(LIB)
+# Each test's binary depends on its own source's object (written out per test, since its source
+# may be in any src/*/tests dir)
+$(foreach source,$(TEST_SOURCES),\
+	$(eval $(BUILD)/tests/$(basename $(notdir $(source))): $(call objects,$(source)) $(LIB)))
+$(TESTS):
 	@mkdir -p $(@D)
 	$(CXX) $(LDFLAGS) $^ $(LDLIBS) $(TEST_LDLIBS) -o $@
 
-# Runs every test, even after a failure, and fails if any did
-test: $(TESTS)
+# Runs every test, even after a failure, and fails if any did. A binary that ran no tests fails
+# too, since gtest passes those (e.g. when the tests weren't linked in).
+test: all $(TESTS)
 	@failed=""; \
 	for t in $(TESTS); do \
-		if $$t > $$t.log 2>&1; then echo "PASS: $$(basename $$t)"; \
+		if $$t > $$t.log 2>&1 && grep -q '^\[  PASSED  \] [1-9]' $$t.log; then \
+			echo "PASS: $$(basename $$t) ($$(grep -o '^\[  PASSED  \] [0-9]*' $$t.log | grep -o '[0-9]*$$') tests)"; \
 		else echo "FAIL: $$(basename $$t) (see $$t.log)"; failed=1; fi; \
 	done; \
 	test -z "$$failed"
