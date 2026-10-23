@@ -14,6 +14,8 @@ struct CliOptions {
     bool is_null_separated = false;
     // -m, --multi: pick several nodes
     bool is_multi = false;
+    // --header TEXT: lines shown above the tree
+    std::string header;
 
     bool is_help_requested = false;
     // Set if the command line isn't valid

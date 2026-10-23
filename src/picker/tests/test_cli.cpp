@@ -44,3 +44,13 @@ TEST(cli, multi) {
     ASSERT_TRUE(parse({"-m"}).is_multi);
     ASSERT_TRUE(parse({"--multi"}).is_multi);
 }
+
+TEST(cli, header) {
+    auto options = parse({"--header", "line 1\nline 2", "-"});
+    ASSERT_EQ(options.header, "line 1\nline 2");
+    ASSERT_EQ(options.args, std::vector<std::string>({"-"}));
+}
+
+TEST(cli, header_without_value) {
+    ASSERT_FALSE(parse({"--header"}).error.empty());
+}

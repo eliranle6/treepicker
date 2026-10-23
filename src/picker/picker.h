@@ -6,14 +6,14 @@
 #include "tree/tree.h"
 #include "utils/guishell.h"
 #include "picker/keyboardreactor.h"
+#include "picker/picker_options.h"
 #include "picker/tree_keyboard_selector.h"
 
 namespace picker {
 
 class Picker {
 public:
-    // With is_multi, the user picks several nodes
-    Picker(treelib::Tree& tree, bool is_multi = false);
+    Picker(treelib::Tree& tree, const PickerOptions& options = PickerOptions());
 
     // Let the user pick, and return what they picked: empty if they quit
     std::vector<std::shared_ptr<treelib::Node>> run(void);

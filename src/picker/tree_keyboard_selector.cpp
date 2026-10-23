@@ -1,11 +1,12 @@
 #include <algorithm>
 #include <iostream>
+#include <sstream>
 #include "tree_keyboard_selector.h"
 #include "dirtree/dirtree.h"
 
 namespace picker {
 
-TreeKeyboardSelector::TreeKeyboardSelector(treelib::Tree& tree, bool is_multi):
+TreeKeyboardSelector::TreeKeyboardSelector(treelib::Tree& tree, const PickerOptions& options):
     _tree(tree),
     _out(guishell::GuiShell::get_instance()),
     _search_keyword(),
@@ -13,8 +14,14 @@ TreeKeyboardSelector::TreeKeyboardSelector(treelib::Tree& tree, bool is_multi):
     _tree_selector(tree, _tree_printer),
     _mode(mode::MODE_NAVIGATION),
     _search(tree),
-    _is_multi(is_multi)
+    _options(options)
 {
+    if (not options.header.empty()) {
+        std::istringstream header(options.header);
+        for (std::string line; std::getline(header, line);) {
+            _header_lines.push_back(line);
+        }
+    }
     curs_set(0);
 }
 
@@ -67,7 +74,7 @@ bool TreeKeyboardSelector::char_pressed(int c)
                 break;
             case KEYCODE_PICK:
             case KEY_ENTER:
-                if (not _is_multi) {
+                if (not _options.is_multi) {
                     _picked = {_tree_selector.get_selection()};
                     is_finished = true;
                 } else if (_tree_selector.get_nr_picked() > 0) {
@@ -76,7 +83,7 @@ bool TreeKeyboardSelector::char_pressed(int c)
                 }
                 break;
             case KEYCODE_TOGGLE_PICK:
-                if (_is_multi) {
+                if (_options.is_multi) {
                     _tree_selector.toggle_pick_of_selection();
                     print_tree();
                 }
@@ -177,7 +184,13 @@ void TreeKeyboardSelector::print_tree(void) {
     const int window_width = getmaxx(stdscr);
     const Layout layout = get_layout();
 
-    // Print tree
+    // Print header
+    for (int row = 0; row < layout.nr_header_rows; ++row) {
+        print_line(row, guishell::printable(_header_lines[row]), window_width, false);
+    }
+
+    // Print tree, below it
+    move(layout.nr_header_rows, 0);
     if (layout.tree_height > 0) {
         // The screen's last column stays empty (see NCursesSink::write)
         _tree_printer.print(_out, not _search_keyword.empty(), _tree_selector.get_selection(),
@@ -191,7 +204,7 @@ void TreeKeyboardSelector::print_tree(void) {
         if (is_search_line_shown()) {
             stats_line += std::string(", Matching: ") + std::to_string(_search.get_nr_matching());
         }
-        if (_is_multi) {
+        if (_options.is_multi) {
             stats_line += ", picked: " + std::to_string(_tree_selector.get_nr_picked());
         }
         stats_line += std::string(", selected: ") +
@@ -227,6 +240,11 @@ TreeKeyboardSelector::Layout TreeKeyboardSelector::get_layout(void) {
     if (nr_rows_left - 1 >= MIN_TREE_HEIGHT) {
         layout.stats_row = --nr_rows_left;
     }
+
+    // The header on top, as much of it as leaves the tree enough room
+    layout.nr_header_rows = std::min(static_cast<int>(_header_lines.size()),
+                                     std::max(0, nr_rows_left - MIN_TREE_HEIGHT));
+    nr_rows_left -= layout.nr_header_rows;
 
     layout.tree_height = nr_rows_left;
     return layout;

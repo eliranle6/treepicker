@@ -10,6 +10,7 @@
 #include "utils/guishell.h"
 #include "tree_selector.h"
 #include "tree/search.h"
+#include "picker/picker_options.h"
 
 namespace picker {
 
@@ -58,8 +59,7 @@ enum mode {
 class TreeKeyboardSelector
 {
 public:
-    // With is_multi, the user picks several nodes (Space picks or unpicks, Enter finishes)
-    TreeKeyboardSelector(treelib::Tree& tree, bool is_multi = false);
+    TreeKeyboardSelector(treelib::Tree& tree, const PickerOptions& options = PickerOptions());
 
     // Handle a key; returns whether picking is finished (a pick, or quitting)
     bool char_pressed(int c);
@@ -82,9 +82,11 @@ private:
     // line on each side of it
     static constexpr int MIN_TREE_HEIGHT = 4;
 
-    // Where things go on the screen, from the top: the tree, the stats line, the search line.
+    // Where things go on the screen, from the top: the header, the tree, the stats line, the
+    // search line.
     // A row of -1 means it isn't shown.
     struct Layout {
+        int nr_header_rows;
         int tree_height;
         int stats_row;
         int search_row;
@@ -104,7 +106,9 @@ private:
     TreeSelector _tree_selector;
     mode _mode;
     ::treelib::Search _search;
-    bool _is_multi;
+    PickerOptions _options;
+    // The header's lines
+    std::vector<std::string> _header_lines;
     std::vector<std::shared_ptr<treelib::Node>> _picked;
 };
 

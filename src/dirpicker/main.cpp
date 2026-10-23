@@ -8,10 +8,10 @@ static const char USAGE[] =
     "Usage: dirpicker [OPTIONS] [DIR | -]\n"
     "Pick a node of a tree of paths.\n"
     "\n"
-    "  DIR         the dir to pick from (default: the current dir)\n"
-    "  -           read the tree from stdin: one path per line, relative to the tree's root,\n"
-    "              with '/' between dirs. Dirs that aren't listed (e.g. \"a\" for \"a/b\") are\n"
-    "              added.\n";
+    "  DIR            the dir to pick from (default: the current dir)\n"
+    "  -              read the tree from stdin: one path per line, relative to the tree's root,\n"
+    "                 with '/' between dirs. Dirs that aren't listed (e.g. \"a\" for \"a/b\")\n"
+    "                 are added.\n";
 
 int main(int argc, char* argv[]) {
     setlocale(LC_ALL, "");
