@@ -33,7 +33,13 @@ std::shared_ptr< Node > Tree::get_node(std::string identifier) {
 }
 
 const std::vector< std::shared_ptr< Node > > & Tree::children(std::string identifier) {
-    return node_map[identifier]->children;
+    // Not node_map[identifier]: for an unknown id it would add an empty node pointer, and then
+    // dereference it
+    auto node = get_node(identifier);
+    if (node == nullptr) {
+        throw std::invalid_argument("No such node: " + identifier);
+    }
+    return node->children;
 }
 
 int Tree::get_node_depth(std::shared_ptr<Node> node) {
