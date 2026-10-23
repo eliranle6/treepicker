@@ -2,7 +2,9 @@
 #ifndef TREE_KEYBOARD_SELECTOR_H__
 #define TREE_KEYBOARD_SELECTOR_H__
 
+#include <memory>
 #include <string>
+#include <vector>
 #include "tree/tree.h"
 #include "treeprinter/treeprinter.h"
 #include "utils/guishell.h"
@@ -39,6 +41,7 @@ enum {
     KEYCODE_RIGHT = KEYCODE_L,
     KEYCODE_LEFT = KEYCODE_H,
     KEYCODE_BACK = KEYCODE_CTRL_C,
+    KEYCODE_PICK = KEYCODE_ENTER,
     KEYCODE_QUIT = KEYCODE_Q,
     KEYCODE_START_SEARCH = KEYCODE_SLASH,
     KEYCODE_MOVE_FROM_SEARCH_TO_NAV_MODE = KEYCODE_ENTER,
@@ -55,7 +58,11 @@ class TreeKeyboardSelector
 public:
     TreeKeyboardSelector(treelib::Tree& tree);
 
+    // Handle a key; returns whether picking is finished (a pick, or quitting)
     bool char_pressed(int c);
+
+    // What was picked, once finished: empty if the user quit
+    const std::vector<std::shared_ptr<treelib::Node>>& get_picked(void) const { return _picked; }
 
     void print_tree(void);
 
@@ -94,6 +101,7 @@ private:
     TreeSelector _tree_selector;
     mode _mode;
     ::treelib::Search _search;
+    std::vector<std::shared_ptr<treelib::Node>> _picked;
 };
 
 }

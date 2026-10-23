@@ -64,10 +64,15 @@ bool TreeKeyboardSelector::char_pressed(int c)
                 _tree_selector.move_one_up();
                 print_tree();
                 break;
+            case KEYCODE_PICK:
+            case KEY_ENTER:
+                _picked = {_tree_selector.get_selection()};
+                is_finished = true;
+                break;
             case KEYCODE_BACK:
             case KEYCODE_QUIT:
+                _picked.clear();
                 is_finished = true;
-                print_tree();
                 break;
             case KEYCODE_START_SEARCH:
                 if (_mode == mode::MODE_NAVIGATION) {

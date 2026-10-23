@@ -10,8 +10,9 @@ Picker::Picker(treelib::Tree& tree) :
                       [&](int c) { return _tree_keyboard_selector.char_pressed(c); })
 {}
 
-void Picker::run(void) {
+std::vector<std::shared_ptr<treelib::Node>> Picker::run(void) {
     _keyboard_reactor.run();
+    return _tree_keyboard_selector.get_picked();
 }
 
 }

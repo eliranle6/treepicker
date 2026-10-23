@@ -1,9 +1,8 @@
 #ifndef __PICKER_H
 #define __PICKER_H
 
-#include <assert.h>
-#include <signal.h>
-#include <thread>
+#include <memory>
+#include <vector>
 #include "tree/tree.h"
 #include "utils/guishell.h"
 #include "picker/keyboardreactor.h"
@@ -15,7 +14,8 @@ class Picker {
 public:
     Picker(treelib::Tree& tree);
 
-    void run(void);
+    // Let the user pick, and return what they picked: empty if they quit
+    std::vector<std::shared_ptr<treelib::Node>> run(void);
 
 private:
     TreeKeyboardSelector _tree_keyboard_selector;
