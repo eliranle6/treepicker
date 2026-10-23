@@ -22,7 +22,6 @@ bool TreeKeyboardSelector::char_pressed(int c)
     bool is_finished = false;
 
     if (_mode == mode::MODE_NAVIGATION) {
-        syslog(LOG_NOTICE, "%d", c);
         switch(c) {
             case KEYCODE_UP:
             case KEY_UP:

@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <tuple>
 #include "paginator.h"
-#include <syslog.h>
 
 std::tuple<int, int> paginate(int nr_items,
                               int page_size,

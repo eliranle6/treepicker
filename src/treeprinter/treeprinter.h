@@ -4,7 +4,6 @@
 #include <array>
 #include <ostream>
 #include <vector>
-#include <syslog.h>
 
 #include "tree/node.h"
 #include "tree/tree.h"
