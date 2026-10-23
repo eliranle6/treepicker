@@ -86,6 +86,14 @@ bool TreeKeyboardSelector::char_pressed(int c)
                 _picked.clear();
                 is_finished = true;
                 break;
+            case KEYCODE_CANCEL_SEARCH:
+                // Like while editing the keyword: drop it, unfiltering the tree
+                if (not _search_keyword.empty()) {
+                    _search_keyword = "";
+                    search();
+                    print_tree();
+                }
+                break;
             case KEYCODE_START_SEARCH:
                 if (_mode == mode::MODE_NAVIGATION) {
                     _mode = mode::MODE_EDIT_SEARCH;
