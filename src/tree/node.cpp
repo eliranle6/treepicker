@@ -1,4 +1,4 @@
-#include <node.h>
+#include "tree/node.h"
 
 namespace treelib {
 

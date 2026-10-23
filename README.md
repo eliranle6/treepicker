@@ -6,23 +6,12 @@ Each time a new feature is used for the first time, the text 'Today i learned: <
 The names of the learned features will be taken from: https://github.com/AnthonyCalandra/modern-cpp-features.
 
 ## How to Build
-This package uses autotools as the build system. I chose it only to practice it and not because i think it's a good choice.
+Needs a C++17 compiler, ncurses (`libncurses-dev`) and, for the tests, Google Test (`libgtest-dev`,
+or `scripts/install-google-test.sh`).
 
-1. Build the build system:
 ```
-$ autoreconf --install
+$ make            # builds build/dirpicker and build/picker
+$ make test       # builds and runs the tests
+$ make install    # copies the programs to /usr/local/bin (or: make install PREFIX=~/.local)
+$ make clean      # removes build/
 ```
-This will, among other things:
-* Call autoconf to generate the 'configure' script from configure.ac
-* Call automake to generate Makefile.in from Makefile.am
-(See https://www.gnu.org/software/autoconf/manual/autoconf-2.68/html_node/autoreconf-Invocation.html)
-
-2. Configure (This generates Makefile files from the Makefile.in files):
-```
-$ ./configure
-```
-3. Build:
-```
-$ make
-```
-
