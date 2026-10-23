@@ -60,8 +60,18 @@ public:
     void initialize(void);
 
 private:
+    // Number of nodes that page up/down move
+    static constexpr int PAGE_SIZE = 10;
+
     // Filter the tree by the current search keyword
     void search(void);
+
+    // Lines available for the tree
+    int get_tree_max_height(void);
+
+    // Lay the tree out without drawing it, so the selection can move relative to what would
+    // be printed
+    void layout_tree(void);
 
     treelib::Tree& _tree;
     guishell::GuiShell& _out;

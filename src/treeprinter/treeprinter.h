@@ -56,7 +56,7 @@ private:
 
     std::stack<std::pair<node_t, int>> _dfs_stack;
     bool should_node_be_skipped(bool filter_search_nodes,
-                                std::shared_ptr<Node> node);
+                                const std::shared_ptr<Node>& node);
     void print_breadcrumbs(std::ostream &out);
     bool will_children_of_node_be_printed(int depth);
 

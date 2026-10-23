@@ -33,28 +33,22 @@ bool TreeKeyboardSelector::char_pressed(int c)
                 print_tree();
                 break;
             case KEYCODE_PAGE_DOWN:
-                {
-                int i = 0;
-                for (; i < 10; ++i) {
+                // Moving relies on the tree's layout (what's printed after the selection), so
+                // lay it out again after each move, but draw only once at the end
+                for (int i = 0; i < PAGE_SIZE; ++i) {
                     _tree_selector.move_to_next();
-                    print_tree();
+                    layout_tree();
                 }
-                if (i == 0) {
-                    print_tree();
-                }
-                }
+                print_tree();
                 break;
             case KEYCODE_PAGE_UP:
                 {
                 auto first_node = _tree_printer.get_first_printed_node();
-                int i = 0;
-                for (; i < 10 && _tree_selector.get_selection() != first_node; ++i) {
+                for (int i = 0; i < PAGE_SIZE && _tree_selector.get_selection() != first_node; ++i) {
                     _tree_selector.move_to_prev();
-                    print_tree();
+                    layout_tree();
                 }
-                if (i == 0) {
-                    print_tree();
-                }
+                print_tree();
                 }
                 break;
             case KEYCODE_RIGHT:
@@ -132,7 +126,7 @@ void TreeKeyboardSelector::print_tree(void) {
     // Determine whether to print search line
     const bool should_search_bar_be_displayed =
         should_nodes_be_search_filtered or _mode == mode::MODE_EDIT_SEARCH;
-    int tree_max_height = window_height - 2;
+    int tree_max_height = get_tree_max_height();
     int tree_height = 0;
 
     // Print tree
@@ -173,6 +167,19 @@ void TreeKeyboardSelector::print_tree(void) {
     wrefresh(subby);
 }
 
+
+int TreeKeyboardSelector::get_tree_max_height(void) {
+    // Leave the two bottom lines for the stats and search lines
+    return getmaxy(stdscr) - 2;
+}
+
+void TreeKeyboardSelector::layout_tree(void) {
+    const int tree_max_height = get_tree_max_height();
+    if (tree_max_height > 0) {
+        _tree_printer.scan_nodes_to_print(_out, not _search_keyword.empty(),
+                                          _tree_selector.get_selection(), tree_max_height);
+    }
+}
 
 void TreeKeyboardSelector::search(void) {
     _search.search(_search_keyword);

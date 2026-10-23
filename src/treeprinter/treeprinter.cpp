@@ -39,7 +39,7 @@ void TreePrinter::init_pre_dfs_state(std::shared_ptr<treelib::Node> selection,
 
 bool TreePrinter::should_node_be_skipped(
                            bool filter_search_nodes,
-                           std::shared_ptr<Node> node) {
+                           const std::shared_ptr<Node>& node) {
     // The root is shown even when nothing matches, so the screen is never empty
     return (filter_search_nodes
         and node != _tree.get_root()
@@ -208,11 +208,14 @@ void TreePrinter::populate_stack_with_paginated_children_of_node(
         int child_depth,
         int window_height) {
     // Paginate the children that are shown: hidden ones would take no rows, and the node after
-    // the selection must be one that's shown
-    std::vector<std::shared_ptr<Node>> children;
+    // the selection must be one that's shown. Points at the node's own children rather than
+    // copying them, since copying a shared_ptr updates its reference count: 100k of those took
+    // 7ms, on every key press. Reserve, since growing the vector step by step took 1-2ms more.
+    std::vector<const std::shared_ptr<Node>*> children;
+    children.reserve(node->children.size());
     for (auto& child : node->children) {
         if (not should_node_be_skipped(_filter_search_nodes, child)) {
-            children.push_back(child);
+            children.push_back(&child);
         }
     }
     std::size_t nr_children = children.size();
@@ -220,7 +223,7 @@ void TreePrinter::populate_stack_with_paginated_children_of_node(
     // Find index of selected child
     std::size_t selection_idx_in_level = 0;
     for (auto iter = children.begin();
-             iter != children.end() and *iter != selection;
+             iter != children.end() and **iter != selection;
              ++iter, ++selection_idx_in_level);
     if (selection_idx_in_level == children.size()) {
         selection_idx_in_level = 0;
@@ -246,15 +249,15 @@ void TreePrinter::populate_stack_with_paginated_children_of_node(
         // know when to add '(... x more)' rows at the beginning and/or end.
         const bool is_last_sibling = counter == 0;
         if (is_last_sibling and _nr_items_removed_at_the_end > 0) {
-            _last_sibling_in_pagination = *iter;
+            _last_sibling_in_pagination = **iter;
         } else if (_nr_items_removed_at_the_beginning) {
             const bool is_first_sibling = counter == nr_items_to_print - 1;
             if (is_first_sibling and not is_last_sibling) {
-                _first_sibling_in_pagination = *iter;
+                _first_sibling_in_pagination = **iter;
             }
         }
 
-        _dfs_stack.push(std::make_pair(*iter, child_depth));
+        _dfs_stack.push(std::make_pair(**iter, child_depth));
     }
 
     // Update the next printed (_next_printed_node_after_selected), in case
@@ -266,7 +269,7 @@ void TreePrinter::populate_stack_with_paginated_children_of_node(
         std::size_t next_item_idx = selection_idx_in_level + 1;
         const bool next_item_exists = next_item_idx < nr_children;
         if (next_item_exists) {
-            _next_printed_node_after_selected = children[selection_idx_in_level + 1];
+            _next_printed_node_after_selected = *children[selection_idx_in_level + 1];
         }
     }
 }

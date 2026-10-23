@@ -25,7 +25,7 @@ public:
     // Today i learned: shared_ptr
     node_t create_node(std::string tag, std::string identifier, std::string parent, void* data);
     node_t get_node(std::string identifier);
-    node_t get_root(void) const { return root; }
+    const node_t& get_root(void) const { return root; }
     const std::vector<node_t> & children(std::string identifier);
 
     // Print tree
