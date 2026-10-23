@@ -68,6 +68,9 @@ GuiShell::GuiShell(NCursesSink &buff) :
     // echoing it onto the screen
     raw();
     noecho();
+    // Get arrow keys and the like as single key codes (KEY_UP...), rather than as escape
+    // sequences, which would otherwise end up typed into the search keyword
+    keypad(stdscr, TRUE);
     start_color();
     use_default_colors();
     is_initialized = true;

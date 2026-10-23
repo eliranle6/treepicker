@@ -25,14 +25,17 @@ bool TreeKeyboardSelector::char_pressed(int c)
         syslog(LOG_NOTICE, "%d", c);
         switch(c) {
             case KEYCODE_UP:
+            case KEY_UP:
                 _tree_selector.move_to_prev();
                 print_tree();
                 break;
             case KEYCODE_DOWN:
+            case KEY_DOWN:
                 _tree_selector.move_to_next();
                 print_tree();
                 break;
             case KEYCODE_PAGE_DOWN:
+            case KEY_NPAGE:
                 // Moving relies on the tree's layout (what's printed after the selection), so
                 // lay it out again after each move, but draw only once at the end
                 for (int i = 0; i < PAGE_SIZE; ++i) {
@@ -42,6 +45,7 @@ bool TreeKeyboardSelector::char_pressed(int c)
                 print_tree();
                 break;
             case KEYCODE_PAGE_UP:
+            case KEY_PPAGE:
                 {
                 auto first_node = _tree_printer.get_first_printed_node();
                 for (int i = 0; i < PAGE_SIZE && _tree_selector.get_selection() != first_node; ++i) {
@@ -52,10 +56,12 @@ bool TreeKeyboardSelector::char_pressed(int c)
                 }
                 break;
             case KEYCODE_RIGHT:
+            case KEY_RIGHT:
                 _tree_selector.explore_children_of_selection();
                 print_tree();
                 break;
             case KEYCODE_LEFT:
+            case KEY_LEFT:
                 _tree_selector.move_one_up();
                 print_tree();
                 break;
@@ -77,6 +83,7 @@ bool TreeKeyboardSelector::char_pressed(int c)
     } else if (_mode == mode::MODE_EDIT_SEARCH) {
         switch(c) {
             case KEYCODE_BACKSPACE:
+            case KEY_BACKSPACE:
                 if (_search_keyword.empty()) {
                     _mode = mode::MODE_NAVIGATION;
                     curs_set(0);
@@ -95,6 +102,7 @@ bool TreeKeyboardSelector::char_pressed(int c)
                 print_tree();
                 break;
             case KEYCODE_MOVE_FROM_SEARCH_TO_NAV_MODE:
+            case KEY_ENTER:
                 _mode = mode::MODE_NAVIGATION;
                 curs_set(0);
                 print_tree();
