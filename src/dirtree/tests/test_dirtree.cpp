@@ -11,29 +11,57 @@
 #include <boost/filesystem/operations.hpp>
 
 #include "dirtree/dirtree.h"
-#include "utils/getexepath.h"
+
+// A temporary dir, removed (with everything in it) when the object is destroyed
+class TempDir {
+public:
+    TempDir(void) {
+        char path_template[] = "/tmp/test_dirtree_XXXXXX";
+        path = mkdtemp(path_template);
+    }
+    ~TempDir(void) {
+        boost::filesystem::remove_all(path);
+    }
+    void make_dir(const std::string& relative_path) {
+        boost::filesystem::create_directories(path + "/" + relative_path);
+    }
+    void make_file(const std::string& relative_path) {
+        std::ofstream(path + "/" + relative_path);
+    }
+    std::string path;
+};
 
 /*
-* The following dir structure is present in the tests dir:
+* The example dir, made in a temporary dir for each test (rather than kept in the tests dir, which
+* tests found by a path relative to their binary):
 *
 *      subdir_for_tests
 *      ├── firstdir
-*      │   ├── anotherfile.txt
-*      │   └── somefile.txt
+*      │   ├── anotherfile.txt
+*      │   ├── link_to_file_in_third -> ../thirddir/yetanotherfile.txt
+*      │   └── somefile.txt
 *      ├── seconddir
-*      │   └── file_in_second
+*      │   └── file_in_second
 *      └── thirddir
 *          ├── subdir_in_third
-*          │   └── file_in_subdir.txt
+*          │   └── file_in_subdir.txt
 *          └── yetanotherfile.txt
 */
-
-
 dirtree::DirTree create_example_tree() {
-    boost::filesystem::path tests_subdir =
-        boost::filesystem::path(getexepath()).parent_path().string()
-        + "/../../../../src/dirtree/tests/subdir_for_tests";
-    dirtree::DirTree dir(tests_subdir.string());
+    TempDir temp;
+    temp.make_dir("subdir_for_tests/firstdir");
+    temp.make_file("subdir_for_tests/firstdir/anotherfile.txt");
+    temp.make_file("subdir_for_tests/firstdir/somefile.txt");
+    temp.make_dir("subdir_for_tests/seconddir");
+    temp.make_file("subdir_for_tests/seconddir/file_in_second");
+    temp.make_dir("subdir_for_tests/thirddir/subdir_in_third");
+    temp.make_file("subdir_for_tests/thirddir/subdir_in_third/file_in_subdir.txt");
+    temp.make_file("subdir_for_tests/thirddir/yetanotherfile.txt");
+    symlink("../thirddir/yetanotherfile.txt",
+            (temp.path + "/subdir_for_tests/firstdir/link_to_file_in_third").c_str());
+
+    // The tree is read into memory, so the dir can go once the function returns
+    dirtree::DirTree dir(temp.path + "/subdir_for_tests");
     dir.update_from_filesystem();
     return dir;
 }
@@ -89,25 +117,6 @@ TEST(dirtree, read_flat_dir__tree_node_identifiers) {
         ASSERT_EQ(dir.get_root()->children[2]->children[1]->identifier,
                   "thirddir/yetanotherfile.txt");
 }
-
-// A temporary dir, removed (with everything in it) when the object is destroyed
-class TempDir {
-public:
-    TempDir(void) {
-        char path_template[] = "/tmp/test_dirtree_XXXXXX";
-        path = mkdtemp(path_template);
-    }
-    ~TempDir(void) {
-        boost::filesystem::remove_all(path);
-    }
-    void make_dir(const std::string& relative_path) {
-        boost::filesystem::create_directories(path + "/" + relative_path);
-    }
-    void make_file(const std::string& relative_path) {
-        std::ofstream(path + "/" + relative_path);
-    }
-    std::string path;
-};
 
 static std::vector<std::string> tags_of_children(dirtree::DirTree& dir, const std::string& id) {
     std::vector<std::string> tags;
