@@ -33,7 +33,8 @@ enum Colors {
     BLACK_ON_WHITE = 100,
     DIRECTORY = 12,
     SELECTED_DIRECTORY = 101,
-    NON_SELECTED_DIRECTORY = 102
+    NON_SELECTED_DIRECTORY = 102,
+    RED_ON_BLUE = 103
 };
 
 // The number of bytes from the start of s (n bytes of UTF-8, with no newline) that fit in

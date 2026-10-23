@@ -5,7 +5,8 @@ namespace picker {
 TreeSelector::TreeSelector(treelib::Tree& tree, treelib::TreePrinter& tree_printer) :
     _tree(tree),
     _tree_printer(tree_printer),
-    _selection(tree.get_root())
+    _selection(tree.get_root()),
+    _nr_picked(0)
 {
 }
 
@@ -71,6 +72,47 @@ void TreeSelector::move_to_prev(void) {
     if (prev_node != nullptr) {
         _selection = prev_node;
     }
+}
+
+void TreeSelector::toggle_pick_of_selection(void) {
+    if (_selection == nullptr) {
+        return;
+    }
+    // Everything under it, whether an ongoing search shows it or not
+    const bool is_picked = not _selection->is_picked;
+    std::vector<treelib::Node*> dfs_stack = {_selection.get()};
+    while (not dfs_stack.empty()) {
+        auto node = dfs_stack.back();
+        dfs_stack.pop_back();
+        if (node->is_picked != is_picked) {
+            node->is_picked = is_picked;
+            is_picked ? ++_nr_picked : --_nr_picked;
+        }
+        for (auto& child : node->children) {
+            dfs_stack.push_back(child.get());
+        }
+    }
+}
+
+std::vector<TreeSelector::NodePtr> TreeSelector::get_picked_nodes(void) {
+    std::vector<NodePtr> picked;
+    if (_tree.get_root() == nullptr) {
+        return picked;
+    }
+    // Pointers to the nodes' shared_ptrs, to copy only the picked ones
+    std::vector<const NodePtr*> dfs_stack = {&_tree.get_root()};
+    while (not dfs_stack.empty() and picked.size() < _nr_picked) {
+        const NodePtr& node = *dfs_stack.back();
+        dfs_stack.pop_back();
+        if (node->is_picked) {
+            picked.push_back(node);
+        }
+        // Reversed, so the first child is popped first
+        for (auto child = node->children.rbegin(); child != node->children.rend(); ++child) {
+            dfs_stack.push_back(&*child);
+        }
+    }
+    return picked;
 }
 
 void TreeSelector::select_visible_ancestor(void) {

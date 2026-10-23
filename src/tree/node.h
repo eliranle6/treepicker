@@ -21,6 +21,9 @@ public:
     bool is_matching_search;
     bool is_ancestor_of_matching_search;
 
+    // Whether the user picked this node (when picking several)
+    bool is_picked;
+
     std::vector< std::shared_ptr< Node > > children;
     void add_child(std::shared_ptr< Node > node);
 

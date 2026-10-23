@@ -12,6 +12,8 @@ namespace picker {
 struct CliOptions {
     // -0: paths (on stdin, and the picked ones printed) end with '\0' rather than a newline
     bool is_null_separated = false;
+    // -m, --multi: pick several nodes
+    bool is_multi = false;
 
     bool is_help_requested = false;
     // Set if the command line isn't valid
@@ -26,7 +28,7 @@ extern const char CLI_OPTIONS_USAGE[];
 CliOptions parse_cli(int argc, char* argv[]);
 
 // Let the user pick from tree, and print the ids of what was picked (the root's as "."), one per
-// line. Returns the program's exit code: 0 if something was picked, 1 if the user quit.
+// line, in the tree's order. Returns the program's exit code: 0 if something was picked, 1 if the user quit.
 int pick_and_print(treelib::Tree& tree, const CliOptions& options);
 
 } // namespace picker

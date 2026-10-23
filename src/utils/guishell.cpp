@@ -158,6 +158,7 @@ GuiShell::GuiShell(NCursesSink &buff) :
     init_pair(WHITE_ON_BLUE, COLOR_WHITE, COLOR_BLUE);
     init_pair(BLACK_ON_BLUE, COLOR_BLACK, COLOR_BLUE);
     init_pair(BLACK_ON_WHITE, COLOR_BLACK, COLOR_WHITE);
+    init_pair(RED_ON_BLUE, COLOR_RED, COLOR_BLUE);
 }
 
 GuiShell& GuiShell::get_instance(void) {

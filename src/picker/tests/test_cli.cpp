@@ -38,3 +38,9 @@ TEST(cli, unknown_option) {
     auto options = parse({"--no-such-option"});
     ASSERT_NE(options.error.find("--no-such-option"), std::string::npos);
 }
+
+TEST(cli, multi) {
+    ASSERT_FALSE(parse({}).is_multi);
+    ASSERT_TRUE(parse({"-m"}).is_multi);
+    ASSERT_TRUE(parse({"--multi"}).is_multi);
+}

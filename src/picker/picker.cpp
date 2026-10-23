@@ -3,8 +3,8 @@
 
 namespace picker {
 
-Picker::Picker(treelib::Tree& tree) :
-    _tree_keyboard_selector(tree),
+Picker::Picker(treelib::Tree& tree, bool is_multi) :
+    _tree_keyboard_selector(tree, is_multi),
     _tree(tree),
     _keyboard_reactor([&](void) { _tree_keyboard_selector.initialize(); },
                       [&](int c) { return _tree_keyboard_selector.char_pressed(c); })

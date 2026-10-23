@@ -12,7 +12,8 @@ namespace picker {
 
 class Picker {
 public:
-    Picker(treelib::Tree& tree);
+    // With is_multi, the user picks several nodes
+    Picker(treelib::Tree& tree, bool is_multi = false);
 
     // Let the user pick, and return what they picked: empty if they quit
     std::vector<std::shared_ptr<treelib::Node>> run(void);

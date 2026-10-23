@@ -48,6 +48,7 @@ void print_node(
 
     // Print selection marker if node is selected node
     const bool is_selection = pn.node == selection;
+    const bool is_picked = pn.node->is_picked;
 
     if (is_selection) {
         out << ">";
@@ -55,8 +56,9 @@ void print_node(
     } else {
         out << " ";
     }
+    // Then a column marking picked nodes (the root's line has none: it shows the root in red)
     if (pn.node->identifier != printed_subtree_root->identifier) {
-        out << " ";
+        out << (is_picked ? "X" : " ");
     }
 
     // Print connecting lines for each depth (node depth is manifested by the indentation
@@ -78,6 +80,9 @@ void print_node(
 
     // If printing root, print breadcrumbs up to node before printed subtree root
     if (pn.node == printed_subtree_root) {
+        if (is_picked and not is_selection) {
+            out << guishell::Color(guishell::RED);
+        }
         // After the one-column selection marker
         _print_breadcrumbs(out, printed_subtree_root, tree,
                            window_width > 0 ? std::max(1, window_width - 1) : 0);
@@ -94,14 +99,22 @@ void print_node(
         if (pn.node->children.size()) {
             auto color = is_selection ? guishell::SELECTED_DIRECTORY :
                 guishell::NON_SELECTED_DIRECTORY;
+            if (is_picked) {
+                color = is_selection ? guishell::RED_ON_BLUE : guishell::RED;
+            }
             out << guishell::Color(color) << guishell::Bold() <<
                 tag << guishell::Unbold() << guishell::Color(guishell::DEFAULT);
 
         } else {
-            if (is_selection) {
+            if (is_picked) {
+                out << guishell::Color(is_selection ? guishell::RED_ON_BLUE : guishell::RED);
+            } else if (is_selection) {
                 out << guishell::Color(guishell::WHITE_ON_BLUE);
             }
             out << tag;
+            if (is_picked and not is_selection) {
+                out << guishell::Color(guishell::DEFAULT);
+            }
         }
         out << std::endl;
     }

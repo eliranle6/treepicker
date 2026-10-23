@@ -1,6 +1,7 @@
 #ifndef __TREESELECTOR_H
 #define __TREESELECTOR_H
 
+#include <vector>
 #include "tree/tree.h"
 #include "treeprinter/treeprinter.h"
 
@@ -23,10 +24,19 @@ public:
     // If an ongoing search hides the selection, select its closest visible ancestor
     void select_visible_ancestor(void);
 
+    // Pick the selection and everything under it, or, if it's picked, unpick them all
+    void toggle_pick_of_selection(void);
+
+    std::size_t get_nr_picked(void) const { return _nr_picked; }
+
+    // The picked nodes, in the tree's order (each node before the nodes under it)
+    std::vector<NodePtr> get_picked_nodes(void);
+
 private:
     treelib::Tree& _tree;
     treelib::TreePrinter& _tree_printer;
     NodePtr _selection;
+    std::size_t _nr_picked;
 };
 
 }

@@ -5,14 +5,15 @@
 
 namespace picker {
 
-TreeKeyboardSelector::TreeKeyboardSelector(treelib::Tree& tree):
+TreeKeyboardSelector::TreeKeyboardSelector(treelib::Tree& tree, bool is_multi):
     _tree(tree),
     _out(guishell::GuiShell::get_instance()),
     _search_keyword(),
     _tree_printer(tree),
     _tree_selector(tree, _tree_printer),
     _mode(mode::MODE_NAVIGATION),
-    _search(tree)
+    _search(tree),
+    _is_multi(is_multi)
 {
     curs_set(0);
 }
@@ -66,8 +67,19 @@ bool TreeKeyboardSelector::char_pressed(int c)
                 break;
             case KEYCODE_PICK:
             case KEY_ENTER:
-                _picked = {_tree_selector.get_selection()};
-                is_finished = true;
+                if (not _is_multi) {
+                    _picked = {_tree_selector.get_selection()};
+                    is_finished = true;
+                } else if (_tree_selector.get_nr_picked() > 0) {
+                    _picked = _tree_selector.get_picked_nodes();
+                    is_finished = true;
+                }
+                break;
+            case KEYCODE_TOGGLE_PICK:
+                if (_is_multi) {
+                    _tree_selector.toggle_pick_of_selection();
+                    print_tree();
+                }
                 break;
             case KEYCODE_BACK:
             case KEYCODE_QUIT:
@@ -170,6 +182,9 @@ void TreeKeyboardSelector::print_tree(void) {
         std::string stats_line = "Total: " + std::to_string(_tree.get_nr_nodes());
         if (is_search_line_shown()) {
             stats_line += std::string(", Matching: ") + std::to_string(_search.get_nr_matching());
+        }
+        if (_is_multi) {
+            stats_line += ", picked: " + std::to_string(_tree_selector.get_nr_picked());
         }
         stats_line += std::string(", selected: ") +
             guishell::printable(_tree_selector.get_selection()->tag);

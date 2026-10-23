@@ -293,3 +293,18 @@ TEST(treeprinter, breadcrumbs_without_width_limit) {
     auto lines = split_string_by_newline(strip_escape_codes(out.str()));
     ASSERT_EQ(lines[0].substr(0, 8), " d0 > d1");
 }
+
+TEST(treeprinter, picked_nodes_are_marked) {
+    auto tree = get_simple_tree();
+    tree.get_node("dumb")->is_picked = true;
+    tree.get_node("poor-dumb")->is_picked = true;
+    treelib::TreePrinter tree_printer(tree);
+
+    auto lines = print_lines(tree_printer, tree.get_root(), 10);
+
+    // The selection marker column, then the picked marker column
+    ASSERT_EQ(lines[1].substr(0, 2), " X");
+    ASSERT_EQ(lines[2].substr(0, 2), " X");
+    ASSERT_EQ(lines[3].substr(0, 2), "  ");
+    ASSERT_EQ(lines[4].substr(0, 2), "  ");
+}

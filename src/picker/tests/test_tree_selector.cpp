@@ -302,3 +302,110 @@ TEST(tree_selector, walk_through_a_filtered_dir_bigger_than_the_window) {
         ASSERT_EQ(tree_selector.get_selection(), visible_children[i]);
     }
 }
+
+static std::vector<std::string> ids(const std::vector<std::shared_ptr<treelib::Node>>& nodes) {
+    std::vector<std::string> result;
+    for (auto& node : nodes) {
+        result.push_back(node->identifier);
+    }
+    return result;
+}
+
+TEST(tree_selector, toggle_pick_picks_the_subtree) {
+    auto tree = get_simple_tree();
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    tree_selector.explore_children_of_selection();  // dumb
+
+    tree_selector.toggle_pick_of_selection();
+
+    ASSERT_EQ(tree_selector.get_nr_picked(), 3);
+    ASSERT_EQ(ids(tree_selector.get_picked_nodes()),
+              std::vector<std::string>({"dumb", "poor-dumb", "rich-dumb"}));
+    ASSERT_FALSE(tree.get_node("smart")->is_picked);
+}
+
+TEST(tree_selector, toggle_pick_again_unpicks) {
+    auto tree = get_simple_tree();
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    tree_selector.toggle_pick_of_selection();
+    ASSERT_EQ(tree_selector.get_nr_picked(), 7);
+
+    tree_selector.toggle_pick_of_selection();
+
+    ASSERT_EQ(tree_selector.get_nr_picked(), 0);
+    ASSERT_TRUE(tree_selector.get_picked_nodes().empty());
+}
+
+TEST(tree_selector, unpick_part_of_a_picked_subtree) {
+    auto tree = get_simple_tree();
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    tree_selector.explore_children_of_selection();  // dumb
+    tree_selector.toggle_pick_of_selection();
+    tree_selector.explore_children_of_selection();  // poor-dumb
+
+    tree_selector.toggle_pick_of_selection();
+
+    ASSERT_EQ(ids(tree_selector.get_picked_nodes()),
+              std::vector<std::string>({"dumb", "rich-dumb"}));
+    ASSERT_EQ(tree_selector.get_nr_picked(), 2);
+}
+
+TEST(tree_selector, pick_inside_a_picked_subtree_counts_once) {
+    // Picking a node that's already picked (as part of its parent) unpicks it rather than
+    // counting it twice
+    auto tree = get_simple_tree();
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    tree_selector.explore_children_of_selection();  // dumb
+    tree_selector.explore_children_of_selection();  // poor-dumb
+    tree_selector.toggle_pick_of_selection();
+    tree_selector.move_one_up();  // dumb
+
+    tree_selector.toggle_pick_of_selection();
+
+    ASSERT_EQ(tree_selector.get_nr_picked(), 3);
+    ASSERT_EQ(ids(tree_selector.get_picked_nodes()),
+              std::vector<std::string>({"dumb", "poor-dumb", "rich-dumb"}));
+}
+
+TEST(tree_selector, toggle_pick_includes_nodes_hidden_by_a_search) {
+    auto tree = get_simple_tree();
+    treelib::Search(tree).search("rich");
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    tree_selector.explore_children_of_selection();  // dumb
+
+    tree_selector.toggle_pick_of_selection();
+
+    ASSERT_TRUE(tree.get_node("poor-dumb")->is_picked);
+    ASSERT_EQ(tree_selector.get_nr_picked(), 3);
+}
+
+TEST(tree_selector, picked_nodes_are_in_the_tree_order) {
+    // Whatever the order they were picked in
+    auto tree = get_simple_tree();
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    tree_selector.explore_children_of_selection();  // dumb
+    print(tree_printer, tree_selector);
+    tree_selector.move_to_next();  // poor-dumb
+    print(tree_printer, tree_selector);
+    tree_selector.move_to_next();  // rich-dumb
+    tree_selector.toggle_pick_of_selection();
+    print(tree_printer, tree_selector);
+    tree_selector.move_to_next();  // smart
+    print(tree_printer, tree_selector);
+    tree_selector.move_to_next();  // poor-smart
+    tree_selector.toggle_pick_of_selection();
+    tree_selector.move_one_up();
+    tree_selector.move_one_up();  // people
+    tree_selector.explore_children_of_selection();  // dumb
+    tree_selector.explore_children_of_selection();  // poor-dumb
+    tree_selector.toggle_pick_of_selection();
+
+    ASSERT_EQ(ids(tree_selector.get_picked_nodes()),
+              std::vector<std::string>({"poor-dumb", "rich-dumb", "poor-smart"}));
+}

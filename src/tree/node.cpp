@@ -8,7 +8,8 @@ Node::Node(std::string _tag, std::string _identifier, void* _data, std::string _
         parent(_parent),
         data(_data),
         is_matching_search(true),
-        is_ancestor_of_matching_search(true)
+        is_ancestor_of_matching_search(true),
+        is_picked(false)
 {
 }
 

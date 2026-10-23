@@ -25,6 +25,7 @@ enum {
     KEYCODE_ESCAPE = 27,  // Also Ctrl-[
     KEYCODE_BACKSPACE = 127,
     KEYCODE_SLASH = 47,
+    KEYCODE_SPACE = 32,
     KEYCODE_ENTER = 10,
     KEYCODE_H = 104,
     KEYCODE_J = 106,
@@ -42,6 +43,7 @@ enum {
     KEYCODE_LEFT = KEYCODE_H,
     KEYCODE_BACK = KEYCODE_CTRL_C,
     KEYCODE_PICK = KEYCODE_ENTER,
+    KEYCODE_TOGGLE_PICK = KEYCODE_SPACE,
     KEYCODE_QUIT = KEYCODE_Q,
     KEYCODE_START_SEARCH = KEYCODE_SLASH,
     KEYCODE_MOVE_FROM_SEARCH_TO_NAV_MODE = KEYCODE_ENTER,
@@ -56,7 +58,8 @@ enum mode {
 class TreeKeyboardSelector
 {
 public:
-    TreeKeyboardSelector(treelib::Tree& tree);
+    // With is_multi, the user picks several nodes (Space picks or unpicks, Enter finishes)
+    TreeKeyboardSelector(treelib::Tree& tree, bool is_multi = false);
 
     // Handle a key; returns whether picking is finished (a pick, or quitting)
     bool char_pressed(int c);
@@ -101,6 +104,7 @@ private:
     TreeSelector _tree_selector;
     mode _mode;
     ::treelib::Search _search;
+    bool _is_multi;
     std::vector<std::shared_ptr<treelib::Node>> _picked;
 };
 
