@@ -24,7 +24,7 @@ void DirTree::update_from_filesystem(void) {
     }
     std::string root_tag = std::string(basename(realpath_ret_value));
     free(realpath_ret_value);
-    create_node(root_tag, "", "", nullptr);
+    add_root(root_tag);
 
     // Execute the `find` command to explore the dir contents. Entries end with '\0' rather
     // than '\n', since file names may contain newlines.
@@ -52,16 +52,74 @@ void DirTree::update_from_filesystem(void) {
     // Sorted paths also list each dir before what's in it, which create_node needs.
     std::sort(entry_paths.begin(), entry_paths.end());
 
-    // Populate dirtree. find's paths are relative and never end with '/', so the name is what
-    // follows the last '/', and the parent's path (its id) what precedes it.
+    // Populate dirtree
     for (auto& entry_path : entry_paths) {
-        const auto last_slash = entry_path.rfind('/');
-        if (last_slash == std::string::npos) {
-            create_node(entry_path, entry_path, "", nullptr);
-        } else {
-            create_node(entry_path.substr(last_slash + 1), entry_path,
-                        entry_path.substr(0, last_slash), nullptr);
+        add_path(entry_path);
+    }
+}
+
+void DirTree::update_from_stream(std::istream& in, char delimiter) {
+    add_root(".");
+    std::string entry_path;
+    while (getline(in, entry_path, delimiter)) {
+        add_path(entry_path);
+    }
+}
+
+// Whether path has empty or "." components (find's paths never do)
+static bool needs_cleaning(const std::string& path) {
+    std::size_t component_start = 0;
+    for (std::size_t i = 0; i <= path.size(); ++i) {
+        if (i == path.size() or path[i] == '/') {
+            const std::size_t length = i - component_start;
+            if (length == 0 or (length == 1 and path[component_start] == '.')) {
+                return true;
+            }
+            component_start = i + 1;
         }
+    }
+    return false;
+}
+
+// path without empty and "." components
+static std::string clean_path(const std::string& path) {
+    std::string cleaned;
+    std::size_t component_start = 0;
+    for (std::size_t i = 0; i <= path.size(); ++i) {
+        if (i == path.size() or path[i] == '/') {
+            const std::size_t length = i - component_start;
+            if (length > 0 and not (length == 1 and path[component_start] == '.')) {
+                if (not cleaned.empty()) {
+                    cleaned += '/';
+                }
+                cleaned.append(path, component_start, length);
+            }
+            component_start = i + 1;
+        }
+    }
+    return cleaned;
+}
+
+void DirTree::add_path(const std::string& path) {
+    const std::string cleaned = needs_cleaning(path) ? clean_path(path) : path;
+    if (cleaned.empty()) {
+        return;
+    }
+
+    // The name is what follows the last '/', and the parent's path (its id) what precedes it
+    const auto last_slash = cleaned.rfind('/');
+    const std::string parent = last_slash == std::string::npos ? "" : cleaned.substr(0, last_slash);
+    const std::string name = last_slash == std::string::npos ? cleaned : cleaned.substr(last_slash + 1);
+    if (get_or_create_node(name, cleaned, parent, nullptr) == nullptr) {
+        // The parent isn't in the tree yet
+        add_path(parent);
+        create_node(name, cleaned, parent, nullptr);
+    }
+}
+
+void DirTree::add_root(const std::string& tag) {
+    if (get_root() == nullptr) {
+        create_node(tag, "", "", nullptr);
     }
 }
 

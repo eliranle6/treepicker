@@ -1,4 +1,8 @@
 #include <algorithm>
+#include <cerrno>
+#include <cstdio>
+#include <cstring>
+#include <stdexcept>
 #include <cwchar>
 #include <limits>
 #include <streambuf>
@@ -106,7 +110,14 @@ void NCursesSink::write_buffer(void) {
 GuiShell::GuiShell(NCursesSink &buff) :
     std::ostream(&buff)
 {
-    initscr();
+    // Use the terminal itself, rather than stdin and stdout, which may be pipes (e.g. a tree read
+    // from stdin, and picked paths written to stdout)
+    FILE* terminal = fopen("/dev/tty", "r+");
+    if (terminal == nullptr) {
+        throw std::runtime_error(std::string("Cannot open the terminal (/dev/tty): ") +
+                                 strerror(errno));
+    }
+    set_term(newterm(nullptr, terminal, terminal));
     // Get each key as it's pressed (Ctrl-C included, as a key rather than a signal), without
     // echoing it onto the screen
     raw();

@@ -112,3 +112,16 @@ TEST(tree, children_of_unknown_node_throws) {
     ASSERT_EQ(tree.get_node("no-such-node"), nullptr);
     ASSERT_EQ(tree.get_nr_nodes(), 7);
 }
+
+TEST(tree, get_or_create_node) {
+    treelib::Tree tree;
+    tree.create_node("root", "root", "", nullptr);
+    auto created = tree.get_or_create_node("a", "a", "root", nullptr);
+    ASSERT_NE(created, nullptr);
+    // Already there: the same node, not a second one
+    ASSERT_EQ(tree.get_or_create_node("a", "a", "root", nullptr), created);
+    ASSERT_EQ(tree.get_root()->children.size(), 1);
+    // No such parent: nothing is added
+    ASSERT_EQ(tree.get_or_create_node("b", "b", "no-such-parent", nullptr), nullptr);
+    ASSERT_EQ(tree.get_nr_nodes(), 2);
+}

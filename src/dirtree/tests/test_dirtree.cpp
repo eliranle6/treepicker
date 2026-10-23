@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include <chrono>
 #include <fstream>
+#include <sstream>
 #include <stdexcept>
 #include <assert.h>
 #include "gtest/gtest.h"
@@ -196,4 +197,59 @@ TEST(dirtree, big_flat_dir) {
 
     ASSERT_EQ(dir.get_root()->children.size(), 20000);
     ASSERT_LT(elapsed, std::chrono::seconds(5));
+}
+
+static dirtree::DirTree tree_from_text(const std::string& text, char delimiter = '\n') {
+    dirtree::DirTree dir("-");
+    std::istringstream in(text);
+    dir.update_from_stream(in, delimiter);
+    return dir;
+}
+
+TEST(dirtree, stream_paths_keep_their_order) {
+    auto dir = tree_from_text("b\nc\na\n");
+    std::vector<std::string> expected = {"b", "c", "a"};
+    ASSERT_EQ(tags_of_children(dir, ""), expected);
+    ASSERT_EQ(dir.get_root()->tag, ".");
+}
+
+TEST(dirtree, stream_adds_missing_parents) {
+    auto dir = tree_from_text("a/b/c.txt\n");
+    ASSERT_EQ(dir.get_nr_nodes(), 4);
+    ASSERT_EQ(dir.get_node("a")->tag, "a");
+    ASSERT_EQ(dir.get_node("a/b")->parent, "a");
+    ASSERT_EQ(dir.get_node("a/b/c.txt")->tag, "c.txt");
+}
+
+TEST(dirtree, stream_paths_are_cleaned) {
+    auto dir = tree_from_text("./a//b/\n/c\n./\n\n.\nd/./e\n");
+    std::vector<std::string> expected = {"a", "c", "d"};
+    ASSERT_EQ(tags_of_children(dir, ""), expected);
+    ASSERT_NE(dir.get_node("a/b"), nullptr);
+    ASSERT_NE(dir.get_node("d/e"), nullptr);
+    ASSERT_EQ(dir.get_nr_nodes(), 6);
+}
+
+TEST(dirtree, stream_skips_paths_already_added) {
+    // Including a dir that was added for a path under it
+    auto dir = tree_from_text("a/b\na/b\na\n");
+    ASSERT_EQ(dir.get_nr_nodes(), 3);
+    ASSERT_EQ(dir.get_node("a")->children.size(), 1);
+}
+
+TEST(dirtree, stream_null_separated) {
+    auto dir = tree_from_text(std::string("line\nbreak/x\0y\0", 16), '\0');
+    std::vector<std::string> expected = {"line\nbreak", "y"};
+    ASSERT_EQ(tags_of_children(dir, ""), expected);
+}
+
+TEST(dirtree, stream_last_path_without_delimiter) {
+    auto dir = tree_from_text("a\nb");
+    std::vector<std::string> expected = {"a", "b"};
+    ASSERT_EQ(tags_of_children(dir, ""), expected);
+}
+
+TEST(dirtree, empty_stream) {
+    auto dir = tree_from_text("");
+    ASSERT_EQ(dir.get_nr_nodes(), 1);
 }

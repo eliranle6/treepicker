@@ -2,33 +2,56 @@
 
 namespace treelib {
 
-std::shared_ptr< Node >Tree::create_node(const std::string& tag, const std::string& identifier,
-                                         const std::string& parent, void* data) {
+Tree::CreateResult Tree::try_create_node(const std::string& tag, const std::string& identifier,
+                                         const std::string& parent, void* data, node_t& node) {
     // Each map lookup compares strings, so look each id up once
     const bool is_root_node_creation = root == nullptr;
     std::shared_ptr< Node > parent_node;
     if (not is_root_node_creation) {
         parent_node = get_node(parent);
         if (parent_node == nullptr) {
-            throw std::invalid_argument("Parent node does not exist");
+            return CreateResult::NO_PARENT;
         }
     }
     auto inserted = node_map.emplace(identifier, nullptr);
     if (not inserted.second) {
-        throw std::invalid_argument("Duplicate node");
+        node = inserted.first->second;
+        return CreateResult::EXISTS;
     }
 
-    auto nodeptr = std::make_shared< Node >(tag, identifier, data, parent);
+    node = std::make_shared< Node >(tag, identifier, data, parent);
     if (is_root_node_creation) {
-        root = nodeptr;
-        nodeptr->path = std::string("/") + tag;
+        root = node;
+        node->path = std::string("/") + tag;
     } else {
         // Set as child of designated parent
-        nodeptr->path = parent_node->path + std::string("/") + tag;
-        parent_node->add_child(nodeptr);
+        node->path = parent_node->path + std::string("/") + tag;
+        parent_node->add_child(node);
     }
-    inserted.first->second = nodeptr;
-    return nodeptr;
+    inserted.first->second = node;
+    return CreateResult::CREATED;
+}
+
+std::shared_ptr< Node >Tree::create_node(const std::string& tag, const std::string& identifier,
+                                         const std::string& parent, void* data) {
+    node_t node;
+    switch (try_create_node(tag, identifier, parent, data, node)) {
+        case CreateResult::NO_PARENT:
+            throw std::invalid_argument("Parent node does not exist");
+        case CreateResult::EXISTS:
+            throw std::invalid_argument("Duplicate node");
+        case CreateResult::CREATED:
+            break;
+    }
+    return node;
+}
+
+std::shared_ptr< Node > Tree::get_or_create_node(const std::string& tag,
+                                                 const std::string& identifier,
+                                                 const std::string& parent, void* data) {
+    node_t node;
+    const auto result = try_create_node(tag, identifier, parent, data, node);
+    return result == CreateResult::NO_PARENT ? nullptr : node;
 }
 
 std::shared_ptr< Node > Tree::get_node(const std::string& identifier) {
