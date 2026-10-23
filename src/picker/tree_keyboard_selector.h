@@ -26,7 +26,8 @@ enum {
     KEYCODE_H = 104,
     KEYCODE_J = 106,
     KEYCODE_K = 107,
-    KEYCODE_L = 108
+    KEYCODE_L = 108,
+    KEYCODE_Q = 113
 };
 
 enum {
@@ -37,6 +38,7 @@ enum {
     KEYCODE_RIGHT = KEYCODE_L,
     KEYCODE_LEFT = KEYCODE_H,
     KEYCODE_BACK = KEYCODE_CTRL_C,
+    KEYCODE_QUIT = KEYCODE_Q,
     KEYCODE_START_SEARCH = KEYCODE_SLASH,
     KEYCODE_MOVE_FROM_SEARCH_TO_NAV_MODE = KEYCODE_ENTER
 };
@@ -51,13 +53,16 @@ class TreeKeyboardSelector
 public:
     TreeKeyboardSelector(treelib::Tree& tree);
 
-    bool char_pressed(char c);
+    bool char_pressed(int c);
 
     void print_tree(void);
 
     void initialize(void);
 
 private:
+    // Filter the tree by the current search keyword
+    void search(void);
+
     treelib::Tree& _tree;
     guishell::GuiShell& _out;
     std::string _search_keyword;

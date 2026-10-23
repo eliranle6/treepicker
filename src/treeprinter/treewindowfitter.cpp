@@ -1,3 +1,4 @@
+#include <vector>
 #include "tree/tree.h"
 #include "tree/node.h"
 #include "treewindowfitter.h"
@@ -10,44 +11,32 @@ int get_nr_levels_that_fit_in_window(
         std::shared_ptr<Node> printed_subtree_root) {
     using NodeP = std::shared_ptr<Node>;
 
-    using NodeDepth = std::pair<NodeP, int>;
-    std::queue<NodeDepth> bfs_queue;
-    bfs_queue.push(std::make_pair(printed_subtree_root, 0));
-    int nr_nodes_to_print_until_previous_level = 0;
-    int nr_nodes_in_current_depth = 0;
-    int nr_depths_to_print = 0;
-    while(not bfs_queue.empty() and
-          nr_nodes_to_print_until_previous_level + nr_nodes_in_current_depth <= window_size + 1) {
-
-        auto node_depth_pair = bfs_queue.front();
-        auto node = std::get<0>(node_depth_pair);
-        auto depth = std::get<1>(node_depth_pair);
-        bfs_queue.pop();
-        for (auto iter = node->children.rbegin(); iter != node->children.rend(); ++iter) {
-            if ((*iter)->is_matching_search or (*iter)->is_ancestor_of_matching_search) {
-                auto child_node_depth_pair = std::make_pair(*iter, depth + 1);
-                bfs_queue.push(child_node_depth_pair);
-            }
-        }
-
-        // Add the previous fully-scanned level as a printed
-        ++nr_nodes_in_current_depth;
-        int previous_depth = nr_depths_to_print;
-        const bool first_in_new_depth = previous_depth != depth;
-        if (first_in_new_depth or bfs_queue.empty()) {
-            if (nr_nodes_to_print_until_previous_level <= window_size) {
-                ++nr_depths_to_print;
-                nr_nodes_to_print_until_previous_level += nr_nodes_in_current_depth;
-            }
-            nr_nodes_in_current_depth = 1;
-            if (bfs_queue.empty() and first_in_new_depth) {
-                if (nr_nodes_to_print_until_previous_level + 1 <= window_size) {
-                    ++nr_depths_to_print;
+    // Add levels (of nodes that an ongoing search doesn't hide) while all of their nodes fit,
+    // one line each. Stop counting a level once it's too big, so a huge dir costs no more than
+    // a small one.
+    int nr_levels = 1;
+    int nr_nodes = 1;
+    std::vector<NodeP> level = {printed_subtree_root};
+    while (true) {
+        std::vector<NodeP> next_level;
+        for (auto& node : level) {
+            for (auto& child : node->children) {
+                if (not child->is_search_visible()) {
+                    continue;
                 }
+                if (nr_nodes + static_cast<int>(next_level.size()) + 1 > window_size) {
+                    return nr_levels;
+                }
+                next_level.push_back(child);
             }
         }
+        if (next_level.empty()) {
+            return nr_levels;
+        }
+        ++nr_levels;
+        nr_nodes += next_level.size();
+        level = std::move(next_level);
     }
-    return nr_depths_to_print;
 }
 
 
@@ -78,7 +67,15 @@ std::tuple<std::shared_ptr<Node>, int, int> choose_printed_subtree_root(
     const bool should_move_printed_subtree_root = selection != tree.get_root() and (
         is_selection_too_deep_to_print or is_selection_above_printed_root
         or is_selection_printed_subtree_root);
-    if (should_move_printed_subtree_root) {
+    if (selection == tree.get_root() and printed_subtree_root != selection) {
+        // E.g. a search hid the selection, so it moved up to the root: show from the root
+        printed_subtree_root = selection;
+        printed_subtree_root_depth = 0;
+        nr_levels_that_fit_in_window = get_nr_levels_that_fit_in_window(
+            tree,
+            window_height,
+            printed_subtree_root);
+    } else if (should_move_printed_subtree_root) {
         printed_subtree_root = tree.get_node(selection->parent);
         printed_subtree_root_depth = tree.get_node_depth(printed_subtree_root);
         nr_levels_that_fit_in_window = get_nr_levels_that_fit_in_window(

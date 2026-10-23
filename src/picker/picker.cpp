@@ -7,7 +7,7 @@ Picker::Picker(treelib::Tree& tree) :
     _tree_keyboard_selector(tree),
     _tree(tree),
     _keyboard_reactor([&](void) { _tree_keyboard_selector.initialize(); },
-                      [&](char c) { return _tree_keyboard_selector.char_pressed(c); })
+                      [&](int c) { return _tree_keyboard_selector.char_pressed(c); })
 {}
 
 void Picker::run(void) {

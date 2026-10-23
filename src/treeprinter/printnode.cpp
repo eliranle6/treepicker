@@ -114,8 +114,7 @@ void _print_breadcrumbs(
     std::string breadcrumbs;
     std::string node_id = node->identifier;
 
-    int counter = 0;
-    while (++counter <= 22) {
+    while (true) {
         auto node = tree.get_node(node_id);
         breadcrumbs = node->tag + std::string(" > ") + breadcrumbs;
         node_id = node->parent;

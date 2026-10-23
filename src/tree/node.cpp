@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <node.h>
 
 namespace treelib {
@@ -13,11 +14,17 @@ Node::Node(std::string _tag, std::string _identifier, void* _data, std::string _
 }
 
 void Node::add_child(std::shared_ptr< Node > node) {
-    // Find position to keep sorted order (todo: optimize this)
-    auto position = children.begin();
-    for (; position != children.end() && node->tag > (*position)->tag; ++position);
-
-    children.insert(position, node);
+    // Keep children sorted by tag. Children often arrive already sorted (dirtree sorts them), so
+    // check the end first, to keep building a big flat dir linear rather than quadratic.
+    if (children.empty() or children.back()->tag <= node->tag) {
+        children.push_back(node);
+    } else {
+        auto position = std::upper_bound(children.begin(), children.end(), node,
+            [](const std::shared_ptr< Node >& a, const std::shared_ptr< Node >& b) {
+                return a->tag < b->tag;
+            });
+        children.insert(position, node);
+    }
     node->parent = identifier;
 }
 

@@ -84,6 +84,7 @@ private:
     bool _was_previously_printed_node_selected;
     bool _has_paginated_in_current_print;
     bool _was_selection_printed;
+    bool _filter_search_nodes;
     bool _will_children_of_node_be_printed;
 };
 } // namespace treelib

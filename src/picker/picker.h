@@ -4,7 +4,6 @@
 #include <assert.h>
 #include <signal.h>
 #include <thread>
-#include <boost/asio.hpp>
 #include "tree/tree.h"
 #include "utils/guishell.h"
 #include "picker/keyboardreactor.h"
@@ -20,7 +19,7 @@ public:
 
 private:
     TreeKeyboardSelector _tree_keyboard_selector;
-    treelib::Tree _tree;
+    treelib::Tree& _tree;
     KeyboardReactor _keyboard_reactor;
 };
 

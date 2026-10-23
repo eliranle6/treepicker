@@ -20,13 +20,13 @@ public:
     void move_to_prev(void);
     void move_one_up(void);
 
+    // If an ongoing search hides the selection, select its closest visible ancestor
+    void select_visible_ancestor(void);
+
 private:
     treelib::Tree& _tree;
     treelib::TreePrinter& _tree_printer;
     NodePtr _selection;
-
-    void _advance_selection_at_same_tree_level(int direction);
-    void select_node(std::shared_ptr<treelib::Node> node);
 };
 
 }

@@ -7,6 +7,7 @@
 #include "tree/tree.h"
 #include "tree/tests/common.h"
 #include "treeprinter/treeprinter.h"
+#include "tree/search.h"
 
 
 static constexpr char SELECTED_ROW_FIRST_CHAR = '\x1B';
@@ -131,4 +132,116 @@ TEST(treeprinter, get_previously_printed_node) {
     auto actual = tree_printer.get_printed_node_before_selected();
     auto expected = tree.get_node("smart");
     ASSERT_EQ(expected, actual);
+}
+
+static std::vector<std::string> print_lines(treelib::TreePrinter& tree_printer,
+                                            std::shared_ptr<treelib::Node> selection,
+                                            int window_height, bool filter = false) {
+    std::ostringstream out;
+    tree_printer.print(out, filter, selection, window_height);
+    return split_string_by_newline(strip_escape_codes(out.str()));
+}
+
+TEST(treeprinter, tags_are_printed_as_is) {
+    treelib::Tree tree;
+    tree.create_node("root", "root", "", nullptr);
+    tree.create_node("100%_%s%n.txt", "file", "root", nullptr);
+    treelib::TreePrinter tree_printer(tree);
+
+    auto lines = print_lines(tree_printer, tree.get_root(), 10);
+
+    ASSERT_TRUE(does_string_contain_substring(lines[1], "100%_%s%n.txt"));
+}
+
+TEST(treeprinter, search_hides_nodes_that_dont_match) {
+    auto tree = get_simple_tree();
+    treelib::Search(tree).search("Rich smart");
+    treelib::TreePrinter tree_printer(tree);
+
+    auto lines = print_lines(tree_printer, tree.get_root(), 10, true);
+
+    ASSERT_EQ(lines.size(), 3);
+    ASSERT_TRUE(does_string_contain_substring(lines[0], "People"));
+    ASSERT_TRUE(does_string_contain_substring(lines[1], "Smart people"));
+    ASSERT_TRUE(does_string_contain_substring(lines[2], "Rich smart people"));
+}
+
+TEST(treeprinter, search_without_matches_still_prints_the_root) {
+    auto tree = get_simple_tree();
+    treelib::Search(tree).search("no such node");
+    treelib::TreePrinter tree_printer(tree);
+
+    auto lines = print_lines(tree_printer, tree.get_root(), 10, true);
+
+    ASSERT_EQ(lines.size(), 1);
+    ASSERT_TRUE(does_string_contain_substring(lines[0], "People"));
+}
+
+TEST(treeprinter, node_with_hidden_children_is_marked) {
+    // A window of 3 lines has room for the root and its children, but not its grandchildren
+    auto tree = get_simple_tree();
+    treelib::TreePrinter tree_printer(tree);
+
+    auto lines = print_lines(tree_printer, tree.get_root(), 3);
+
+    ASSERT_TRUE(does_string_contain_substring(lines[1], "Dumb people (...)"));
+    ASSERT_TRUE(does_string_contain_substring(lines[2], "Smart people (...)"));
+}
+
+TEST(treeprinter, siblings_that_dont_fit_are_counted) {
+    auto tree = get_flat_tree(50);
+    treelib::TreePrinter tree_printer(tree);
+
+    auto lines = print_lines(tree_printer, tree.get_node("child000025"), 10);
+
+    // The root, '(N more ...)', some children, the selected one and '(M more ...)'
+    ASSERT_EQ(lines.size(), 10);
+    int nr_hidden_at_beginning = 0, nr_hidden_at_end = 0;
+    ASSERT_EQ(sscanf(lines[1].c_str(), "  \xe2\x94\x82(%d more ...)", &nr_hidden_at_beginning), 1);
+    ASSERT_EQ(sscanf(lines[9].c_str(), "  \xe2\x94\x82(%d more ...)", &nr_hidden_at_end), 1);
+    const int nr_children_printed = lines.size() - 3;
+    ASSERT_EQ(nr_hidden_at_beginning + nr_children_printed + nr_hidden_at_end, 50);
+    ASSERT_TRUE(does_string_contain_substring(lines[8], "child000025"));
+}
+
+TEST(treeprinter, printed_lines_never_exceed_the_window) {
+    for (int nr_children : {1, 2, 5, 9, 10, 11, 30}) {
+        auto tree = get_flat_tree(nr_children);
+        // From 4 lines: the root, and a selected child between two '(N more ...)' rows
+        for (int window_height = 4; window_height <= 12; ++window_height) {
+            treelib::TreePrinter tree_printer(tree);
+            for (auto& child : tree.get_root()->children) {
+                SCOPED_TRACE("nr_children=" + std::to_string(nr_children) + " window_height=" +
+                             std::to_string(window_height) + " selection=" + child->tag);
+                auto lines = print_lines(tree_printer, child, window_height);
+                ASSERT_LE(lines.size(), window_height);
+                ASSERT_TRUE(tree_printer.was_selection_printed());
+            }
+        }
+    }
+}
+
+TEST(treeprinter, selection_is_printed_in_tiny_windows) {
+    auto tree = get_flat_tree(9);
+    for (int window_height = 1; window_height <= 3; ++window_height) {
+        treelib::TreePrinter tree_printer(tree);
+        for (auto& child : tree.get_root()->children) {
+            SCOPED_TRACE("window_height=" + std::to_string(window_height) + " selection=" +
+                         child->tag);
+            print_lines(tree_printer, child, window_height);
+            ASSERT_TRUE(tree_printer.was_selection_printed());
+        }
+    }
+}
+
+TEST(treeprinter, print_deep_tree) {
+    // Deeper than the 100 levels that get_node_depth() once asserted on
+    auto tree = get_chain_tree(150);
+    treelib::TreePrinter tree_printer(tree);
+
+    auto lines = print_lines(tree_printer, tree.get_node("d150"), 10);
+
+    ASSERT_LE(lines.size(), 10);
+    ASSERT_TRUE(tree_printer.was_selection_printed());
+    ASSERT_TRUE(does_string_contain_substring(lines.back(), "d150"));
 }

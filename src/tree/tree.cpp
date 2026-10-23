@@ -38,9 +38,10 @@ const std::vector< std::shared_ptr< Node > > & Tree::children(std::string identi
 
 int Tree::get_node_depth(std::shared_ptr<Node> node) {
     int depth = 0;
+    // No depth limit, and no assert() around the ++: with NDEBUG the increment would vanish too
     while (node != get_root()) {
         node = get_node(node->parent);
-        assert (++depth <= 100);
+        ++depth;
     }
     return depth;
 }

@@ -2,6 +2,8 @@
 
 #include "picker/tree_selector.h"
 #include "tree/tests/common.h"
+#include "tree/search.h"
+#include <random>
 
 
 TEST(tree_selector, default_selection) {
@@ -128,4 +130,175 @@ TEST(tree_selector, next_skips_non_matching_children) {
     tree_selector.move_to_next();
 
     ASSERT_EQ(tree_selector.get_selection()->identifier, "smart");
+}
+
+// Print the tree the way the picker does before each move, since moving to the next/previous
+// node relies on what was printed
+static std::vector<std::string> print(treelib::TreePrinter& tree_printer,
+                                      picker::TreeSelector& tree_selector,
+                                      int window_height = 100, bool filter = false) {
+    std::ostringstream out;
+    tree_printer.print(out, filter, tree_selector.get_selection(), window_height);
+    // Without escape codes, which may follow the last newline
+    return split_string_by_newline(strip_escape_codes(out.str()));
+}
+
+TEST(tree_selector, explore_selection_without_visible_children_stays) {
+    auto tree = get_simple_tree();
+    treelib::Search(tree).search("Smart");
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    tree_selector.explore_children_of_selection();
+    ASSERT_EQ(tree_selector.get_selection()->identifier, "smart");
+    tree_selector.explore_children_of_selection();
+    ASSERT_EQ(tree_selector.get_selection()->identifier, "poor-smart");
+    // A leaf
+    tree_selector.explore_children_of_selection();
+    ASSERT_EQ(tree_selector.get_selection()->identifier, "poor-smart");
+}
+
+TEST(tree_selector, select_visible_ancestor) {
+    auto tree = get_simple_tree();
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    tree_selector.explore_children_of_selection();
+    tree_selector.explore_children_of_selection();
+    ASSERT_EQ(tree_selector.get_selection()->identifier, "poor-dumb");
+
+    // Still visible: stays
+    treelib::Search(tree).search("Poor");
+    tree_selector.select_visible_ancestor();
+    ASSERT_EQ(tree_selector.get_selection()->identifier, "poor-dumb");
+
+    // Hidden, but its parent isn't
+    treelib::Search(tree).search("Rich dumb");
+    tree_selector.select_visible_ancestor();
+    ASSERT_EQ(tree_selector.get_selection()->identifier, "dumb");
+
+    // Nothing matches: the root
+    treelib::Search(tree).search("no such node");
+    tree_selector.select_visible_ancestor();
+    ASSERT_EQ(tree_selector.get_selection(), tree.get_root());
+}
+
+TEST(tree_selector, move_to_next_at_the_last_node_stays) {
+    auto tree = get_simple_tree();
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    for (int i = 0; i < 20; ++i) {
+        print(tree_printer, tree_selector);
+        tree_selector.move_to_next();
+    }
+    ASSERT_EQ(tree_selector.get_selection()->identifier, "rich-smart");
+}
+
+TEST(tree_selector, walk_through_a_dir_bigger_than_the_window) {
+    // Through the pagination, one child at a time, and back
+    auto tree = get_flat_tree(60);
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    tree_selector.explore_children_of_selection();
+    auto& children = tree.get_root()->children;
+    for (std::size_t i = 1; i < children.size(); ++i) {
+        print(tree_printer, tree_selector, 10);
+        tree_selector.move_to_next();
+        ASSERT_EQ(tree_selector.get_selection(), children[i]);
+    }
+    for (int i = children.size() - 2; i >= 0; --i) {
+        print(tree_printer, tree_selector, 10);
+        tree_selector.move_to_prev();
+        ASSERT_EQ(tree_selector.get_selection(), children[i]);
+    }
+}
+
+// A random tree of nr_nodes nodes, with tags made of a few letters so searches match some
+static treelib::Tree get_random_tree(std::mt19937& random, int nr_nodes) {
+    treelib::Tree tree;
+    tree.create_node("root", "0", "", nullptr);
+    for (int i = 1; i < nr_nodes; ++i) {
+        std::string tag;
+        for (int j = 0, length = 1 + random() % 4; j < length; ++j) {
+            tag += "abcde"[random() % 5];
+        }
+        // Lean towards recent nodes as parents, for deeper trees
+        int parent = std::max(0, i - 1 - static_cast<int>(random() % std::min(i, 8)));
+        if (random() % 3 == 0) {
+            parent = random() % i;
+        }
+        tree.create_node(tag + std::to_string(i), std::to_string(i), std::to_string(parent),
+                         nullptr);
+    }
+    return tree;
+}
+
+TEST(tree_selector, random_walks_keep_the_selection_shown) {
+    // Like the picker: random moves and searches, printing after each one. The selection must
+    // always be a node that's shown, and the tree must fit in the window.
+    for (int seed = 0; seed < 300; ++seed) {
+        std::mt19937 random(seed);
+        auto tree = get_random_tree(random, 1 + random() % 80);
+        treelib::TreePrinter tree_printer(tree);
+        picker::TreeSelector tree_selector(tree, tree_printer);
+        treelib::Search search(tree);
+        const int window_height = 4 + random() % 12;
+        std::string keyword;
+        std::string actions;
+
+        for (int step = 0; step < 60; ++step) {
+            switch (random() % 6) {
+                case 0: tree_selector.move_to_next(); actions += 'j'; break;
+                case 1: tree_selector.move_to_prev(); actions += 'k'; break;
+                case 2: tree_selector.explore_children_of_selection(); actions += 'l'; break;
+                case 3: tree_selector.move_one_up(); actions += 'h'; break;
+                case 4:
+                    if (random() % 3 == 0 or keyword.size() > 2) {
+                        keyword.clear();
+                    } else {
+                        keyword += "abcde"[random() % 5];
+                    }
+                    search.search(keyword);
+                    tree_selector.select_visible_ancestor();
+                    actions += "/" + keyword + "/";
+                    break;
+                case 5: actions += '.'; break;  // Just print again
+            }
+            SCOPED_TRACE("seed=" + std::to_string(seed) + " window_height=" +
+                         std::to_string(window_height) + " actions=" + actions);
+
+            auto selection = tree_selector.get_selection();
+            ASSERT_NE(selection, nullptr);
+            ASSERT_TRUE(selection == tree.get_root() or selection->is_search_visible());
+            auto lines = print(tree_printer, tree_selector, window_height, not keyword.empty());
+            std::string screen;
+            for (auto& line : lines) {
+                screen += line + "\n";
+            }
+            ASSERT_TRUE(tree_printer.was_selection_printed()) << screen;
+            ASSERT_LE(lines.size(), window_height) << screen;
+        }
+    }
+}
+
+TEST(tree_selector, walk_through_a_filtered_dir_bigger_than_the_window) {
+    // Pagination once counted hidden children too, so moving next could select a hidden one
+    auto tree = get_flat_tree(60);
+    treelib::Search(tree).search("5");  // child000005, child000015, ... child000050..59
+    std::vector<std::shared_ptr<treelib::Node>> visible_children;
+    for (auto& child : tree.get_root()->children) {
+        if (child->is_search_visible()) {
+            visible_children.push_back(child);
+        }
+    }
+    ASSERT_EQ(visible_children.size(), 15);
+
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    tree_selector.explore_children_of_selection();
+    ASSERT_EQ(tree_selector.get_selection(), visible_children[0]);
+    for (std::size_t i = 1; i < visible_children.size(); ++i) {
+        auto lines = print(tree_printer, tree_selector, 6, true);
+        ASSERT_LE(lines.size(), 6);
+        tree_selector.move_to_next();
+        ASSERT_EQ(tree_selector.get_selection(), visible_children[i]);
+    }
 }

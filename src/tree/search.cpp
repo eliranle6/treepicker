@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <cctype>
 #include <string>
 
 #include "tree/search.h"
@@ -5,8 +7,22 @@
 
 namespace treelib {
 
+// Smartcase, like vim: ignore case unless the keyword has an uppercase letter (ASCII only)
+static bool does_path_match(const std::string& path, const std::string& keyword,
+                            bool ignore_case) {
+    if (not ignore_case) {
+        return path.find(keyword) != std::string::npos;
+    }
+    auto equal_ignoring_case = [](char a, char b) {
+        return std::tolower(static_cast<unsigned char>(a)) ==
+               std::tolower(static_cast<unsigned char>(b));
+    };
+    return std::search(path.begin(), path.end(), keyword.begin(), keyword.end(),
+                       equal_ignoring_case) != path.end();
+}
+
 void Search::search(std::string keyword) {
-    // Currently,  assume that there are no cycles.
+    // Currently, assume that there are no cycles (create_node can't make any).
     // Also, not using concurrency yet.
     std::stack< node_t > dfs_stack;
     _nr_matching = 0;
@@ -17,18 +33,16 @@ void Search::search(std::string keyword) {
         return;
     }
 
-    dfs_stack.push(root);
+    const bool ignore_case = std::none_of(keyword.begin(), keyword.end(),
+        [](char c) { return std::isupper(static_cast<unsigned char>(c)); });
 
-    // Use a simple cycle counter to prevent infinite loops (TODO: implement a better
-    // cycle detection with a set or something)
-    int cycle_count = 0;
-    static const int cycle_count_limit = 999999;
-    while (not dfs_stack.empty() and cycle_count < cycle_count_limit) {
+    dfs_stack.push(root);
+    while (not dfs_stack.empty()) {
         node_t node = dfs_stack.top();
         dfs_stack.pop();
 
         // Visit node
-        bool found = keyword.empty() or node->path.find(keyword) != std::string::npos;
+        bool found = keyword.empty() or does_path_match(node->path, keyword, ignore_case);
         node->is_matching_search = found;
         // Mark 'ancestor of matching' as false, by default, to be updated later
         node->is_ancestor_of_matching_search = false;
@@ -42,8 +56,6 @@ void Search::search(std::string keyword) {
         for (auto child : node->children) {
             dfs_stack.push(child);
         }
-
-        ++cycle_count;
     }
 }
 

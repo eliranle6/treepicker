@@ -1,6 +1,11 @@
 #ifndef __COMMON_H
 #define __COMMON_H
 
+#include <cstdio>
+#include <regex>
+#include <sstream>
+#include <string>
+#include <vector>
 #include "tree/tree.h"
 
 treelib::Tree get_simple_tree(void) {
@@ -52,6 +57,36 @@ std::vector<std::string> split_string_by_newline(const std::string& str)
 bool does_string_contain_substring(const std::string& string, const std::string& substring) {
     auto pos = string.find(substring) != std::string::npos;
     return pos;
+}
+
+// A root ("root") with nr_children leaves: "child000000", "child000001", ... (ids are the same
+// as tags)
+treelib::Tree get_flat_tree(int nr_children) {
+    treelib::Tree tree;
+    tree.create_node("root", "root", "", nullptr);
+    for (int i = 0; i < nr_children; ++i) {
+        char tag[16];
+        snprintf(tag, sizeof(tag), "child%06d", i);
+        tree.create_node(tag, tag, "root", nullptr);
+    }
+    return tree;
+}
+
+// A chain of nr_levels nodes under the root: "d1" (child of "d0", the root), "d2", ...
+treelib::Tree get_chain_tree(int nr_levels) {
+    treelib::Tree tree;
+    tree.create_node("d0", "d0", "", nullptr);
+    for (int i = 1; i <= nr_levels; ++i) {
+        tree.create_node("d" + std::to_string(i), "d" + std::to_string(i),
+                         "d" + std::to_string(i - 1), nullptr);
+    }
+    return tree;
+}
+
+// Printed text without its color/bold escape codes
+std::string strip_escape_codes(const std::string& str) {
+    static const std::regex escape_code("\x1B\\[[0-9;]*m");
+    return std::regex_replace(str, escape_code, "");
 }
 
 #endif

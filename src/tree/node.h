@@ -24,6 +24,11 @@ public:
     std::vector< std::shared_ptr< Node > > children;
     void add_child(std::shared_ptr< Node > node);
 
+    // Whether an ongoing search shows this node (it, or a node under it, matches)
+    bool is_search_visible(void) const {
+        return is_matching_search or is_ancestor_of_matching_search;
+    }
+
 private:
     std::shared_ptr< Node > parent_node;
 };

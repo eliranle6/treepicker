@@ -31,9 +31,13 @@ enum Colors {
     BLACK_ON_BLUE = 99,
     BLACK_ON_WHITE = 100,
     DIRECTORY = 12,
-    SELECTED_DIRECTORY = 100,
-    NON_SELECTED_DIRECTORY = 101
+    SELECTED_DIRECTORY = 101,
+    NON_SELECTED_DIRECTORY = 102
 };
+
+// The number of bytes from the start of s (n bytes of UTF-8, with no newline) that fit in
+// nr_columns screen columns, without splitting a character
+std::size_t nr_bytes_that_fit(const char *s, std::size_t n, int nr_columns);
 
 class NCursesSink : public boost::iostreams::sink
 {

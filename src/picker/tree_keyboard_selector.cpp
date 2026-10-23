@@ -11,12 +11,13 @@ TreeKeyboardSelector::TreeKeyboardSelector(treelib::Tree& tree):
     _tree_printer(tree),
     _tree_selector(tree, _tree_printer),
     _mode(mode::MODE_NAVIGATION),
+    subby(nullptr),
     _search(tree)
 {
     curs_set(0);
 }
 
-bool TreeKeyboardSelector::char_pressed(char c)
+bool TreeKeyboardSelector::char_pressed(int c)
 {
     bool is_finished = false;
 
@@ -65,6 +66,7 @@ bool TreeKeyboardSelector::char_pressed(char c)
                 print_tree();
                 break;
             case KEYCODE_BACK:
+            case KEYCODE_QUIT:
                 is_finished = true;
                 print_tree();
                 break;
@@ -86,7 +88,7 @@ bool TreeKeyboardSelector::char_pressed(char c)
                     curs_set(0);
                 } else {
                     _search_keyword = _search_keyword.substr(0, _search_keyword.size() - 1);
-                    _search.search(_search_keyword);
+                    search();
                 }
                 print_tree();
                 break;
@@ -95,7 +97,7 @@ bool TreeKeyboardSelector::char_pressed(char c)
                 if (_mode == mode::MODE_EDIT_SEARCH) {
                     _search_keyword = "";
                 }
-                _search.search(_search_keyword);
+                search();
                 print_tree();
                 break;
             case KEYCODE_MOVE_FROM_SEARCH_TO_NAV_MODE:
@@ -104,11 +106,14 @@ bool TreeKeyboardSelector::char_pressed(char c)
                 print_tree();
                 break;
             default:
-                if (_mode == mode::MODE_EDIT_SEARCH)
-                    _search_keyword += c;
-                else {
+                // Only text goes into the keyword: no control keys, and no curses codes
+                // (e.g. KEY_RESIZE), which are bigger than a byte. Bytes of UTF-8 characters
+                // (128-255) are text too.
+                const bool is_text = c >= ' ' and c <= 0xff and c != KEYCODE_BACKSPACE;
+                if (is_text) {
+                    _search_keyword += static_cast<char>(c);
+                    search();
                 }
-                _search.search(_search_keyword);
                 print_tree();
         }
     }
@@ -153,7 +158,8 @@ void TreeKeyboardSelector::print_tree(void) {
     }
     stats_line += std::string(", selected: ") +
             _tree_selector.get_selection()->tag;
-    mvwprintw(subby, 0, 0, stats_line.c_str());
+    // Not mvwprintw: the line holds a file name, which may contain '%'
+    mvwaddstr(subby, 0, 0, stats_line.c_str());
     wrefresh(subby);
 
     // Print Search line
@@ -162,11 +168,17 @@ void TreeKeyboardSelector::print_tree(void) {
     // Print search line
     if (should_search_bar_be_displayed) {
         std::string search_line = std::string("/") + _search_keyword;
-        mvwprintw(subby, 0, 0, search_line.c_str());
+        mvwaddstr(subby, 0, 0, search_line.c_str());
     }
     wrefresh(subby);
 }
 
+
+void TreeKeyboardSelector::search(void) {
+    _search.search(_search_keyword);
+    // The new filter may hide the selected node
+    _tree_selector.select_visible_ancestor();
+}
 
 void TreeKeyboardSelector::initialize(void) {
     print_tree();
