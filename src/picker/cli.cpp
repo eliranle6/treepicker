@@ -9,6 +9,7 @@ const char CLI_OPTIONS_USAGE[] =
     "  -m, --multi    pick several nodes: Space picks the selected node and everything under\n"
     "                 it (or unpicks them), and Enter finishes\n"
     "  --header TEXT  show TEXT (one or more lines) above the tree\n"
+    "  --root NAME    show the tree's root as NAME\n"
     "  -0             paths end with '\\0' rather than a newline (read ones and printed ones)\n"
     "  -h, --help     show this help\n"
     "\n"
@@ -25,11 +26,11 @@ CliOptions parse_cli(int argc, char* argv[]) {
             options.is_help_requested = true;
         } else if (arg == "-m" or arg == "--multi") {
             options.is_multi = true;
-        } else if (arg == "--header") {
+        } else if (arg == "--header" or arg == "--root") {
             if (i + 1 == argc) {
-                options.error = "--header needs a value";
+                options.error = arg + " needs a value";
             } else {
-                options.header = argv[++i];
+                (arg == "--header" ? options.header : options.root_name) = argv[++i];
             }
         } else if (arg == "-0") {
             options.is_null_separated = true;
@@ -43,6 +44,9 @@ CliOptions parse_cli(int argc, char* argv[]) {
 }
 
 int pick_and_print(treelib::Tree& tree, const CliOptions& options) {
+    if (not options.root_name.empty() and tree.get_root() != nullptr) {
+        tree.get_root()->tag = options.root_name;
+    }
     PickerOptions picker_options;
     picker_options.is_multi = options.is_multi;
     picker_options.header = options.header;

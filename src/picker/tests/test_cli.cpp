@@ -54,3 +54,8 @@ TEST(cli, header) {
 TEST(cli, header_without_value) {
     ASSERT_FALSE(parse({"--header"}).error.empty());
 }
+
+TEST(cli, root_name) {
+    ASSERT_EQ(parse({"--root", "/some/dir"}).root_name, "/some/dir");
+    ASSERT_FALSE(parse({"--root"}).error.empty());
+}

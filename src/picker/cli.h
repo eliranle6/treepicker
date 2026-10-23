@@ -16,6 +16,8 @@ struct CliOptions {
     bool is_multi = false;
     // --header TEXT: lines shown above the tree
     std::string header;
+    // --root NAME: the name shown for the tree's root (e.g. a stdin tree's, which is ".")
+    std::string root_name;
 
     bool is_help_requested = false;
     // Set if the command line isn't valid
