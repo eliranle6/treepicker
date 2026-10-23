@@ -71,6 +71,9 @@ GuiShell::GuiShell(NCursesSink &buff) :
     // Get arrow keys and the like as single key codes (KEY_UP...), rather than as escape
     // sequences, which would otherwise end up typed into the search keyword
     keypad(stdscr, TRUE);
+    // With keypad mode, curses waits after Esc in case it starts a key's escape sequence. The
+    // default wait is a second, which makes Esc feel stuck; terminals send sequences at once.
+    set_escdelay(25);
     start_color();
     use_default_colors();
     is_initialized = true;

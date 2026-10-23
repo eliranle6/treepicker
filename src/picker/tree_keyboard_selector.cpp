@@ -101,6 +101,14 @@ bool TreeKeyboardSelector::char_pressed(int c)
                 search();
                 print_tree();
                 break;
+            case KEYCODE_CANCEL_SEARCH:
+                // Like in vim: drop the keyword (unlike Enter, which keeps filtering by it)
+                _search_keyword = "";
+                search();
+                _mode = mode::MODE_NAVIGATION;
+                curs_set(0);
+                print_tree();
+                break;
             case KEYCODE_MOVE_FROM_SEARCH_TO_NAV_MODE:
             case KEY_ENTER:
                 _mode = mode::MODE_NAVIGATION;
