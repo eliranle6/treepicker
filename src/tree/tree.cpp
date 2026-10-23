@@ -2,37 +2,41 @@
 
 namespace treelib {
 
-std::shared_ptr< Node >Tree::create_node(std::string tag, std::string identifier,
-                                               std::string parent, void* data) {
-    if (node_map.count(identifier)) {
-        throw std::invalid_argument("Duplicate node");
-    }
+std::shared_ptr< Node >Tree::create_node(const std::string& tag, const std::string& identifier,
+                                         const std::string& parent, void* data) {
+    // Each map lookup compares strings, so look each id up once
     const bool is_root_node_creation = root == nullptr;
-
-    auto nodeptr = std::make_shared< Node >(tag, identifier, data, parent);
-    if (is_root_node_creation) {
-    // Set as child of designated parent
-        root = nodeptr;
-        nodeptr->path = std::string("/") + tag;
-    } else {
-        auto parent_node = get_node(parent);
+    std::shared_ptr< Node > parent_node;
+    if (not is_root_node_creation) {
+        parent_node = get_node(parent);
         if (parent_node == nullptr) {
             throw std::invalid_argument("Parent node does not exist");
         }
+    }
+    auto inserted = node_map.emplace(identifier, nullptr);
+    if (not inserted.second) {
+        throw std::invalid_argument("Duplicate node");
+    }
+
+    auto nodeptr = std::make_shared< Node >(tag, identifier, data, parent);
+    if (is_root_node_creation) {
+        root = nodeptr;
+        nodeptr->path = std::string("/") + tag;
+    } else {
+        // Set as child of designated parent
         nodeptr->path = parent_node->path + std::string("/") + tag;
         parent_node->add_child(nodeptr);
     }
-    node_map[identifier] =  nodeptr;
-    return node_map[identifier];
+    inserted.first->second = nodeptr;
+    return nodeptr;
 }
 
-std::shared_ptr< Node > Tree::get_node(std::string identifier) {
-    if (node_map.count(identifier))
-        return node_map[identifier];
-    return nullptr;
+std::shared_ptr< Node > Tree::get_node(const std::string& identifier) {
+    auto found = node_map.find(identifier);
+    return found == node_map.end() ? nullptr : found->second;
 }
 
-const std::vector< std::shared_ptr< Node > > & Tree::children(std::string identifier) {
+const std::vector< std::shared_ptr< Node > > & Tree::children(const std::string& identifier) {
     // Not node_map[identifier]: for an unknown id it would add an empty node pointer, and then
     // dereference it
     auto node = get_node(identifier);

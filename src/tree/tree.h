@@ -23,10 +23,11 @@ public:
         root(nullptr)
     {}
     // Today i learned: shared_ptr
-    node_t create_node(std::string tag, std::string identifier, std::string parent, void* data);
-    node_t get_node(std::string identifier);
+    node_t create_node(const std::string& tag, const std::string& identifier,
+                       const std::string& parent, void* data);
+    node_t get_node(const std::string& identifier);
     const node_t& get_root(void) const { return root; }
-    const std::vector<node_t> & children(std::string identifier);
+    const std::vector<node_t> & children(const std::string& identifier);
 
     // Print tree
     friend std::ostream& operator << (std::ostream &os, const Tree &tree);
