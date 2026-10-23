@@ -54,19 +54,29 @@ int display_width(const std::string& s) {
     return nr_columns_used;
 }
 
+// Whether text reached past the bottom of the screen since it was last cleared. The sink is copied
+// into the stream, so this lives outside it.
+static bool is_screen_full = false;
+
 std::streamsize NCursesSink::write(const char *s, std::streamsize n) {
     // Print line by line, cutting each line at the right edge of the screen, since a wrapped line
     // would push the rest of the tree down. The last column is left empty, since writing to it
     // moves the cursor to the next line. Not printw: text may contain '%'.
+    // Once the screen is full, drop the rest: on the bottom row a newline can't move the cursor
+    // down, so the next line would be appended to the bottom row.
     const char *end = s + n;
-    while (s < end) {
+    while (s < end and not is_screen_full) {
         const char *newline = std::find(s, end, '\n');
         const int nr_columns_left = COLS - 1 - getcurx(stdscr);
         if (nr_columns_left > 0) {
             addnstr(s, nr_bytes_that_fit(s, newline - s, nr_columns_left));
         }
         if (newline != end) {
-            addch('\n');
+            if (getcury(stdscr) >= LINES - 1) {
+                is_screen_full = true;
+            } else {
+                addch('\n');
+            }
             s = newline + 1;
         } else {
             s = end;
@@ -128,6 +138,7 @@ void GuiShell::refresh(void) {
 
 void GuiShell::clear(void) {
     erase(); // ncurses call
+    is_screen_full = false;
 }
 
 bool GuiShell::is_initialized = false;

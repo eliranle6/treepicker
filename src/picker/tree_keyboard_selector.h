@@ -68,8 +68,20 @@ private:
     // Filter the tree by the current search keyword
     void search(void);
 
-    // Lines available for the tree
-    int get_tree_max_height(void);
+    // Lines the tree needs to show the selection: the root, the selection, and a '... (N more)'
+    // line on each side of it
+    static constexpr int MIN_TREE_HEIGHT = 4;
+
+    // Where things go on the screen, from the top: the tree, the stats line, the search line.
+    // A row of -1 means it isn't shown.
+    struct Layout {
+        int tree_height;
+        int stats_row;
+        int search_row;
+    };
+    Layout get_layout(void);
+
+    bool is_search_line_shown(void);
 
     // Lay the tree out without drawing it, so the selection can move relative to what would
     // be printed
@@ -81,7 +93,6 @@ private:
     treelib::TreePrinter _tree_printer;
     TreeSelector _tree_selector;
     mode _mode;
-    WINDOW* subby;
     ::treelib::Search _search;
 };
 

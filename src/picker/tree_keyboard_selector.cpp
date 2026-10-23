@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include "tree_keyboard_selector.h"
 #include "dirtree/dirtree.h"
@@ -11,7 +12,6 @@ TreeKeyboardSelector::TreeKeyboardSelector(treelib::Tree& tree):
     _tree_printer(tree),
     _tree_selector(tree, _tree_printer),
     _mode(mode::MODE_NAVIGATION),
-    subby(nullptr),
     _search(tree)
 {
     curs_set(0);
@@ -131,67 +131,81 @@ bool TreeKeyboardSelector::char_pressed(int c)
     return is_finished;
 }
 
-void TreeKeyboardSelector::print_tree(void) {
-    _out.clear();
-    const bool should_nodes_be_search_filtered = not _search_keyword.empty();
-
-    // Get window height
-    int window_height = 0, window_width = 0;
-    getmaxyx(stdscr, window_height, window_width);
-
-    // Determine whether to print search line
-    const bool should_search_bar_be_displayed =
-        should_nodes_be_search_filtered or _mode == mode::MODE_EDIT_SEARCH;
-    int tree_max_height = get_tree_max_height();
-    int tree_height = 0;
-
-    // Print tree
-    if (tree_max_height > 0) {
-        // The screen's last column stays empty (see NCursesSink::write)
-        tree_height = _tree_printer.print(_out, should_nodes_be_search_filtered,
-                            _tree_selector.get_selection(), tree_max_height, window_width - 1);
+// Print text on a row of the screen, over whatever was there, cut at the screen's edge. With
+// fill, the rest of the row is filled with spaces (to show the row's background color).
+static void print_line(int row, const std::string& text, int window_width, bool fill) {
+    // The last column stays empty, like in NCursesSink::write
+    const int width = std::max(0, window_width - 1);
+    move(row, 0);
+    clrtoeol();
+    // Not printw: the text may hold a file name, which may contain '%'
+    const std::size_t nr_bytes = guishell::nr_bytes_that_fit(text.data(), text.size(), width);
+    addnstr(text.data(), nr_bytes);
+    if (fill) {
+        for (int i = guishell::display_width(text.substr(0, nr_bytes)); i < width; ++i) {
+            addch(' ');
+        }
     }
-    for (int i = 0; i < tree_max_height - tree_height; ++i) {
-      _out << std::endl;
-    }
-
-    _out.refresh();
-
-    // Print Stats line
-    if (subby != nullptr) {
-        delwin(subby);
-    }
-    subby = newwin(1, window_width - 1, window_height - 2, 0);
-    wbkgd(subby,COLOR_PAIR(::guishell::BLACK_ON_WHITE));
-    std::string stats_line = "Total: " + std::to_string(_tree.get_nr_nodes());
-    if (should_search_bar_be_displayed) {
-        stats_line += std::string(", Matching: ") + std::to_string(_search.get_nr_matching());
-    }
-    stats_line += std::string(", selected: ") +
-            _tree_selector.get_selection()->tag;
-    // Not mvwprintw: the line holds a file name, which may contain '%'
-    mvwaddstr(subby, 0, 0, stats_line.c_str());
-    wrefresh(subby);
-
-    // Print Search line
-    delwin(subby);
-    subby = newwin(1, window_width - 1, window_height - 1, 0);
-    // Print search line
-    if (should_search_bar_be_displayed) {
-        std::string search_line = std::string("/") + _search_keyword;
-        mvwaddstr(subby, 0, 0, search_line.c_str());
-    }
-    wrefresh(subby);
 }
 
+void TreeKeyboardSelector::print_tree(void) {
+    _out.clear();
+    const int window_width = getmaxx(stdscr);
+    const Layout layout = get_layout();
 
-int TreeKeyboardSelector::get_tree_max_height(void) {
-    // Leave the two bottom lines for the stats and search lines
-    return getmaxy(stdscr) - 2;
+    // Print tree
+    if (layout.tree_height > 0) {
+        // The screen's last column stays empty (see NCursesSink::write)
+        _tree_printer.print(_out, not _search_keyword.empty(), _tree_selector.get_selection(),
+                            layout.tree_height, window_width - 1);
+    }
+    _out.flush();
+
+    // Print stats line
+    if (layout.stats_row >= 0) {
+        std::string stats_line = "Total: " + std::to_string(_tree.get_nr_nodes());
+        if (is_search_line_shown()) {
+            stats_line += std::string(", Matching: ") + std::to_string(_search.get_nr_matching());
+        }
+        stats_line += std::string(", selected: ") + _tree_selector.get_selection()->tag;
+        attron(COLOR_PAIR(::guishell::BLACK_ON_WHITE));
+        print_line(layout.stats_row, stats_line, window_width, true);
+        attroff(COLOR_PAIR(::guishell::BLACK_ON_WHITE));
+    }
+
+    // Print search line (last, so that the cursor stays at its end while editing it)
+    if (layout.search_row >= 0) {
+        print_line(layout.search_row, "/" + _search_keyword, window_width, false);
+    }
+    refresh();
+}
+
+bool TreeKeyboardSelector::is_search_line_shown(void) {
+    return not _search_keyword.empty() or _mode == mode::MODE_EDIT_SEARCH;
+}
+
+TreeKeyboardSelector::Layout TreeKeyboardSelector::get_layout(void) {
+    Layout layout;
+    int nr_rows_left = getmaxy(stdscr);
+
+    // The search line, at the bottom, only while there's a search
+    layout.search_row = -1;
+    if (is_search_line_shown() and nr_rows_left > 0) {
+        layout.search_row = --nr_rows_left;
+    }
+
+    // The stats line above it, unless the tree would then be too short to show the selection
+    layout.stats_row = -1;
+    if (nr_rows_left - 1 >= MIN_TREE_HEIGHT) {
+        layout.stats_row = --nr_rows_left;
+    }
+
+    layout.tree_height = nr_rows_left;
+    return layout;
 }
 
 void TreeKeyboardSelector::layout_tree(void) {
-    const int tree_max_height = get_tree_max_height();
+    const int tree_max_height = get_layout().tree_height;
     if (tree_max_height > 0) {
         _tree_printer.scan_nodes_to_print(_out, not _search_keyword.empty(),
                                           _tree_selector.get_selection(), tree_max_height);
