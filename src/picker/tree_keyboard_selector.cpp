@@ -65,6 +65,16 @@ bool TreeKeyboardSelector::char_pressed(int c)
                 print_tree();
                 }
                 break;
+            case KEYCODE_FIRST_SIBLING:
+            case KEY_HOME:
+                _tree_selector.move_to_first_sibling();
+                print_tree();
+                break;
+            case KEYCODE_LAST_SIBLING:
+            case KEY_END:
+                _tree_selector.move_to_last_sibling();
+                print_tree();
+                break;
             case KEYCODE_RIGHT:
             case KEY_RIGHT:
                 _tree_selector.explore_children_of_selection();

@@ -21,6 +21,10 @@ public:
     void move_to_prev(void);
     void move_one_up(void);
 
+    // Select the first/last of the selection's siblings (that an ongoing search doesn't hide)
+    void move_to_first_sibling(void);
+    void move_to_last_sibling(void);
+
     // If an ongoing search hides the selection, select its closest visible ancestor
     void select_visible_ancestor(void);
 

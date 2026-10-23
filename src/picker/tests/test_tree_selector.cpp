@@ -409,3 +409,41 @@ TEST(tree_selector, picked_nodes_are_in_the_tree_order) {
     ASSERT_EQ(ids(tree_selector.get_picked_nodes()),
               std::vector<std::string>({"poor-dumb", "rich-dumb", "poor-smart"}));
 }
+
+TEST(tree_selector, move_to_first_and_last_sibling) {
+    auto tree = get_flat_tree(10);
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    tree_selector.explore_children_of_selection();
+
+    tree_selector.move_to_last_sibling();
+    ASSERT_EQ(tree_selector.get_selection()->tag, "child000009");
+    tree_selector.move_to_first_sibling();
+    ASSERT_EQ(tree_selector.get_selection()->tag, "child000000");
+}
+
+TEST(tree_selector, move_to_first_and_last_sibling_skips_hidden_ones) {
+    auto tree = get_flat_tree(10);
+    // As if a search hid the first and the last
+    for (auto id : {"child000000", "child000009"}) {
+        tree.get_node(id)->is_matching_search = false;
+        tree.get_node(id)->is_ancestor_of_matching_search = false;
+    }
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    tree_selector.explore_children_of_selection();
+    ASSERT_EQ(tree_selector.get_selection()->tag, "child000001");
+
+    tree_selector.move_to_last_sibling();
+    ASSERT_EQ(tree_selector.get_selection()->tag, "child000008");
+    tree_selector.move_to_first_sibling();
+    ASSERT_EQ(tree_selector.get_selection()->tag, "child000001");
+}
+
+TEST(tree_selector, move_to_sibling_of_the_root_stays) {
+    auto tree = get_simple_tree();
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    tree_selector.move_to_last_sibling();
+    ASSERT_EQ(tree_selector.get_selection(), tree.get_root());
+}

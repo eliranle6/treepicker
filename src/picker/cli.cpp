@@ -14,7 +14,8 @@ const char CLI_OPTIONS_USAGE[] =
     "  -0             paths end with '\\0' rather than a newline (read ones and printed ones)\n"
     "  -h, --help     show this help\n"
     "\n"
-    "Keys: h/j/k/l or arrows to move, / to search (Enter keeps the filter, Esc drops it),\n"
+    "Keys: h/j/k/l or arrows to move, g/G to the first/last sibling, / to search (Enter keeps\n"
+    "the filter, Esc drops it),\n"
     "Enter to pick, q to quit.\n"
     "Prints the picked nodes' paths, in the tree's order. Exits with 0 if a node was picked, 1 if\n"
     "not.\n";

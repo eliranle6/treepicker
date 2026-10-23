@@ -38,6 +38,31 @@ void TreeSelector::move_one_up(void) {
     _selection = parent;
 }
 
+void TreeSelector::move_to_first_sibling(void) {
+    if (_selection == nullptr or _selection == _tree.get_root()) {
+        return;
+    }
+    for (auto& sibling : _tree.get_node(_selection->parent)->children) {
+        if (sibling->is_search_visible()) {
+            _selection = sibling;
+            return;
+        }
+    }
+}
+
+void TreeSelector::move_to_last_sibling(void) {
+    if (_selection == nullptr or _selection == _tree.get_root()) {
+        return;
+    }
+    auto& siblings = _tree.get_node(_selection->parent)->children;
+    for (auto sibling = siblings.rbegin(); sibling != siblings.rend(); ++sibling) {
+        if ((*sibling)->is_search_visible()) {
+            _selection = *sibling;
+            return;
+        }
+    }
+}
+
 void TreeSelector::move_to_next(void) {
     auto next_node = _tree_printer.get_next_printed_node_after_selected();
 
