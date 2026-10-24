@@ -15,7 +15,7 @@ README.md has the usage; `dirpicker --help` lists the options and keys. Ideas no
 A plain Makefile, everything built into `build/` (C++17, ncurses; Google Test for the tests):
 
 ```
-make            # build/dirpicker, build/picker (a demo), build/libcpptree.a
+make            # build/dirpicker, build/dirdiff, build/picker (a demo), build/libcpptree.a
 make test       # builds the programs and a binary per test, runs them all
 make clean
 make install PREFIX=~/.local
@@ -48,6 +48,8 @@ src/utils/        guishell (curses on /dev/tty, colors, cutting lines by display
                   subprocess (running find)
 src/dirtree/      DirTree: a tree of paths, from find (sorted) or from a stream (in order)
 src/dirpicker/    the dirpicker program; src/picker/main.cpp is the demo program
+src/dirdiff/      the dirdiff program: the files of a dir that another lacks (DirTree::files_not_in),
+                  for dirdelta
 ```
 
 Every program feature goes in the shared core (`src/picker` and below), so all programs get it;

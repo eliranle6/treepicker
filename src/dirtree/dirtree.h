@@ -37,6 +37,10 @@ public:
     // kind (see Node::kind) is set on the node, unless 0; dirs added for it are 'd'.
     void add_path(const std::string& path, char kind = 0);
 
+    // The ids (paths) of this tree's files (nodes of kind 'f') that other doesn't have, in the
+    // tree's order: what other lacks of this tree's files
+    std::vector<std::string> files_not_in(treelib::Tree& other);
+
 private:
     // Create the root node, unless there is one
     void add_root(const std::string& tag);

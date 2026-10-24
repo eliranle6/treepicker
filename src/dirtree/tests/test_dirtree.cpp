@@ -330,3 +330,24 @@ TEST(dirtree, untyped_stream_kinds_are_unknown) {
     // a was added for a/b, so it's a dir
     ASSERT_EQ(dir.get_node("a")->kind, 'd');
 }
+
+TEST(dirtree, files_not_in) {
+    TempDir a, b;
+    for (auto dir : {"music", "music/album", "only_a"}) {
+        a.make_dir(dir);
+    }
+    for (auto file : {"top.txt", "music/x.mp3", "music/album/y.mp3", "only_a/z.txt"}) {
+        a.make_file(file);
+    }
+    b.make_dir("music");
+    b.make_file("music/x.mp3");
+    b.make_file("top.txt");
+    dirtree::DirTree tree_a(a.path), tree_b(b.path);
+    tree_a.update_from_filesystem();
+    tree_b.update_from_filesystem();
+
+    // Files only (not the dirs they're in), in the tree's order
+    ASSERT_EQ(tree_a.files_not_in(tree_b),
+              std::vector<std::string>({"music/album/y.mp3", "only_a/z.txt"}));
+    ASSERT_TRUE(tree_b.files_not_in(tree_a).empty());
+}

@@ -149,6 +149,26 @@ void DirTree::add_path(const std::string& path, char kind) {
     }
 }
 
+std::vector<std::string> DirTree::files_not_in(treelib::Tree& other) {
+    std::vector<std::string> missing;
+    if (get_root() == nullptr) {
+        return missing;
+    }
+    std::vector<treelib::Node*> dfs_stack = {get_root().get()};
+    while (not dfs_stack.empty()) {
+        auto node = dfs_stack.back();
+        dfs_stack.pop_back();
+        if (node->kind == 'f' and other.get_node(node->identifier) == nullptr) {
+            missing.push_back(node->identifier);
+        }
+        // Reversed, so the first child is popped first
+        for (auto child = node->children.rbegin(); child != node->children.rend(); ++child) {
+            dfs_stack.push_back(child->get());
+        }
+    }
+    return missing;
+}
+
 void DirTree::add_root(const std::string& tag) {
     if (get_root() == nullptr) {
         create_node(tag, "", "", nullptr);

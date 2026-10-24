@@ -10,7 +10,7 @@ Needs a C++17 compiler, ncurses (`libncurses-dev`) and, for the tests, Google Te
 or `scripts/install-google-test.sh`).
 
 ```
-$ make            # builds build/dirpicker and build/picker
+$ make            # builds build/dirpicker, build/dirdiff and build/picker
 $ make test       # builds and runs the tests
 $ make install    # copies the programs to /usr/local/bin (or: make install PREFIX=~/.local)
 $ make clean      # removes build/
@@ -30,3 +30,14 @@ $ printf 'Copy\nRemove\n' | dirpicker --list         # a menu
 It draws on the terminal (`/dev/tty`), so stdin and stdout are free for the tree and the result.
 It exits with 0 if something was picked, and 1 if the user quit. `dirpicker --help` lists the
 options and keys. dirdelta (github.com/levioctl/dirdelta) uses it for all of its pickers.
+
+## dirdiff
+Prints the files of one dir that another doesn't have, by path only (no content comparison):
+
+```
+$ dirdiff A B        # A's files (paths relative to A) that B lacks; -0 ends them with '\0'
+```
+
+It scans both with the same fast scan as dirpicker; what find couldn't read goes to stderr.
+dirdelta uses it to diff two local dirs.
+
