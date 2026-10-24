@@ -206,11 +206,13 @@ TEST(treeprinter, siblings_that_dont_fit_are_counted) {
 
     auto lines = print_lines(tree_printer, tree.get_node("child000025"), 10);
 
-    // The root, '(N more ...)', some children, the selected one and '(M more ...)'
+    // The root, '... N more', some children, the selected one and '... M more'
     ASSERT_EQ(lines.size(), 10);
     int nr_hidden_at_beginning = 0, nr_hidden_at_end = 0;
-    ASSERT_EQ(sscanf(lines[1].c_str(), "  \xe2\x94\x82(%d more ...)", &nr_hidden_at_beginning), 1);
-    ASSERT_EQ(sscanf(lines[9].c_str(), "  \xe2\x94\x82(%d more ...)", &nr_hidden_at_end), 1);
+    ASSERT_EQ(sscanf(lines[1].c_str(), "  \xe2\x94\x9c\xe2\x94\x80\xe2\x94\x80 ... %d more",
+                     &nr_hidden_at_beginning), 1);
+    ASSERT_EQ(sscanf(lines[9].c_str(), "  \xe2\x94\x94\xe2\x94\x80\xe2\x94\x80 ... %d more",
+                     &nr_hidden_at_end), 1);
     const int nr_children_printed = lines.size() - 3;
     ASSERT_EQ(nr_hidden_at_beginning + nr_children_printed + nr_hidden_at_end, 50);
     ASSERT_TRUE(does_string_contain_substring(lines[8], "child000025"));
@@ -219,7 +221,7 @@ TEST(treeprinter, siblings_that_dont_fit_are_counted) {
 TEST(treeprinter, printed_lines_never_exceed_the_window) {
     for (int nr_children : {1, 2, 5, 9, 10, 11, 30}) {
         auto tree = get_flat_tree(nr_children);
-        // From 4 lines: the root, and a selected child between two '(N more ...)' rows
+        // From 4 lines: the root, and a selected child between two '... N more' rows
         for (int window_height = 4; window_height <= 12; ++window_height) {
             treelib::TreePrinter tree_printer(tree);
             for (auto& child : tree.get_root()->children) {

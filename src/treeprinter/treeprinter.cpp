@@ -61,13 +61,15 @@ int TreePrinter::print(std::ostream &out,
         const bool is_first_in_pagination = printed_node.node == _first_sibling_in_pagination;
         const bool is_last_in_pagination = printed_node.node == _last_sibling_in_pagination;
         if (is_first_in_pagination) {
-            print_top_scroll_indicator(out, _nr_items_removed_at_the_beginning);
+            print_scroll_indicator(out, _nr_items_removed_at_the_beginning, printed_node.depth,
+                                   &depth_to_next_sibling[0], false);
         }
         depth_to_next_sibling[printed_node.depth] = printed_node.next_sibling_exists;
         print_node(out, printed_node, selection, _printed_subtree_root, _tree,
             &depth_to_next_sibling[0], is_last_in_pagination, window_width);
         if (is_last_in_pagination) {
-            print_top_scroll_indicator(out, _nr_items_removed_at_the_end);
+            print_scroll_indicator(out, _nr_items_removed_at_the_end, printed_node.depth,
+                                   &depth_to_next_sibling[0], true);
         }
 
     }
@@ -247,7 +249,7 @@ void TreePrinter::populate_stack_with_paginated_children_of_node(
              ++counter, ++iter) {
 
         // Update the first/last sibling pointers, in order for the print loop to
-        // know when to add '(... x more)' rows at the beginning and/or end.
+        // know when to add '... N more' rows at the beginning and/or end.
         const bool is_last_sibling = counter == 0;
         if (is_last_sibling and _nr_items_removed_at_the_end > 0) {
             _last_sibling_in_pagination = **iter;

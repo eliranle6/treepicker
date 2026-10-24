@@ -99,7 +99,7 @@ private:
     // Leave search mode, back to navigation
     void stop_editing_keyword(void);
 
-    // Lines the tree needs to show the selection: the root, the selection, and a '... (N more)'
+    // Lines the tree needs to show the selection: the root, the selection, and a '... N more'
     // line on each side of it
     static constexpr int MIN_TREE_HEIGHT = 4;
 

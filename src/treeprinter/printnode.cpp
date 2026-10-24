@@ -177,8 +177,19 @@ void _print_breadcrumbs(
     out << breadcrumbs << std::endl;
 }
 
-void print_top_scroll_indicator(std::ostream &out, std::size_t nr_hidden_items) {
-    out << "  " << VERTICAL_TREE_LINE << "(" << nr_hidden_items << " more ...)" << std::endl;
+void print_scroll_indicator(std::ostream &out, std::size_t nr_hidden_items, int depth,
+                            const bool* depth_to_next_sibling, bool is_after_printed_siblings) {
+    // Where a node has its selection marker and picked columns
+    out << "  ";
+    for (int depth_idx = 1; depth_idx < depth; ++depth_idx) {
+        if (depth_to_next_sibling[depth_idx])
+            out << VERTICAL_TREE_LINE << "   ";
+        else
+            out << "    ";
+    }
+    out << (is_after_printed_siblings ? LAST_CHILD_CONNECTOR : MIDDLE_CHILD_CONNECTOR)
+        << HORIZONTAL_TREE_LINE << HORIZONTAL_TREE_LINE
+        << " ... " << nr_hidden_items << " more" << std::endl;
 }
 
 }

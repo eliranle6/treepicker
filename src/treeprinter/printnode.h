@@ -42,7 +42,10 @@ void print_node(
 void _print_breadcrumbs(std::ostream &out, const std::shared_ptr<Node> printed_subtree_root, Tree& tree,
                         int max_width = 0);
 
-void print_top_scroll_indicator(std::ostream &out, std::size_t nr_hidden_items);
+// The line standing for paginated siblings that don't fit, at their depth: "├── ... 12 more" above
+// the printed ones, or "└── ... 12 more" below them (they're the last of their siblings)
+void print_scroll_indicator(std::ostream &out, std::size_t nr_hidden_items, int depth,
+                            const bool* depth_to_next_sibling, bool is_after_printed_siblings);
 
 }
 

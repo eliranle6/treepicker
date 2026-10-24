@@ -61,7 +61,7 @@ TEST_F(TreePaginatorTest, paginate_selection_at_the_end) {
         paginate(10, 5, 9);
 
     ASSERT_EQ(nr_items_removed_at_the_end, 0);
-    // 5 rows: '(6 more)' and the last 4 items
+    // 5 rows: '... 6 more' and the last 4 items
     ASSERT_EQ(nr_items_removed_at_the_beginning, 6);
 }
 
@@ -78,9 +78,9 @@ TEST_F(TreePaginatorTest, paginate_selection_in_the_middle) {
 TEST_F(TreePaginatorTest, invariants_for_all_small_sizes) {
     // For every number of items, page size and selection:
     // - the selected item is shown
-    // - items and '(N more)' rows together fit in the page
+    // - items and '... N more' rows together fit in the page
     // - nothing is hidden when everything fits
-    // - a '(N more)' row never hides a single item (the row could show the item instead)
+    // - a '... N more' row never hides a single item (the row could show the item instead)
     for (int page_size = 3; page_size <= 15; ++page_size) {
         for (int nr_items = 1; nr_items <= 40; ++nr_items) {
             for (int selected = 0; selected < nr_items; ++selected) {
