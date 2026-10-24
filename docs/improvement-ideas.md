@@ -5,14 +5,16 @@ A backlog to pick from.
 
 ## Concepts
 
-1. **Navigate the tree, not the last screen.** `TreeSelector::move_to_next()`/`move_to_prev()`
-   ask the printer which node was printed after/before the selection, so every move needs a fresh
-   layout first (page up/down call `layout_tree()` after each step), and there are special cases
-   for when the selection wasn't printed, or the previous node is the printed root. If next/previous
-   were the next/previous node of the tree's visible preorder (what a full listing would show), the
-   selector wouldn't depend on the printer at all, and the printer would only draw around the
-   selection. Behavior changes only at the edges of depth-limited views (moving into a `(...)`
-   node's children).
+1. **~~Navigate the tree, not the last screen~~ (decided against, 2026-10-24).** `j`/`k` move
+   through what's printed (`TreeSelector::move_to_next()`/`move_to_prev()` ask the printer which
+   node was printed after/before the selection), so the screen stays put while moving in it. Moving
+   through the tree's preorder instead would make the selector independent of the printer, but the
+   view would be redrawn around each new selection, which is hard to follow; the author prefers the
+   steady screen. What was wrong were the dead ends at the screen's edges (in `music > Bach >`, `j`
+   on the last album did nothing), now fixed by scrolling past them: `j` on the last line goes to
+   the node a bigger screen would show next, `k` on the first child goes to the printed root, and
+   the printer moves its view as little as it can to show it. Left: from a wide view (`music >`,
+   its artists collapsed), `j` still moves artist by artist and never enters one; `l` does that.
 
 2. **Know files from dirs.** The tree only knows nodes with children from nodes without. Given the
    types (e.g. find's `%y` letters on stdin, `d path`/`f path`), empty dirs would show as dirs, and
@@ -38,7 +40,7 @@ A backlog to pick from.
    and last paginated siblings, the node printed before/after the selection, depth bookkeeping for
    the connector lines...). Building the list of lines to show once (the visible nodes down to the
    depth that fits, with the selection's siblings paginated), then drawing it, would remove most of
-   that state, especially with #1.
+   that state.
 
 7. **A key table.** `TreeKeyboardSelector::char_pressed()` is a long switch per mode, each case
    ending with `print_tree()`, and keys are listed twice (the `KEYCODE_*` enum, and curses' `KEY_*`

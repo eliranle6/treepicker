@@ -587,3 +587,37 @@ TEST(tree_selector, picked_files_are_counted_apart) {
     tree_selector.toggle_pick_of_selection();
     ASSERT_EQ(tree_selector.get_nr_picked_files(), 0);
 }
+
+TEST(tree_selector, move_to_next_past_the_last_printed_node) {
+    // Inside Dumb people's view, its last child is the last line: next is the node after it in
+    // the tree, the next sibling of its parent
+    auto tree = get_simple_tree();
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    tree_selector.explore_children_of_selection();
+    tree_selector.explore_children_of_selection();
+    tree_selector.move_to_next();
+    ASSERT_EQ(tree_selector.get_selection()->identifier, "rich-dumb");
+    print(tree_printer, tree_selector, 3);
+    ASSERT_EQ(tree_printer.get_printed_subtree_root()->identifier, "dumb");
+    ASSERT_EQ(tree_printer.get_last_printed_node()->identifier, "rich-dumb");
+    tree_selector.move_to_next();
+    ASSERT_EQ(tree_selector.get_selection()->identifier, "smart");
+    print(tree_printer, tree_selector, 3);
+    ASSERT_TRUE(tree_printer.was_selection_printed());
+}
+
+TEST(tree_selector, move_to_prev_past_the_first_printed_node) {
+    // Above the printed root's first child is the printed root itself
+    auto tree = get_simple_tree();
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    tree_selector.explore_children_of_selection();
+    tree_selector.explore_children_of_selection();
+    print(tree_printer, tree_selector, 3);
+    ASSERT_EQ(tree_printer.get_printed_subtree_root()->identifier, "dumb");
+    tree_selector.move_to_prev();
+    ASSERT_EQ(tree_selector.get_selection()->identifier, "dumb");
+    print(tree_printer, tree_selector, 3);
+    ASSERT_TRUE(tree_printer.was_selection_printed());
+}

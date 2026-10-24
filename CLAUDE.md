@@ -52,6 +52,9 @@ src/dirdiff/      the dirdiff program: the files of a dir that another lacks (Di
                   for dirdelta
 ```
 
+`j`/`k` move through what's printed, not the tree's order, so the screen stays steady (the
+author's choice, see `docs/improvement-ideas.md` #1); past the screen's edges they go on, scrolling.
+
 Every program feature goes in the shared core (`src/picker` and below), so all programs get it;
 a program's `main.cpp` only builds its tree and calls `picker::pick_and_print()`.
 

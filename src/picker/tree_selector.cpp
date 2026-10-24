@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "picker/tree_selector.h"
 
 namespace picker {
@@ -64,6 +65,11 @@ void TreeSelector::move_to_last_sibling(void) {
     }
 }
 
+// Moving goes through what's printed, line by line, so the screen stays put rather than being
+// redrawn around each new selection. At the screen's edges it goes on, like scrolling a list: to the
+// node that a bigger screen would show next (or before), and the printer shows it, moving its view
+// as little as it can.
+
 void TreeSelector::move_to_next(void) {
     auto next_node = _tree_printer.get_next_printed_node_after_selected();
 
@@ -71,12 +77,14 @@ void TreeSelector::move_to_next(void) {
         // There can be few cases for next node being null:
         // 1. Printed tree is empty - do nothing
         // 2. Selection isn't visible but root is - select root
-        // 3. Selected node is the selected node is the last printed node - do nothing
+        // 3. Selected node is the last printed node - the node after it, past the screen's edge
         const bool selection_isnt_visible_but_root_is =  (
                 not _tree_printer.was_selection_printed()
                 and _tree_printer.get_last_printed_node() != nullptr);
         if (selection_isnt_visible_but_root_is) {
             next_node = _tree_printer.get_printed_subtree_root();
+        } else if (_selection != nullptr) {
+            next_node = get_next_beyond_screen(_selection);
         }
     }
 
@@ -85,16 +93,25 @@ void TreeSelector::move_to_next(void) {
     }
 }
 
-void TreeSelector::move_to_prev(void) {
-    auto prev_node = _tree_printer.get_printed_node_before_selected();
-
-    // Avoid jumping to parent on moving to 'previously printed',
-    // (use 'move_one_up' instead)
-    if (prev_node == _tree_printer.get_printed_subtree_root()
-            and prev_node != _tree.get_root()) {
-        return;
+TreeSelector::NodePtr TreeSelector::get_next_beyond_screen(NodePtr node) {
+    // Not into the node's own children: they weren't printed (the node was the last line). So its
+    // next sibling, or else the next sibling of the closest ancestor that has one.
+    for (; node != _tree.get_root(); node = _tree.get_node(node->parent)) {
+        auto& siblings = _tree.get_node(node->parent)->children;
+        auto position = std::find(siblings.begin(), siblings.end(), node);
+        for (auto sibling = position + 1; sibling < siblings.end(); ++sibling) {
+            if ((*sibling)->is_search_visible()) {
+                return *sibling;
+            }
+        }
     }
+    return nullptr;
+}
 
+void TreeSelector::move_to_prev(void) {
+    // Above the first child of the printed subtree's root, there's the root itself (shown as the
+    // breadcrumbs line): past the screen's top edge, so selecting it scrolls the view up
+    auto prev_node = _tree_printer.get_printed_node_before_selected();
     if (prev_node != nullptr) {
         _selection = prev_node;
     }

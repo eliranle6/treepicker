@@ -49,6 +49,10 @@ public:
 private:
     treelib::Tree& _tree;
     treelib::TreePrinter& _tree_printer;
+    // The node after node that a bigger screen would show, when node is the last line printed:
+    // its next sibling, or else the closest ancestor's next sibling; nullptr at the tree's end
+    NodePtr get_next_beyond_screen(NodePtr node);
+
     // Update node's picked state from its children's
     void update_from_children(treelib::Node* node);
 
