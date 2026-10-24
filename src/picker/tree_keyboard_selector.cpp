@@ -68,116 +68,16 @@ bool TreeKeyboardSelector::char_pressed(int c)
     }
 
     if (_mode == mode::MODE_NAVIGATION) {
-        switch(c) {
-            case KEYCODE_UP:
-            case KEY_UP:
-                _tree_selector.move_to_prev();
-                print_tree();
-                break;
-            case KEYCODE_DOWN:
-            case KEY_DOWN:
-                _tree_selector.move_to_next();
-                print_tree();
-                break;
-            case KEYCODE_PAGE_DOWN:
-            case KEY_NPAGE:
-                // Moving relies on the tree's layout (what's printed after the selection), so
-                // lay it out again after each move, but draw only once at the end
-                for (int i = 0; i < PAGE_SIZE; ++i) {
-                    _tree_selector.move_to_next();
-                    layout_tree();
+        for (auto& command : get_key_commands()) {
+            for (auto& binding : command.bindings) {
+                if (binding.first == c) {
+                    is_finished = (this->*binding.second)();
+                    break;
                 }
-                print_tree();
-                break;
-            case KEYCODE_PAGE_UP:
-            case KEY_PPAGE:
-                {
-                auto first_node = _tree_printer.get_first_printed_node();
-                for (int i = 0; i < PAGE_SIZE && _tree_selector.get_selection() != first_node; ++i) {
-                    _tree_selector.move_to_prev();
-                    layout_tree();
-                }
-                print_tree();
-                }
-                break;
-            case KEYCODE_FIRST_SIBLING:
-            case KEY_HOME:
-                _tree_selector.move_to_first_sibling();
-                print_tree();
-                break;
-            case KEYCODE_LAST_SIBLING:
-            case KEY_END:
-                _tree_selector.move_to_last_sibling();
-                print_tree();
-                break;
-            case KEYCODE_RIGHT:
-            case KEY_RIGHT:
-                _tree_selector.explore_children_of_selection();
-                print_tree();
-                break;
-            case KEYCODE_LEFT:
-            case KEY_LEFT:
-                _tree_selector.move_one_up();
-                print_tree();
-                break;
-            case KEYCODE_PICK:
-            case KEY_ENTER:
-                if (not _options.is_multi) {
-                    if (_options.is_root_pickable or
-                            _tree_selector.get_selection() != _tree.get_root()) {
-                        _picked = {_tree_selector.get_selection()};
-                        is_finished = true;
-                    }
-                } else if (_tree_selector.get_nr_picked() > 0) {
-                    _picked = _tree_selector.get_picked_nodes();
-                    is_finished = true;
-                }
-                break;
-            case KEYCODE_TOGGLE_PICK:
-                if (_options.is_multi) {
-                    _tree_selector.toggle_pick_of_selection();
-                    print_tree();
-                }
-                break;
-            case KEYCODE_BACK:
-            case KEYCODE_QUIT:
-                _picked.clear();
-                is_finished = true;
-                break;
-            case KEYCODE_CANCEL_SEARCH:
-                // Like while editing the keyword: drop it, unfiltering the tree
-                if (not _applied_keyword.empty()) {
-                    _search_keyword = "";
-                    search();
-                    print_tree();
-                }
-                break;
-            case KEYCODE_HELP:
-                _mode = mode::MODE_HELP;
-                print_tree();
-                break;
-            case KEYCODE_TOGGLE_FILTER:
-                _is_filtering = not _is_filtering;
-                if (not _applied_keyword.empty()) {
-                    search();
-                }
-                print_tree();
-                break;
-            case KEYCODE_START_SEARCH_ON_ENTER:
-                _mode = mode::MODE_EDIT_SEARCH;
-                _is_search_on_enter = true;
-                curs_set(1);
-                print_tree();
-                break;
-            case KEYCODE_START_SEARCH:
-                if (_mode == mode::MODE_NAVIGATION) {
-                    _mode = mode::MODE_EDIT_SEARCH;
-                    curs_set(1);
-                    print_tree();
-                }
-                break;
-            default:
-                print_tree();
+            }
+        }
+        if (not is_finished) {
+            print_tree();
         }
     } else if (_mode == mode::MODE_EDIT_SEARCH) {
         switch(c) {
@@ -197,14 +97,14 @@ bool TreeKeyboardSelector::char_pressed(int c)
                 keyword_changed();
                 print_tree();
                 break;
-            case KEYCODE_CANCEL_SEARCH:
+            case KEYCODE_ESCAPE:
                 // Like in vim: drop the keyword (unlike Enter, which keeps filtering by it)
                 _search_keyword = "";
                 search();
                 stop_editing_keyword();
                 print_tree();
                 break;
-            case KEYCODE_MOVE_FROM_SEARCH_TO_NAV_MODE:
+            case KEYCODE_ENTER:
             case KEY_ENTER:
                 if (_is_search_on_enter) {
                     search();
@@ -228,6 +128,150 @@ bool TreeKeyboardSelector::char_pressed(int c)
     return is_finished;
 }
 
+const std::vector<TreeKeyboardSelector::KeyCommand>& TreeKeyboardSelector::get_key_commands(void) {
+    using T = TreeKeyboardSelector;
+    // A function's static, so it's there for whoever needs it while statics are initialized
+    // (cli's usage text)
+    static const std::vector<KeyCommand> commands = {
+        {"h/j/k/l, arrows", "move", {
+            {KEYCODE_K, &T::move_to_prev}, {KEY_UP, &T::move_to_prev},
+            {KEYCODE_J, &T::move_to_next}, {KEY_DOWN, &T::move_to_next},
+            {KEYCODE_H, &T::move_one_up}, {KEY_LEFT, &T::move_one_up},
+            {KEYCODE_L, &T::explore_children}, {KEY_RIGHT, &T::explore_children}}},
+        {"g/G, Home/End", "first/last sibling", {
+            {KEYCODE_LOWER_G, &T::move_to_first_sibling}, {KEY_HOME, &T::move_to_first_sibling},
+            {KEYCODE_UPPER_G, &T::move_to_last_sibling}, {KEY_END, &T::move_to_last_sibling}}},
+        {"Ctrl-D/Ctrl-U", "page down/up", {
+            {KEYCODE_CTRL_D, &T::page_down}, {KEY_NPAGE, &T::page_down},
+            {KEYCODE_CTRL_U, &T::page_up}, {KEY_PPAGE, &T::page_up}}},
+        {"/", "search as you type (Enter keeps the filter, Esc drops it)", {
+            {KEYCODE_SLASH, &T::start_search}}},
+        {"Ctrl-/", "search when Enter is pressed", {
+            {KEYCODE_CTRL_SLASH, &T::start_search_on_enter}}},
+        {"Esc", "drop the search filter", {
+            {KEYCODE_ESCAPE, &T::drop_search}}},
+        {"f", "switch between showing only the matches and the\n"
+              "whole tree with the matches in yellow", {
+            {KEYCODE_F, &T::toggle_filter}}},
+        {"Space", "pick or unpick (with -m)", {
+            {KEYCODE_SPACE, &T::toggle_pick}}},
+        {"Enter", "pick (with -m: finish)", {
+            {KEYCODE_ENTER, &T::pick}, {KEY_ENTER, &T::pick}}},
+        {"?", "show these keys", {
+            {KEYCODE_QUESTION_MARK, &T::show_help}}},
+        {"q, Ctrl-C", "quit", {
+            {KEYCODE_Q, &T::quit}, {KEYCODE_CTRL_C, &T::quit}}},
+    };
+    return commands;
+}
+
+bool TreeKeyboardSelector::move_to_prev(void) {
+    _tree_selector.move_to_prev();
+    return false;
+}
+
+bool TreeKeyboardSelector::move_to_next(void) {
+    _tree_selector.move_to_next();
+    return false;
+}
+
+bool TreeKeyboardSelector::page_down(void) {
+    // Moving relies on the tree's layout (what's printed after the selection), so lay it out
+    // again after each move, but draw only once at the end
+    for (int i = 0; i < PAGE_SIZE; ++i) {
+        _tree_selector.move_to_next();
+        layout_tree();
+    }
+    return false;
+}
+
+bool TreeKeyboardSelector::page_up(void) {
+    auto first_node = _tree_printer.get_first_printed_node();
+    for (int i = 0; i < PAGE_SIZE && _tree_selector.get_selection() != first_node; ++i) {
+        _tree_selector.move_to_prev();
+        layout_tree();
+    }
+    return false;
+}
+
+bool TreeKeyboardSelector::move_to_first_sibling(void) {
+    _tree_selector.move_to_first_sibling();
+    return false;
+}
+
+bool TreeKeyboardSelector::move_to_last_sibling(void) {
+    _tree_selector.move_to_last_sibling();
+    return false;
+}
+
+bool TreeKeyboardSelector::explore_children(void) {
+    _tree_selector.explore_children_of_selection();
+    return false;
+}
+
+bool TreeKeyboardSelector::move_one_up(void) {
+    _tree_selector.move_one_up();
+    return false;
+}
+
+bool TreeKeyboardSelector::pick(void) {
+    if (not _options.is_multi) {
+        if (_options.is_root_pickable or _tree_selector.get_selection() != _tree.get_root()) {
+            _picked = {_tree_selector.get_selection()};
+            return true;
+        }
+    } else if (_tree_selector.get_nr_picked() > 0) {
+        _picked = _tree_selector.get_picked_nodes();
+        return true;
+    }
+    return false;
+}
+
+bool TreeKeyboardSelector::toggle_pick(void) {
+    if (_options.is_multi) {
+        _tree_selector.toggle_pick_of_selection();
+    }
+    return false;
+}
+
+bool TreeKeyboardSelector::quit(void) {
+    _picked.clear();
+    return true;
+}
+
+bool TreeKeyboardSelector::drop_search(void) {
+    // Like while editing the keyword: drop it, unfiltering the tree
+    if (not _applied_keyword.empty()) {
+        _search_keyword = "";
+        search();
+    }
+    return false;
+}
+
+bool TreeKeyboardSelector::show_help(void) {
+    _mode = mode::MODE_HELP;
+    return false;
+}
+
+bool TreeKeyboardSelector::toggle_filter(void) {
+    _is_filtering = not _is_filtering;
+    if (not _applied_keyword.empty()) {
+        search();
+    }
+    return false;
+}
+
+bool TreeKeyboardSelector::start_search(void) {
+    _mode = mode::MODE_EDIT_SEARCH;
+    curs_set(1);
+    return false;
+}
+
+bool TreeKeyboardSelector::start_search_on_enter(void) {
+    _is_search_on_enter = true;
+    return start_search();
+}
+
 // Print text on a row of the screen, over whatever was there, cut at the screen's edge. With
 // fill, the rest of the row is filled with spaces (to show the row's background color).
 static void print_line(int row, const std::string& text, int window_width, bool fill) {
@@ -249,7 +293,7 @@ void TreeKeyboardSelector::print_help(void) {
     const int window_height = getmaxy(stdscr);
     const int window_width = getmaxx(stdscr);
     std::vector<std::string> lines = {"Keys (press any key to go back):", ""};
-    std::istringstream keys(KEYS_HELP);
+    std::istringstream keys(keys_help());
     for (std::string line; std::getline(keys, line);) {
         lines.push_back(line);
     }

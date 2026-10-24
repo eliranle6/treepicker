@@ -1,18 +1,25 @@
 #include "picker/keys_help.h"
+#include "picker/tree_keyboard_selector.h"
 
 namespace picker {
 
-const char KEYS_HELP[] =
-    "  h/j/k/l, arrows  move\n"
-    "  g/G, Home/End    first/last sibling\n"
-    "  Ctrl-D/Ctrl-U    page down/up\n"
-    "  /                search as you type (Enter keeps the filter, Esc drops it)\n"
-    "  Ctrl-/           search when Enter is pressed\n"
-    "  f                switch between showing only the matches and the\n"
-    "                   whole tree with the matches in yellow\n"
-    "  Space            pick or unpick (with -m)\n"
-    "  Enter            pick (with -m: finish)\n"
-    "  ?                show these keys\n"
-    "  q, Ctrl-C        quit\n";
+std::string keys_help(void) {
+    // "  keys            description", the descriptions in a column
+    static const std::size_t KEYS_WIDTH = 17;
+    const std::string indent = "  ";
+    std::string help;
+    for (auto& command : TreeKeyboardSelector::get_key_commands()) {
+        std::string keys = command.keys;
+        help += indent + keys + std::string(KEYS_WIDTH - keys.size(), ' ');
+        for (const char* c = command.description; *c != '\0'; ++c) {
+            help += *c;
+            if (*c == '\n') {
+                help += indent + std::string(KEYS_WIDTH, ' ');
+            }
+        }
+        help += '\n';
+    }
+    return help;
+}
 
 } // namespace picker

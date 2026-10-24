@@ -22,7 +22,7 @@ const std::string CLI_OPTIONS_USAGE = std::string(
     "  -0             paths end with '\\0' rather than a newline (read ones and printed ones)\n"
     "  -h, --help     show this help\n"
     "\n"
-    "Keys:\n") + KEYS_HELP +
+    "Keys:\n") + keys_help() +
     "\n"
     "Prints the picked nodes' paths, in the tree's order. Exits with 0 if a node was picked, 1 if\n"
     "not.\n";

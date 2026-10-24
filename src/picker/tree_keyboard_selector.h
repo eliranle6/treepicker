@@ -17,10 +17,6 @@ namespace picker {
 enum {
     KEYCODE_CTRL_C = 3,
     KEYCODE_CTRL_D = 4,
-    KEYCODE_CTRL_H = 8,
-    KEYCODE_CTRL_J = 10,
-    KEYCODE_CTRL_K = 11,
-    KEYCODE_CTRL_L = 12,
     KEYCODE_CTRL_U = 21,
     KEYCODE_CTRL_W = 23,
     KEYCODE_ESCAPE = 27,  // Also Ctrl-[
@@ -40,30 +36,6 @@ enum {
     KEYCODE_Q = 113
 };
 
-enum {
-    KEYCODE_UP = KEYCODE_K,
-    KEYCODE_DOWN = KEYCODE_J,
-    KEYCODE_PAGE_UP = KEYCODE_CTRL_U,
-    KEYCODE_PAGE_DOWN = KEYCODE_CTRL_D,
-    KEYCODE_RIGHT = KEYCODE_L,
-    KEYCODE_LEFT = KEYCODE_H,
-    KEYCODE_BACK = KEYCODE_CTRL_C,
-    KEYCODE_PICK = KEYCODE_ENTER,
-    KEYCODE_TOGGLE_PICK = KEYCODE_SPACE,
-    KEYCODE_QUIT = KEYCODE_Q,
-    KEYCODE_FIRST_SIBLING = KEYCODE_LOWER_G,
-    KEYCODE_LAST_SIBLING = KEYCODE_UPPER_G,
-    KEYCODE_START_SEARCH = KEYCODE_SLASH,
-    // Search, but only once Enter is pressed rather than as the keyword is typed
-    KEYCODE_START_SEARCH_ON_ENTER = KEYCODE_CTRL_SLASH,
-    // Switch between showing only the matches (and their ancestors), and the whole tree with
-    // the matches highlighted
-    KEYCODE_TOGGLE_FILTER = KEYCODE_F,
-    KEYCODE_HELP = KEYCODE_QUESTION_MARK,
-    KEYCODE_MOVE_FROM_SEARCH_TO_NAV_MODE = KEYCODE_ENTER,
-    KEYCODE_CANCEL_SEARCH = KEYCODE_ESCAPE
-};
-
 enum mode {
     MODE_NAVIGATION,
     MODE_EDIT_SEARCH,
@@ -79,6 +51,19 @@ public:
     // Handle a key; returns whether picking is finished (a pick, or quitting)
     bool char_pressed(int c);
 
+    // A line of the keys' help, and the keys it's about, each with what it does when moving
+    // around (not while editing the search keyword): the keys' only list, so the help can't
+    // miss one
+    struct KeyCommand {
+        // Returns whether picking is finished
+        using Action = bool (TreeKeyboardSelector::*)(void);
+        const char* keys;
+        // Lines after the first are shown indented under it
+        const char* description;
+        std::vector<std::pair<int, Action>> bindings;
+    };
+    static const std::vector<KeyCommand>& get_key_commands(void);
+
     // What was picked, once finished: empty if the user quit
     const std::vector<std::shared_ptr<treelib::Node>>& get_picked(void) const { return _picked; }
 
@@ -89,6 +74,24 @@ public:
 private:
     // Number of nodes that page up/down move
     static constexpr int PAGE_SIZE = 10;
+
+    // What the keys do (see get_key_commands())
+    bool move_to_prev(void);
+    bool move_to_next(void);
+    bool page_down(void);
+    bool page_up(void);
+    bool move_to_first_sibling(void);
+    bool move_to_last_sibling(void);
+    bool explore_children(void);
+    bool move_one_up(void);
+    bool pick(void);
+    bool toggle_pick(void);
+    bool quit(void);
+    bool drop_search(void);
+    bool show_help(void);
+    bool toggle_filter(void);
+    bool start_search(void);
+    bool start_search_on_enter(void);
 
     // Search for the keyword being edited, filtering or highlighting
     void search(void);
