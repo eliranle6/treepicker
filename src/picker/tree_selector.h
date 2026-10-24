@@ -31,6 +31,9 @@ public:
     // Pick the selection and everything under it, or, if it's picked, unpick them all
     void toggle_pick_of_selection(void);
 
+    // Pick (or unpick) the node alone, without the nodes under it
+    void set_picked(NodePtr node, bool is_picked);
+
     std::size_t get_nr_picked(void) const { return _nr_picked; }
 
     // The picked nodes, in the tree's order (each node before the nodes under it)

@@ -119,6 +119,13 @@ void TreeSelector::toggle_pick_of_selection(void) {
     }
 }
 
+void TreeSelector::set_picked(NodePtr node, bool is_picked) {
+    if (node != nullptr and node->is_picked != is_picked) {
+        node->is_picked = is_picked;
+        is_picked ? ++_nr_picked : --_nr_picked;
+    }
+}
+
 std::vector<TreeSelector::NodePtr> TreeSelector::get_picked_nodes(void) {
     std::vector<NodePtr> picked;
     if (_tree.get_root() == nullptr) {

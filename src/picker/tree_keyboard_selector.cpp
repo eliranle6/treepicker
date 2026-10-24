@@ -20,6 +20,11 @@ TreeKeyboardSelector::TreeKeyboardSelector(treelib::Tree& tree, const PickerOpti
     _search(tree),
     _options(options)
 {
+    if (options.is_multi) {
+        for (auto& id : options.initially_picked_ids) {
+            _tree_selector.set_picked(_tree.get_node(id), true);
+        }
+    }
     if (options.is_first_child_selected_first) {
         _tree_selector.explore_children_of_selection();
     }

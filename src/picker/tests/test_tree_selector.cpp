@@ -447,3 +447,18 @@ TEST(tree_selector, move_to_sibling_of_the_root_stays) {
     tree_selector.move_to_last_sibling();
     ASSERT_EQ(tree_selector.get_selection(), tree.get_root());
 }
+
+TEST(tree_selector, set_picked_picks_the_node_alone) {
+    auto tree = get_simple_tree();
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+
+    tree_selector.set_picked(tree.get_node("dumb"), true);
+    tree_selector.set_picked(tree.get_node("dumb"), true);  // Counts once
+    ASSERT_EQ(ids(tree_selector.get_picked_nodes()), std::vector<std::string>({"dumb"}));
+    ASSERT_EQ(tree_selector.get_nr_picked(), 1);
+
+    tree_selector.set_picked(tree.get_node("dumb"), false);
+    tree_selector.set_picked(nullptr, true);  // E.g. an id that isn't in the tree
+    ASSERT_EQ(tree_selector.get_nr_picked(), 0);
+}

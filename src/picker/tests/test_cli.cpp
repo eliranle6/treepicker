@@ -100,3 +100,8 @@ TEST(cli, scan_errors_warning_lists_the_first_errors) {
     auto warning = picker::scan_errors_warning("/d", {"e1", "e2", "e3", "e4", "e5"});
     ASSERT_EQ(warning.substr(warning.find('\n')), "\n  e1\n  e2\n  e3\n  (and 2 more)");
 }
+
+TEST(cli, picked_file) {
+    ASSERT_EQ(parse({"--picked", "/tmp/picked"}).picked_file, "/tmp/picked");
+    ASSERT_FALSE(parse({"--picked"}).error.empty());
+}

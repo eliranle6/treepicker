@@ -21,6 +21,9 @@ struct CliOptions {
     std::string root_name;
     // --list: the input is a flat list of options (one per line), rather than paths
     bool is_list = false;
+    // --picked FILE: with -m, start with the paths in FILE (one per line, or with -0 ending with
+    // '\0') picked, like what dirpicker printed
+    std::string picked_file;
     // --max-depth N: when scanning a dir, go at most N levels below it (-1: no limit)
     int max_depth = -1;
 

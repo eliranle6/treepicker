@@ -1,5 +1,7 @@
 #include <cstdlib>
+#include <fstream>
 #include <iostream>
+#include <stdexcept>
 
 #include "picker/cli.h"
 #include "picker/keys_help.h"
@@ -12,6 +14,7 @@ const std::string CLI_OPTIONS_USAGE = std::string(
     "                 it (or unpicks them), and Enter finishes\n"
     "  --header TEXT  show TEXT (one or more lines) above the tree\n"
     "  --root NAME    show the tree's root as NAME\n"
+    "  --picked FILE  with -m, start with the nodes whose paths are in FILE (as printed) picked\n"
     "  -0             paths end with '\\0' rather than a newline (read ones and printed ones)\n"
     "  -h, --help     show this help\n"
     "\n"
@@ -28,11 +31,15 @@ CliOptions parse_cli(int argc, char* argv[]) {
             options.is_help_requested = true;
         } else if (arg == "-m" or arg == "--multi") {
             options.is_multi = true;
-        } else if (arg == "--header" or arg == "--root") {
+        } else if (arg == "--header" or arg == "--root" or arg == "--picked") {
             if (i + 1 == argc) {
                 options.error = arg + " needs a value";
+            } else if (arg == "--header") {
+                options.header = argv[++i];
+            } else if (arg == "--root") {
+                options.root_name = argv[++i];
             } else {
-                (arg == "--header" ? options.header : options.root_name) = argv[++i];
+                options.picked_file = argv[++i];
             }
         } else if (arg == "--max-depth") {
             char* end = nullptr;
@@ -57,6 +64,7 @@ CliOptions parse_cli(int argc, char* argv[]) {
 }
 
 int pick_and_print(treelib::Tree& tree, const CliOptions& options) {
+    const char delimiter = options.is_null_separated ? '\0' : '\n';
     if (not options.root_name.empty() and tree.get_root() != nullptr) {
         tree.get_root()->tag = options.root_name;
     }
@@ -66,9 +74,19 @@ int pick_and_print(treelib::Tree& tree, const CliOptions& options) {
     // A list's root is only its title
     picker_options.is_first_child_selected_first = options.is_list;
     picker_options.is_root_pickable = not options.is_list;
+    if (not options.picked_file.empty()) {
+        std::ifstream picked_file(options.picked_file);
+        if (not picked_file) {
+            throw std::runtime_error("Cannot read " + options.picked_file);
+        }
+        // As printed: the root is "."
+        for (std::string path; std::getline(picked_file, path, delimiter);) {
+            picker_options.initially_picked_ids.push_back(
+                path == "." ? tree.get_root()->identifier : path);
+        }
+    }
     const auto picked = Picker(tree, picker_options).run();
     // The screen is the terminal's, so stdout is only the picked nodes
-    const char delimiter = options.is_null_separated ? '\0' : '\n';
     for (auto& node : picked) {
         std::cout << (node == tree.get_root() ? "." : node->identifier) << delimiter;
     }
