@@ -88,3 +88,15 @@ TEST(cli, max_depth) {
     ASSERT_FALSE(parse({"--max-depth", "-1"}).error.empty());
     ASSERT_FALSE(parse({"--max-depth", ""}).error.empty());
 }
+
+TEST(cli, scan_errors_warning) {
+    ASSERT_EQ(picker::scan_errors_warning("/d", {}), "");
+    ASSERT_EQ(picker::scan_errors_warning("/d", {"find: '/d/a': Permission denied"}),
+              "Warning: find couldn't read everything in /d (1 errors), so the tree may lack files:\n"
+              "  find: '/d/a': Permission denied");
+}
+
+TEST(cli, scan_errors_warning_lists_the_first_errors) {
+    auto warning = picker::scan_errors_warning("/d", {"e1", "e2", "e3", "e4", "e5"});
+    ASSERT_EQ(warning.substr(warning.find('\n')), "\n  e1\n  e2\n  e3\n  (and 2 more)");
+}

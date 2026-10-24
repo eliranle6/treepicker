@@ -40,6 +40,10 @@ CliOptions parse_cli(int argc, char* argv[]);
 // line, in the tree's order. Returns the program's exit code: 0 if something was picked, 1 if the user quit.
 int pick_and_print(treelib::Tree& tree, const CliOptions& options);
 
+// A warning that scanning dir couldn't read everything, listing the first few of find's errors,
+// or "" if there are none
+std::string scan_errors_warning(const std::string& dir, const std::vector<std::string>& errors);
+
 // Add a child to the root for each line in `in` (ending with delimiter), its id and tag the line
 // itself. Empty lines and repeated ones are skipped.
 void add_list_from_stream(treelib::Tree& tree, std::istream& in, char delimiter);

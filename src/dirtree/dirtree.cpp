@@ -2,6 +2,7 @@
 #include <sys/wait.h>
 #include <algorithm>
 #include <cerrno>
+#include <cstdio>
 #include <cstring>
 #include <sstream>
 #include <stdexcept>
@@ -36,7 +37,11 @@ void DirTree::update_from_filesystem(int max_depth) {
         argv.insert(argv.end(), {"-maxdepth", max_depth_string.c_str()});
     }
     argv.insert(argv.end(), {"!", "-path", path_string.c_str(), "-printf", "%y %P\\0", nullptr});
-    auto entries_stream = utils::subprocess_read_output("/usr/bin/find", argv.data());
+    // find's errors go to a temporary file rather than a pipe: reading two pipes one after the
+    // other could block find on a full one
+    FILE* errors_file = std::tmpfile();
+    auto entries_stream = utils::subprocess_read_output(
+        "/usr/bin/find", argv.data(), errors_file == nullptr ? -1 : fileno(errors_file));
 
     // Read the dirs and files (skipping other types, e.g. symlinks)
     std::vector<std::string> entry_paths;
@@ -51,6 +56,19 @@ void DirTree::update_from_filesystem(int max_depth) {
 
     // Reap the find process
     wait(nullptr);
+
+    scan_errors.clear();
+    if (errors_file != nullptr) {
+        std::rewind(errors_file);
+        char* line = nullptr;
+        std::size_t line_capacity = 0;
+        ssize_t line_size;
+        while ((line_size = getline(&line, &line_capacity, errors_file)) > 0) {
+            scan_errors.emplace_back(line, line[line_size - 1] == '\n' ? line_size - 1 : line_size);
+        }
+        free(line);
+        std::fclose(errors_file);
+    }
 
     // Show each dir's entries sorted by name (the tree keeps them in the order they're added).
     // Sorted paths also list each dir before what's in it, which create_node needs.

@@ -41,12 +41,13 @@ typedef std::unique_ptr<fds_istream> fds_istreamp;
  * - The reason that a pointer is used is because i cannot find how (it seems impossible)
  *   to copy/move an istream object.
  */
-fds_istreamp subprocess_read_output(const char *filename, char const *argv[]);
+fds_istreamp subprocess_read_output(const char *filename, char const *argv[], int stderr_fd = -1);
 
 /* Run a subprocess and return a file descriptor connected to its standard output.
  *
- * This is similar to popen, except that it does not use the shell to execute processes. */
-int subprocess_get_fd(const char *filename, char const *argv[]);
+ * This is similar to popen, except that it does not use the shell to execute processes.
+ * With a stderr_fd, the subprocess's standard error goes to it (else it's this process's). */
+int subprocess_get_fd(const char *filename, char const *argv[], int stderr_fd = -1);
 
 } // namespace utils
 

@@ -266,3 +266,30 @@ TEST(dirtree, max_depth) {
     ASSERT_EQ(dir.get_node("a/b/c"), nullptr);
     ASSERT_NE(dir.get_node("top.txt"), nullptr);
 }
+
+TEST(dirtree, scan_errors) {
+    if (geteuid() == 0) {
+        GTEST_SKIP() << "root can read anything";
+    }
+    TempDir temp;
+    temp.make_dir("locked");
+    temp.make_file("locked/secret.txt");
+    temp.make_file("open.txt");
+    chmod((temp.path + "/locked").c_str(), 0);
+
+    dirtree::DirTree dir(temp.path);
+    dir.update_from_filesystem();
+    chmod((temp.path + "/locked").c_str(), 0755);
+
+    ASSERT_EQ(dir.scan_errors.size(), 1);
+    ASSERT_NE(dir.scan_errors[0].find("Permission denied"), std::string::npos);
+    ASSERT_NE(dir.get_node("open.txt"), nullptr);
+}
+
+TEST(dirtree, no_scan_errors) {
+    TempDir temp;
+    temp.make_file("a.txt");
+    dirtree::DirTree dir(temp.path);
+    dir.update_from_filesystem();
+    ASSERT_TRUE(dir.scan_errors.empty());
+}

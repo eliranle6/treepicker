@@ -75,6 +75,22 @@ int pick_and_print(treelib::Tree& tree, const CliOptions& options) {
     return picked.empty() ? 1 : 0;
 }
 
+std::string scan_errors_warning(const std::string& dir, const std::vector<std::string>& errors) {
+    static const std::size_t MAX_ERRORS_SHOWN = 3;
+    if (errors.empty()) {
+        return "";
+    }
+    std::string warning = "Warning: find couldn't read everything in " + dir + " (" +
+        std::to_string(errors.size()) + " errors), so the tree may lack files:";
+    for (std::size_t i = 0; i < errors.size() and i < MAX_ERRORS_SHOWN; ++i) {
+        warning += "\n  " + errors[i];
+    }
+    if (errors.size() > MAX_ERRORS_SHOWN) {
+        warning += "\n  (and " + std::to_string(errors.size() - MAX_ERRORS_SHOWN) + " more)";
+    }
+    return warning;
+}
+
 void add_list_from_stream(treelib::Tree& tree, std::istream& in, char delimiter) {
     if (tree.get_root() == nullptr) {
         tree.create_node(".", "", "", nullptr);

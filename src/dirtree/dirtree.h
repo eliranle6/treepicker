@@ -21,6 +21,10 @@ public:
     // the dir (-1: all)
     void update_from_filesystem(int max_depth = -1);
 
+    // find's error messages from the last update_from_filesystem(), one per path it couldn't
+    // read (e.g. "find: '/a/b': Permission denied"), so the tree may lack what's under them
+    std::vector<std::string> scan_errors;
+
     // Add the paths read from in, each ending with delimiter (or the end of input), in the order
     // they're read. Paths are relative to the tree's root, '/'-separated; see add_path().
     void update_from_stream(std::istream& in, char delimiter = '\n');

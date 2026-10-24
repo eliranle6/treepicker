@@ -20,7 +20,7 @@ static const char USAGE[] =
 int main(int argc, char* argv[]) {
     setlocale(LC_ALL, "");
 
-    const auto options = picker::parse_cli(argc, argv);
+    auto options = picker::parse_cli(argc, argv);
     if (options.is_help_requested) {
         std::cout << USAGE << picker::CLI_OPTIONS_USAGE;
         return 0;
@@ -47,6 +47,11 @@ int main(int argc, char* argv[]) {
             tree.update_from_stream(std::cin, delimiter);
         } else {
             tree.update_from_filesystem(options.max_depth);
+            // Above the caller's header
+            const auto warning = picker::scan_errors_warning(dir, tree.scan_errors);
+            if (not warning.empty()) {
+                options.header = warning + (options.header.empty() ? "" : "\n" + options.header);
+            }
         }
         return picker::pick_and_print(tree, options);
     } catch (const std::exception& e) {
