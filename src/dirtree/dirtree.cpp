@@ -26,6 +26,7 @@ void DirTree::update_from_filesystem(int max_depth) {
     std::string root_tag = std::string(basename(realpath_ret_value));
     free(realpath_ret_value);
     add_root(root_tag);
+    get_root()->kind = 'd';
 
     // Execute the `find` command to explore the dir contents. Entries end with '\0' rather
     // than '\n', since file names may contain newlines.
@@ -44,13 +45,14 @@ void DirTree::update_from_filesystem(int max_depth) {
         "/usr/bin/find", argv.data(), errors_file == nullptr ? -1 : fileno(errors_file));
 
     // Read the dirs and files (skipping other types, e.g. symlinks)
-    std::vector<std::string> entry_paths;
+    // Each its path and kind
+    std::vector<std::pair<std::string, char>> entries;
     std::string entry;
     while (getline(*entries_stream, entry, '\0')) {
         const bool is_dir_or_file = entry.size() > 2 and entry[1] == ' ' and
             (entry[0] == 'd' or entry[0] == 'f');
         if (is_dir_or_file) {
-            entry_paths.push_back(entry.substr(2));
+            entries.emplace_back(entry.substr(2), entry[0]);
         }
     }
 
@@ -72,19 +74,23 @@ void DirTree::update_from_filesystem(int max_depth) {
 
     // Show each dir's entries sorted by name (the tree keeps them in the order they're added).
     // Sorted paths also list each dir before what's in it, which create_node needs.
-    std::sort(entry_paths.begin(), entry_paths.end());
+    std::sort(entries.begin(), entries.end());
 
     // Populate dirtree
-    for (auto& entry_path : entry_paths) {
-        add_path(entry_path);
+    for (auto& path_and_kind : entries) {
+        add_path(path_and_kind.first, path_and_kind.second);
     }
 }
 
-void DirTree::update_from_stream(std::istream& in, char delimiter) {
+void DirTree::update_from_stream(std::istream& in, char delimiter, bool is_typed) {
     add_root(".");
-    std::string entry_path;
-    while (getline(in, entry_path, delimiter)) {
-        add_path(entry_path);
+    std::string entry;
+    while (getline(in, entry, delimiter)) {
+        if (not is_typed) {
+            add_path(entry);
+        } else if (entry.size() > 2 and entry[1] == ' ' and (entry[0] == 'f' or entry[0] == 'd')) {
+            add_path(entry.substr(2), entry[0]);
+        }
     }
 }
 
@@ -122,7 +128,7 @@ static std::string clean_path(const std::string& path) {
     return cleaned;
 }
 
-void DirTree::add_path(const std::string& path) {
+void DirTree::add_path(const std::string& path, char kind) {
     const std::string cleaned = needs_cleaning(path) ? clean_path(path) : path;
     if (cleaned.empty()) {
         return;
@@ -132,10 +138,14 @@ void DirTree::add_path(const std::string& path) {
     const auto last_slash = cleaned.rfind('/');
     const std::string parent = last_slash == std::string::npos ? "" : cleaned.substr(0, last_slash);
     const std::string name = last_slash == std::string::npos ? cleaned : cleaned.substr(last_slash + 1);
-    if (get_or_create_node(name, cleaned, parent, nullptr) == nullptr) {
+    auto node = get_or_create_node(name, cleaned, parent, nullptr);
+    if (node == nullptr) {
         // The parent isn't in the tree yet
-        add_path(parent);
-        create_node(name, cleaned, parent, nullptr);
+        add_path(parent, 'd');
+        node = create_node(name, cleaned, parent, nullptr);
+    }
+    if (kind != 0) {
+        node->kind = kind;
     }
 }
 

@@ -293,3 +293,40 @@ TEST(dirtree, no_scan_errors) {
     dir.update_from_filesystem();
     ASSERT_TRUE(dir.scan_errors.empty());
 }
+
+TEST(dirtree, scan_knows_files_from_dirs) {
+    TempDir temp;
+    temp.make_dir("empty");
+    temp.make_dir("a");
+    temp.make_file("a/b.txt");
+    dirtree::DirTree dir(temp.path);
+    dir.update_from_filesystem();
+    for (auto id : {"empty", "a", "a/b.txt"}) {
+        ASSERT_NE(dir.get_node(id), nullptr) << id;
+    }
+    ASSERT_EQ(dir.get_node("empty")->kind, 'd');
+    ASSERT_EQ(dir.get_node("a")->kind, 'd');
+    ASSERT_EQ(dir.get_node("a/b.txt")->kind, 'f');
+    ASSERT_EQ(dir.get_root()->kind, 'd');
+}
+
+TEST(dirtree, typed_stream) {
+    // A type letter and a space, then the path: others are skipped
+    dirtree::DirTree dir("-");
+    std::istringstream in("d empty\nf music/a.mp3\nl a-symlink\nnot typed\n");
+    dir.update_from_stream(in, '\n', true);
+
+    ASSERT_EQ(dir.get_node("empty")->kind, 'd');
+    ASSERT_EQ(dir.get_node("music/a.mp3")->kind, 'f');
+    // Added for a path under it
+    ASSERT_EQ(dir.get_node("music")->kind, 'd');
+    ASSERT_EQ(dir.get_node("a-symlink"), nullptr);
+    ASSERT_EQ(dir.get_nr_nodes(), 4);
+}
+
+TEST(dirtree, untyped_stream_kinds_are_unknown) {
+    auto dir = tree_from_text("a/b\n");
+    ASSERT_EQ(dir.get_node("a/b")->kind, 0);
+    // a was added for a/b, so it's a dir
+    ASSERT_EQ(dir.get_node("a")->kind, 'd');
+}

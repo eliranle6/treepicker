@@ -570,3 +570,20 @@ TEST(tree_selector, update_picked_dirs) {
     ASSERT_TRUE(tree.get_root()->is_partly_picked);
     ASSERT_EQ(tree_selector.get_nr_picked(), 4);
 }
+
+TEST(tree_selector, picked_files_are_counted_apart) {
+    auto tree = get_simple_tree();
+    for (auto id : {"poor-dumb", "rich-dumb", "poor-smart", "rich-smart"}) {
+        tree.get_node(id)->kind = 'f';
+    }
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    tree_selector.explore_children_of_selection();  // dumb
+
+    tree_selector.toggle_pick_of_selection();
+    ASSERT_EQ(tree_selector.get_nr_picked(), 3);
+    ASSERT_EQ(tree_selector.get_nr_picked_files(), 2);
+
+    tree_selector.toggle_pick_of_selection();
+    ASSERT_EQ(tree_selector.get_nr_picked_files(), 0);
+}

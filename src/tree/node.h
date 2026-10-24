@@ -28,6 +28,10 @@ public:
     bool is_picked;
     bool is_partly_picked;
 
+    // What the node is, if known: 'f' a file, 'd' a dir, 0 unknown (e.g. a tree of paths without
+    // types)
+    char kind;
+
     std::vector< std::shared_ptr< Node > > children;
     void add_child(std::shared_ptr< Node > node);
 

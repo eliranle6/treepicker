@@ -40,6 +40,8 @@ public:
     void update_picked_dirs(void);
 
     std::size_t get_nr_picked(void) const { return _nr_picked; }
+    // Of them, the files (nodes whose kind is 'f')
+    std::size_t get_nr_picked_files(void) const { return _nr_picked_files; }
 
     // The picked nodes, in the tree's order (each node before the nodes under it)
     std::vector<NodePtr> get_picked_nodes(void);
@@ -50,8 +52,12 @@ private:
     // Update node's picked state from its children's
     void update_from_children(treelib::Node* node);
 
+    // Set node's is_picked, and the counts
+    void set_picked_flag(treelib::Node* node, bool is_picked);
+
     NodePtr _selection;
     std::size_t _nr_picked;
+    std::size_t _nr_picked_files;
 };
 
 }

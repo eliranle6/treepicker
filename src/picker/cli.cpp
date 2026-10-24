@@ -62,6 +62,8 @@ CliOptions parse_cli(int argc, char* argv[]) {
                 options.max_depth = value;
             }
             ++i;
+        } else if (arg == "--typed") {
+            options.is_typed = true;
         } else if (arg == "--list") {
             options.is_list = true;
         } else if (arg == "-0") {

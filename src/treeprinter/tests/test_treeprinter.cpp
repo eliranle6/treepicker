@@ -355,3 +355,18 @@ TEST(treeprinter, a_picked_roots_color_ends_with_its_line) {
     // Back to the default color before anything of the next line
     ASSERT_EQ(lines[1].substr(0, 5), "\x1B[39m");
 }
+
+TEST(treeprinter, an_empty_dir_looks_like_a_dir) {
+    treelib::Tree tree;
+    tree.create_node("root", "root", "", nullptr);
+    tree.create_node("empty", "empty", "root", nullptr)->kind = 'd';
+    tree.create_node("file", "file", "root", nullptr)->kind = 'f';
+    treelib::TreePrinter tree_printer(tree);
+    std::ostringstream out;
+    tree_printer.print(out, false, tree.get_root(), 10);
+
+    auto lines = split_string_by_newline(out.str());
+    // Dirs are bold
+    ASSERT_TRUE(does_string_contain_substring(lines[1], "\x1B[1mempty"));
+    ASSERT_FALSE(does_string_contain_substring(lines[2], "\x1B[1m"));
+}

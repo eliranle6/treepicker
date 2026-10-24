@@ -18,8 +18,22 @@ TreeKeyboardSelector::TreeKeyboardSelector(treelib::Tree& tree, const PickerOpti
     _tree_selector(tree, _tree_printer),
     _mode(mode::MODE_NAVIGATION),
     _search(tree),
-    _options(options)
+    _options(options),
+    _are_files_known(false)
 {
+    // Once, rather than on each redraw
+    std::vector<treelib::Node*> dfs_stack;
+    if (tree.get_root() != nullptr) {
+        dfs_stack.push_back(tree.get_root().get());
+    }
+    while (not dfs_stack.empty() and not _are_files_known) {
+        auto node = dfs_stack.back();
+        dfs_stack.pop_back();
+        _are_files_known = node->kind == 'f';
+        for (auto& child : node->children) {
+            dfs_stack.push_back(child.get());
+        }
+    }
     if (options.is_multi) {
         for (auto& id : options.initially_picked_ids) {
             _tree_selector.set_picked(_tree.get_node(id), true);
@@ -278,7 +292,10 @@ void TreeKeyboardSelector::print_tree(void) {
             }
         }
         if (_options.is_multi) {
-            stats_line += ", picked: " + std::to_string(_tree_selector.get_nr_picked());
+            // Files, when the tree knows which nodes are files (else nodes, dirs too)
+            stats_line += ", picked: " + (_are_files_known ?
+                std::to_string(_tree_selector.get_nr_picked_files()) + " files" :
+                std::to_string(_tree_selector.get_nr_picked()));
         }
         stats_line += std::string(", selected: ") +
             guishell::printable(_tree_selector.get_selection()->tag);

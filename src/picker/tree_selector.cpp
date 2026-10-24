@@ -6,7 +6,8 @@ TreeSelector::TreeSelector(treelib::Tree& tree, treelib::TreePrinter& tree_print
     _tree(tree),
     _tree_printer(tree_printer),
     _selection(tree.get_root()),
-    _nr_picked(0)
+    _nr_picked(0),
+    _nr_picked_files(0)
 {
 }
 
@@ -109,10 +110,7 @@ void TreeSelector::toggle_pick_of_selection(void) {
     while (not dfs_stack.empty()) {
         auto node = dfs_stack.back();
         dfs_stack.pop_back();
-        if (node->is_picked != is_picked) {
-            node->is_picked = is_picked;
-            is_picked ? ++_nr_picked : --_nr_picked;
-        }
+        set_picked_flag(node, is_picked);
         node->is_partly_picked = false;
         for (auto& child : node->children) {
             dfs_stack.push_back(child.get());
@@ -136,10 +134,7 @@ void TreeSelector::update_from_children(treelib::Node* node) {
         are_all_picked = are_all_picked and child->is_picked;
         is_any_picked = is_any_picked or child->is_picked or child->is_partly_picked;
     }
-    if (node->is_picked != are_all_picked) {
-        node->is_picked = are_all_picked;
-        are_all_picked ? ++_nr_picked : --_nr_picked;
-    }
+    set_picked_flag(node, are_all_picked);
     node->is_partly_picked = not are_all_picked and is_any_picked;
 }
 
@@ -164,9 +159,20 @@ void TreeSelector::update_picked_dirs(void) {
 }
 
 void TreeSelector::set_picked(NodePtr node, bool is_picked) {
-    if (node != nullptr and node->is_picked != is_picked) {
-        node->is_picked = is_picked;
-        is_picked ? ++_nr_picked : --_nr_picked;
+    if (node != nullptr) {
+        set_picked_flag(node.get(), is_picked);
+    }
+}
+
+void TreeSelector::set_picked_flag(treelib::Node* node, bool is_picked) {
+    if (node->is_picked == is_picked) {
+        return;
+    }
+    node->is_picked = is_picked;
+    const int change = is_picked ? 1 : -1;
+    _nr_picked += change;
+    if (node->kind == 'f') {
+        _nr_picked_files += change;
     }
 }
 

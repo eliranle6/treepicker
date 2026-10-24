@@ -102,7 +102,8 @@ void print_node(
             tag += std::string(" (...)");
         }
 
-        if (pn.node->children.size()) {
+        // Dirs look like dirs even when they're empty, if the tree knows they're dirs
+        if (pn.node->children.size() or pn.node->kind == 'd') {
             auto color = is_selection ? guishell::SELECTED_DIRECTORY :
                 guishell::NON_SELECTED_DIRECTORY;
             if (is_picked) {

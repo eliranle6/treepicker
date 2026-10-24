@@ -138,6 +138,8 @@ private:
     mode _mode;
     ::treelib::Search _search;
     PickerOptions _options;
+    // Whether the tree says which nodes are files (Node::kind), to count them
+    bool _are_files_known;
     // The header's lines
     std::vector<std::string> _header_lines;
     std::vector<std::shared_ptr<treelib::Node>> _picked;

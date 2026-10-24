@@ -14,6 +14,8 @@ static const char USAGE[] =
     "  -              read the tree from stdin: one path per line, relative to the tree's root,\n"
     "                 with '/' between dirs. Dirs that aren't listed (e.g. \"a\" for \"a/b\")\n"
     "                 are added.\n"
+    "  --typed        with -, each path starts with its type and a space, like find's %y: 'f'\n"
+    "                 a file, 'd' a dir (others are skipped). Counts picked files, not nodes.\n"
     "  --list         read a list of options from stdin, one per line, and pick one (or, with\n"
     "                 -m, several). Prints the picked ones.\n";
 
@@ -44,7 +46,7 @@ int main(int argc, char* argv[]) {
             picker::add_list_from_stream(tree, std::cin, delimiter);
         } else if (dir == "-") {
             std::ios::sync_with_stdio(false);
-            tree.update_from_stream(std::cin, delimiter);
+            tree.update_from_stream(std::cin, delimiter, options.is_typed);
         } else {
             tree.update_from_filesystem(options.max_depth);
             // Above the caller's header

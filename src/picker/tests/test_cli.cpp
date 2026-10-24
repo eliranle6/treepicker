@@ -117,3 +117,8 @@ TEST(cli, label) {
 TEST(cli, unknown_label_color) {
     ASSERT_NE(parse({"--label-color", "plaid"}).error.find("plaid"), std::string::npos);
 }
+
+TEST(cli, typed) {
+    ASSERT_FALSE(parse({}).is_typed);
+    ASSERT_TRUE(parse({"--typed", "-"}).is_typed);
+}

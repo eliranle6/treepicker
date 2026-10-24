@@ -24,6 +24,8 @@ struct CliOptions {
     std::string label_color = "blue";
     // --list: the input is a flat list of options (one per line), rather than paths
     bool is_list = false;
+    // --typed: each path on stdin starts with its type and a space, like find -printf '%y %p'
+    bool is_typed = false;
     // --picked FILE: with -m, start with the paths in FILE (one per line, or with -0 ending with
     // '\0') picked, like what dirpicker printed
     std::string picked_file;
