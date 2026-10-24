@@ -32,7 +32,6 @@ public:
                               const std::string& parent);
     node_t get_node(const std::string& identifier);
     const node_t& get_root(void) const { return root; }
-    const std::vector<node_t> & children(const std::string& identifier);
 
     // Print tree
     friend std::ostream& operator << (std::ostream &os, const Tree &tree);

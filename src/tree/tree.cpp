@@ -57,16 +57,6 @@ std::shared_ptr< Node > Tree::get_node(const std::string& identifier) {
     return found == node_map.end() ? nullptr : found->second;
 }
 
-const std::vector< std::shared_ptr< Node > > & Tree::children(const std::string& identifier) {
-    // Not node_map[identifier]: for an unknown id it would add an empty node pointer, and then
-    // dereference it
-    auto node = get_node(identifier);
-    if (node == nullptr) {
-        throw std::invalid_argument("No such node: " + identifier);
-    }
-    return node->children;
-}
-
 int Tree::get_node_depth(std::shared_ptr<Node> node) {
     int depth = 0;
     // No depth limit, and no assert() around the ++: with NDEBUG the increment would vanish too

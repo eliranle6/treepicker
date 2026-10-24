@@ -94,18 +94,10 @@ TEST(tree, nr_nodes) {
     ASSERT_EQ(treelib::Tree().get_nr_nodes(), 0);
 }
 
-TEST(tree, children) {
+TEST(tree, unknown_node_is_null) {
     auto tree = get_simple_tree();
-    auto& children = tree.children("dumb");
-    ASSERT_EQ(children.size(), 2);
-    ASSERT_EQ(children[0]->identifier, "poor-dumb");
-}
-
-TEST(tree, children_of_unknown_node_throws) {
-    auto tree = get_simple_tree();
-    ASSERT_THROW(tree.children("no-such-node"), std::invalid_argument);
-    // And doesn't add the id to the tree
     ASSERT_EQ(tree.get_node("no-such-node"), nullptr);
+    // And isn't added to the tree
     ASSERT_EQ(tree.get_nr_nodes(), 7);
 }
 

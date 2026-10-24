@@ -21,7 +21,7 @@ TEST(treeprinter, print_basic_tree) {
 
     // Run
     auto selection = tree.get_root();
-    tree_printer.print(out, true, selection);
+    tree_printer.print(out, true, selection, 100);
 
     // Validate
     auto tree_lines = split_string_by_newline(out.str());
@@ -54,7 +54,7 @@ TEST(treeprinter, test_different_selection) {
     // Run
     // Select 'dumb' instead of root
     auto selection = tree.get_node("dumb");
-    tree_printer.print(out, true, selection);
+    tree_printer.print(out, true, selection, 100);
 
     // Validate
     std::string actual = out.str();
