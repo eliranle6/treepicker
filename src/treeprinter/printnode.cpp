@@ -49,6 +49,7 @@ void print_node(
     // Print selection marker if node is selected node
     const bool is_selection = pn.node == selection;
     const bool is_picked = pn.node->is_picked;
+    const bool is_partly_picked = pn.node->is_partly_picked;
 
     if (is_selection) {
         out << ">";
@@ -58,7 +59,7 @@ void print_node(
     }
     // Then a column marking picked nodes (the root's line has none: it shows the root in red)
     if (pn.node->identifier != printed_subtree_root->identifier) {
-        out << (is_picked ? "X" : " ");
+        out << (is_picked ? "X" : is_partly_picked ? "-" : " ");
     }
 
     // Print connecting lines for each depth (node depth is manifested by the indentation
@@ -82,10 +83,15 @@ void print_node(
     if (pn.node == printed_subtree_root) {
         if (is_picked and not is_selection) {
             out << guishell::Color(guishell::RED);
+        } else if (is_partly_picked and not is_selection) {
+            out << guishell::Color(guishell::MAGENTA);
         }
         // After the one-column selection marker
         _print_breadcrumbs(out, printed_subtree_root, tree,
                            window_width > 0 ? std::max(1, window_width - 1) : 0);
+        if ((is_picked or is_partly_picked) and not is_selection) {
+            out << guishell::Color(guishell::DEFAULT);
+        }
     } else {
         // Print node text
         out << " ";
@@ -101,6 +107,8 @@ void print_node(
                 guishell::NON_SELECTED_DIRECTORY;
             if (is_picked) {
                 color = is_selection ? guishell::RED_ON_BLUE : guishell::RED;
+            } else if (is_partly_picked) {
+                color = is_selection ? guishell::MAGENTA_ON_BLUE : guishell::MAGENTA;
             } else if (pn.node->is_search_highlighted and not is_selection) {
                 color = guishell::YELLOW;
             }

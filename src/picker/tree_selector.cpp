@@ -113,9 +113,53 @@ void TreeSelector::toggle_pick_of_selection(void) {
             node->is_picked = is_picked;
             is_picked ? ++_nr_picked : --_nr_picked;
         }
+        node->is_partly_picked = false;
         for (auto& child : node->children) {
             dfs_stack.push_back(child.get());
         }
+    }
+
+    // Up from it, each node's state depends on its children's
+    for (auto node = _selection; node != _tree.get_root();) {
+        node = _tree.get_node(node->parent);
+        update_from_children(node.get());
+    }
+}
+
+void TreeSelector::update_from_children(treelib::Node* node) {
+    if (node->children.empty()) {
+        return;
+    }
+    bool are_all_picked = true;
+    bool is_any_picked = false;
+    for (auto& child : node->children) {
+        are_all_picked = are_all_picked and child->is_picked;
+        is_any_picked = is_any_picked or child->is_picked or child->is_partly_picked;
+    }
+    if (node->is_picked != are_all_picked) {
+        node->is_picked = are_all_picked;
+        are_all_picked ? ++_nr_picked : --_nr_picked;
+    }
+    node->is_partly_picked = not are_all_picked and is_any_picked;
+}
+
+void TreeSelector::update_picked_dirs(void) {
+    if (_tree.get_root() == nullptr) {
+        return;
+    }
+    // Children before their parents: a DFS's preorder, reversed
+    std::vector<treelib::Node*> preorder;
+    std::vector<treelib::Node*> dfs_stack = {_tree.get_root().get()};
+    while (not dfs_stack.empty()) {
+        auto node = dfs_stack.back();
+        dfs_stack.pop_back();
+        preorder.push_back(node);
+        for (auto& child : node->children) {
+            dfs_stack.push_back(child.get());
+        }
+    }
+    for (auto node = preorder.rbegin(); node != preorder.rend(); ++node) {
+        update_from_children(*node);
     }
 }
 

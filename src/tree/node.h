@@ -23,8 +23,10 @@ public:
     // Whether it matches an ongoing search's (non-empty) keyword, to be shown highlighted
     bool is_search_highlighted;
 
-    // Whether the user picked this node (when picking several)
+    // Whether the user picked this node (when picking several). A node with children is picked
+    // when all of them are, and partly picked when only some of them are (picked or partly).
     bool is_picked;
+    bool is_partly_picked;
 
     std::vector< std::shared_ptr< Node > > children;
     void add_child(std::shared_ptr< Node > node);

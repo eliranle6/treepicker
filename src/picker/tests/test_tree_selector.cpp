@@ -348,9 +348,11 @@ TEST(tree_selector, unpick_part_of_a_picked_subtree) {
 
     tree_selector.toggle_pick_of_selection();
 
-    ASSERT_EQ(ids(tree_selector.get_picked_nodes()),
-              std::vector<std::string>({"dumb", "rich-dumb"}));
-    ASSERT_EQ(tree_selector.get_nr_picked(), 2);
+    // Not all under dumb is picked anymore, so dumb is only partly picked
+    ASSERT_EQ(ids(tree_selector.get_picked_nodes()), std::vector<std::string>({"rich-dumb"}));
+    ASSERT_EQ(tree_selector.get_nr_picked(), 1);
+    ASSERT_FALSE(tree.get_node("dumb")->is_picked);
+    ASSERT_TRUE(tree.get_node("dumb")->is_partly_picked);
 }
 
 TEST(tree_selector, pick_inside_a_picked_subtree_counts_once) {
@@ -406,8 +408,9 @@ TEST(tree_selector, picked_nodes_are_in_the_tree_order) {
     tree_selector.explore_children_of_selection();  // poor-dumb
     tree_selector.toggle_pick_of_selection();
 
+    // Both of dumb's are picked, so dumb is too
     ASSERT_EQ(ids(tree_selector.get_picked_nodes()),
-              std::vector<std::string>({"poor-dumb", "rich-dumb", "poor-smart"}));
+              std::vector<std::string>({"dumb", "poor-dumb", "rich-dumb", "poor-smart"}));
 }
 
 TEST(tree_selector, move_to_first_and_last_sibling) {
@@ -461,4 +464,109 @@ TEST(tree_selector, set_picked_picks_the_node_alone) {
     tree_selector.set_picked(tree.get_node("dumb"), false);
     tree_selector.set_picked(nullptr, true);  // E.g. an id that isn't in the tree
     ASSERT_EQ(tree_selector.get_nr_picked(), 0);
+}
+
+
+// In the simple tree each node with children has two: the first is reached with explore, the
+// other with move_to_last_sibling
+
+TEST(tree_selector, picking_all_of_a_dirs_children_picks_it) {
+    auto tree = get_simple_tree();
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    tree_selector.explore_children_of_selection();  // dumb
+    tree_selector.explore_children_of_selection();  // poor-dumb
+    tree_selector.toggle_pick_of_selection();
+    ASSERT_FALSE(tree.get_node("dumb")->is_picked);
+    ASSERT_TRUE(tree.get_node("dumb")->is_partly_picked);
+    ASSERT_TRUE(tree.get_root()->is_partly_picked);
+
+    tree_selector.move_to_last_sibling();  // rich-dumb
+    tree_selector.toggle_pick_of_selection();
+
+    ASSERT_TRUE(tree.get_node("dumb")->is_picked);
+    ASSERT_FALSE(tree.get_node("dumb")->is_partly_picked);
+    // Smart isn't picked, so the root is still only partly
+    ASSERT_FALSE(tree.get_root()->is_picked);
+    ASSERT_TRUE(tree.get_root()->is_partly_picked);
+    ASSERT_EQ(tree_selector.get_nr_picked(), 3);
+}
+
+TEST(tree_selector, picking_everything_bit_by_bit_picks_the_root) {
+    auto tree = get_simple_tree();
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    tree_selector.explore_children_of_selection();  // dumb
+    tree_selector.toggle_pick_of_selection();
+    tree_selector.move_to_last_sibling();  // smart
+    tree_selector.toggle_pick_of_selection();
+
+    ASSERT_TRUE(tree.get_root()->is_picked);
+    ASSERT_EQ(tree_selector.get_nr_picked(), 7);
+}
+
+TEST(tree_selector, unpicking_a_file_unpicks_its_ancestors) {
+    auto tree = get_simple_tree();
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    tree_selector.toggle_pick_of_selection();  // Everything
+    tree_selector.explore_children_of_selection();  // dumb
+    tree_selector.explore_children_of_selection();  // poor-dumb
+
+    tree_selector.toggle_pick_of_selection();
+
+    for (auto id : {"people", "dumb"}) {
+        ASSERT_FALSE(tree.get_node(id)->is_picked) << id;
+        ASSERT_TRUE(tree.get_node(id)->is_partly_picked) << id;
+    }
+    ASSERT_TRUE(tree.get_node("smart")->is_picked);
+    ASSERT_EQ(ids(tree_selector.get_picked_nodes()),
+              std::vector<std::string>({"rich-dumb", "smart", "poor-smart", "rich-smart"}));
+}
+
+TEST(tree_selector, picking_a_partly_picked_dir_picks_all_of_it) {
+    auto tree = get_simple_tree();
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    tree_selector.explore_children_of_selection();  // dumb
+    tree_selector.explore_children_of_selection();  // poor-dumb
+    tree_selector.toggle_pick_of_selection();
+    tree_selector.move_one_up();  // dumb, partly picked
+
+    tree_selector.toggle_pick_of_selection();
+
+    ASSERT_TRUE(tree.get_node("dumb")->is_picked);
+    ASSERT_TRUE(tree.get_node("rich-dumb")->is_picked);
+}
+
+TEST(tree_selector, unpicking_the_last_picked_file_clears_the_partly_picked) {
+    auto tree = get_simple_tree();
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    tree_selector.explore_children_of_selection();  // dumb
+    tree_selector.explore_children_of_selection();  // poor-dumb
+    tree_selector.toggle_pick_of_selection();
+    tree_selector.toggle_pick_of_selection();
+
+    for (auto id : {"people", "dumb"}) {
+        ASSERT_FALSE(tree.get_node(id)->is_partly_picked) << id;
+    }
+    ASSERT_EQ(tree_selector.get_nr_picked(), 0);
+}
+
+TEST(tree_selector, update_picked_dirs) {
+    // E.g. after starting with some nodes picked
+    auto tree = get_simple_tree();
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    for (auto id : {"poor-dumb", "rich-dumb", "poor-smart"}) {
+        tree_selector.set_picked(tree.get_node(id), true);
+    }
+
+    tree_selector.update_picked_dirs();
+
+    ASSERT_TRUE(tree.get_node("dumb")->is_picked);
+    ASSERT_TRUE(tree.get_node("smart")->is_partly_picked);
+    ASSERT_TRUE(tree.get_root()->is_partly_picked);
+    ASSERT_EQ(tree_selector.get_nr_picked(), 4);
 }

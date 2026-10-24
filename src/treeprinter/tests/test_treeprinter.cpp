@@ -326,3 +326,32 @@ TEST(treeprinter, search_matches_are_highlighted) {
             << line;
     }
 }
+
+TEST(treeprinter, partly_picked_nodes_are_marked) {
+    auto tree = get_simple_tree();
+    tree.get_node("dumb")->is_partly_picked = true;
+    tree.get_node("poor-dumb")->is_picked = true;
+    treelib::TreePrinter tree_printer(tree);
+    std::ostringstream out;
+    tree_printer.print(out, false, tree.get_root(), 10);
+
+    auto lines = split_string_by_newline(strip_escape_codes(out.str()));
+    ASSERT_EQ(lines[1].substr(0, 2), " -");
+    ASSERT_EQ(lines[2].substr(0, 2), " X");
+    // In magenta
+    ASSERT_TRUE(does_string_contain_substring(split_string_by_newline(out.str())[1],
+                                              "\x1B[35m\x1B[1mDumb people"));
+}
+
+TEST(treeprinter, a_picked_roots_color_ends_with_its_line) {
+    auto tree = get_simple_tree();
+    tree.get_root()->is_partly_picked = true;
+    treelib::TreePrinter tree_printer(tree);
+    std::ostringstream out;
+    tree_printer.print(out, false, tree.get_node("dumb"), 10);
+
+    auto lines = split_string_by_newline(out.str());
+    ASSERT_TRUE(does_string_contain_substring(lines[0], "\x1B[35m"));
+    // Back to the default color before anything of the next line
+    ASSERT_EQ(lines[1].substr(0, 5), "\x1B[39m");
+}

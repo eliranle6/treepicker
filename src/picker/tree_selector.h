@@ -28,11 +28,16 @@ public:
     // If an ongoing search hides the selection, select its closest visible ancestor
     void select_visible_ancestor(void);
 
-    // Pick the selection and everything under it, or, if it's picked, unpick them all
+    // Pick the selection and everything under it, or, if it's picked, unpick them all. The nodes
+    // above it become picked if all under them is, and partly picked if some is.
     void toggle_pick_of_selection(void);
 
-    // Pick (or unpick) the node alone, without the nodes under it
+    // Pick (or unpick) the node alone, without the nodes under it or above it; then call
+    // update_picked_dirs()
     void set_picked(NodePtr node, bool is_picked);
+
+    // Make each node with children picked if all of them are, and partly picked if some are
+    void update_picked_dirs(void);
 
     std::size_t get_nr_picked(void) const { return _nr_picked; }
 
@@ -42,6 +47,9 @@ public:
 private:
     treelib::Tree& _tree;
     treelib::TreePrinter& _tree_printer;
+    // Update node's picked state from its children's
+    void update_from_children(treelib::Node* node);
+
     NodePtr _selection;
     std::size_t _nr_picked;
 };
