@@ -38,12 +38,13 @@ src/tree/         Tree, Node (children keep the order they're added), Search (sm
                   matches names; hides non-matching nodes, or only highlights matches)
 src/treeprinter/  TreePrinter (lays out and prints the part of the tree that fits around the
                   selection), treewindowfitter (how many levels fit), paginator (siblings
-                  that don't fit become "... (N more)" lines), printnode (one line)
+                  that don't fit become "... N more" lines), printnode (one line)
 src/picker/       TreeSelector (the selection, and picked nodes: a dir is picked when all
                   under it is, partly picked when some is), TreeKeyboardSelector (keys,
                   modes, the screen's layout: header, tree, stats line, search line),
                   KeyboardReactor (the key loop), Picker, cli (the programs' shared options
-                  and output), keys_help (the key list, for --help and the ? key)
+                  and output), keys_help (the key list, for --help and the ? key, made from
+                  TreeKeyboardSelector's key table)
 src/utils/        guishell (curses on /dev/tty, colors, cutting lines by display width),
                   subprocess (running find)
 src/dirtree/      DirTree: a tree of paths, from find (sorted) or from a stream (in order)
@@ -52,8 +53,11 @@ src/dirdiff/      the dirdiff program: the files of a dir that another lacks (Di
                   for dirdelta
 ```
 
-`j`/`k` move through what's printed, not the tree's order, so the screen stays steady (the
-author's choice, see `docs/improvement-ideas.md` #1); past the screen's edges they go on, scrolling.
+`j`/`k` move through what's printed (the printer says which node was printed after or before the
+selection), not through the tree's order: so the screen stays steady while moving in it, rather
+than being redrawn around each new selection, which is hard to follow (the author's choice,
+2026-10-24). Past the screen's edges they go on, like scrolling a list: `j` on the last line to the
+node a bigger screen would show next, `k` on the first child to the printed root.
 
 Every program feature goes in the shared core (`src/picker` and below), so all programs get it;
 a program's `main.cpp` only builds its tree and calls `picker::pick_and_print()`.
