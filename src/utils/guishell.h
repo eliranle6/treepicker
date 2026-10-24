@@ -42,6 +42,13 @@ enum Colors {
 // nr_columns screen columns, without splitting a character
 std::size_t nr_bytes_that_fit(const char *s, std::size_t n, int nr_columns);
 
+// The curses color pair for a label of the given background color (e.g. "green", "red"), in
+// white or black text, whichever reads better on it; -1 for an unknown color name. Needs curses.
+int label_color_pair(const std::string& color);
+
+// Whether label_color_pair() knows the color name
+bool is_label_color(const std::string& color);
+
 // The number of screen columns that s (UTF-8) takes
 int display_width(const std::string& s);
 

@@ -282,6 +282,12 @@ void TreeKeyboardSelector::print_tree(void) {
         }
         stats_line += std::string(", selected: ") +
             guishell::printable(_tree_selector.get_selection()->tag);
+        // Room for the label, which is drawn over it
+        const std::string label = _options.label.empty() ? "" :
+            " " + guishell::printable(_options.label) + " ";
+        if (not label.empty()) {
+            stats_line = std::string(guishell::display_width(label) + 1, ' ') + stats_line;
+        }
         // With a reminder of the help key at the right end, which the stats give way to
         static const std::string HELP_HINT = "?: help";
         const int width = window_width - 1;
@@ -295,6 +301,16 @@ void TreeKeyboardSelector::print_tree(void) {
         attron(COLOR_PAIR(::guishell::BLACK_ON_WHITE));
         print_line(layout.stats_row, stats_line, window_width, true);
         attroff(COLOR_PAIR(::guishell::BLACK_ON_WHITE));
+        if (not label.empty()) {
+            const int pair = guishell::label_color_pair(_options.label_color);
+            attron(COLOR_PAIR(pair));
+            attron(A_BOLD);
+            const int width = std::max(0, window_width - 1);
+            mvaddnstr(layout.stats_row, 0, label.data(),
+                      guishell::nr_bytes_that_fit(label.data(), label.size(), width));
+            attroff(A_BOLD);
+            attroff(COLOR_PAIR(pair));
+        }
     }
 
     // Print search line (last, so that the cursor stays at its end while editing it)

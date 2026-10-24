@@ -105,3 +105,15 @@ TEST(cli, picked_file) {
     ASSERT_EQ(parse({"--picked", "/tmp/picked"}).picked_file, "/tmp/picked");
     ASSERT_FALSE(parse({"--picked"}).error.empty());
 }
+
+TEST(cli, label) {
+    auto options = parse({"--label", "DRY RUN", "--label-color", "green"});
+    ASSERT_EQ(options.label, "DRY RUN");
+    ASSERT_EQ(options.label_color, "green");
+    ASSERT_TRUE(options.error.empty());
+    ASSERT_EQ(parse({}).label_color, "blue");
+}
+
+TEST(cli, unknown_label_color) {
+    ASSERT_NE(parse({"--label-color", "plaid"}).error.find("plaid"), std::string::npos);
+}

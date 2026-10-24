@@ -61,6 +61,44 @@ int display_width(const std::string& s) {
 // into the stream, so this lives outside it.
 static bool is_screen_full = false;
 
+namespace {
+struct LabelColor {
+    const char* name;
+    short background;
+    short foreground;
+};
+const LabelColor LABEL_COLORS[] = {
+    {"red", COLOR_RED, COLOR_WHITE},
+    {"green", COLOR_GREEN, COLOR_BLACK},
+    {"yellow", COLOR_YELLOW, COLOR_BLACK},
+    {"blue", COLOR_BLUE, COLOR_WHITE},
+    {"magenta", COLOR_MAGENTA, COLOR_WHITE},
+    {"cyan", COLOR_CYAN, COLOR_BLACK},
+};
+// Past the pairs of the Colors enum
+const short FIRST_LABEL_COLOR_PAIR = 120;
+}
+
+bool is_label_color(const std::string& color) {
+    for (auto& label_color : LABEL_COLORS) {
+        if (color == label_color.name) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int label_color_pair(const std::string& color) {
+    for (std::size_t i = 0; i < sizeof(LABEL_COLORS) / sizeof(LABEL_COLORS[0]); ++i) {
+        if (color == LABEL_COLORS[i].name) {
+            const short pair = FIRST_LABEL_COLOR_PAIR + i;
+            init_pair(pair, LABEL_COLORS[i].foreground, LABEL_COLORS[i].background);
+            return pair;
+        }
+    }
+    return -1;
+}
+
 std::string printable(const std::string& s) {
     std::string result = s;
     for (auto& c : result) {

@@ -11,6 +11,10 @@ struct PickerOptions {
     bool is_multi = false;
     // Lines shown above the tree
     std::string header;
+    // A label at the start of the stats line, in bold, on label_color (see
+    // guishell::label_color_pair), e.g. a mode the caller is in
+    std::string label;
+    std::string label_color = "blue";
     // Start with the root's first child selected, rather than the root
     bool is_first_child_selected_first = false;
     // Whether Enter picks the root (it may be just a title, e.g. of a list of options)

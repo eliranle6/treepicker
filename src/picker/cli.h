@@ -19,6 +19,9 @@ struct CliOptions {
     std::string header;
     // --root NAME: the name shown for the tree's root (e.g. a stdin tree's, which is ".")
     std::string root_name;
+    // --label TEXT, --label-color COLOR: a label at the start of the stats line
+    std::string label;
+    std::string label_color = "blue";
     // --list: the input is a flat list of options (one per line), rather than paths
     bool is_list = false;
     // --picked FILE: with -m, start with the paths in FILE (one per line, or with -0 ending with
