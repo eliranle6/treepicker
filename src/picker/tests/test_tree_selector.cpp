@@ -214,7 +214,7 @@ TEST(tree_selector, walk_through_a_dir_bigger_than_the_window) {
 // A random tree of nr_nodes nodes, with tags made of a few letters so searches match some
 static treelib::Tree get_random_tree(std::mt19937& random, int nr_nodes) {
     treelib::Tree tree;
-    tree.create_node("root", "0", "", nullptr);
+    tree.create_node("root", "0", "");
     for (int i = 1; i < nr_nodes; ++i) {
         std::string tag;
         for (int j = 0, length = 1 + random() % 4; j < length; ++j) {
@@ -225,8 +225,7 @@ static treelib::Tree get_random_tree(std::mt19937& random, int nr_nodes) {
         if (random() % 3 == 0) {
             parent = random() % i;
         }
-        tree.create_node(tag + std::to_string(i), std::to_string(i), std::to_string(parent),
-                         nullptr);
+        tree.create_node(tag + std::to_string(i), std::to_string(i), std::to_string(parent));
     }
     return tree;
 }

@@ -3,18 +3,15 @@
 #include "tree/search.h"
 
 
-static auto TEN = reinterpret_cast<void*>(10); // Not allowed with constexpr
-static auto TWENTY = reinterpret_cast<void*>(20); // Not allowed with constexpr
-
 treelib::Tree get_example_tree(void) {
     treelib::Tree tree;
-    tree.create_node("root_tag", "root_id", "", TEN);
-        tree.create_node("child1_tag", "child1_id", "root_id", TWENTY);
-            tree.create_node("child1.1_tag", "child1.1_id", "child1_id", TWENTY);
-            tree.create_node("child1.2_tag", "child1.2_id", "child1_id", TWENTY);
-        tree.create_node("child2_tag", "child2_id", "root_id", TWENTY);
-            tree.create_node("child2.1_tag", "child2.1_id", "child2_id", TWENTY);
-            tree.create_node("child2.2_tag", "child2.2_id", "child2_id", TWENTY);
+    tree.create_node("root_tag", "root_id", "");
+        tree.create_node("child1_tag", "child1_id", "root_id");
+            tree.create_node("child1.1_tag", "child1.1_id", "child1_id");
+            tree.create_node("child1.2_tag", "child1.2_id", "child1_id");
+        tree.create_node("child2_tag", "child2_id", "root_id");
+            tree.create_node("child2.1_tag", "child2.1_id", "child2_id");
+            tree.create_node("child2.2_tag", "child2.2_id", "child2_id");
     return tree;
 }
 
@@ -60,9 +57,9 @@ TEST(treesearch, search_matches_names_not_paths) {
 
 TEST(treesearch, lowercase_keyword_ignores_case) {
     treelib::Tree tree;
-    tree.create_node("root", "root", "", nullptr);
-    tree.create_node("README.md", "readme", "root", nullptr);
-    tree.create_node("notes.txt", "notes", "root", nullptr);
+    tree.create_node("root", "root", "");
+    tree.create_node("README.md", "readme", "root");
+    tree.create_node("notes.txt", "notes", "root");
     treelib::Search(tree).search("readme");
     ASSERT_TRUE(tree.get_node("readme")->is_matching_search);
     ASSERT_FALSE(tree.get_node("notes")->is_matching_search);
@@ -70,9 +67,9 @@ TEST(treesearch, lowercase_keyword_ignores_case) {
 
 TEST(treesearch, keyword_with_uppercase_is_case_sensitive) {
     treelib::Tree tree;
-    tree.create_node("root", "root", "", nullptr);
-    tree.create_node("README.md", "upper", "root", nullptr);
-    tree.create_node("readme.md", "lower", "root", nullptr);
+    tree.create_node("root", "root", "");
+    tree.create_node("README.md", "upper", "root");
+    tree.create_node("readme.md", "lower", "root");
     treelib::Search(tree).search("README");
     ASSERT_TRUE(tree.get_node("upper")->is_matching_search);
     ASSERT_FALSE(tree.get_node("lower")->is_matching_search);

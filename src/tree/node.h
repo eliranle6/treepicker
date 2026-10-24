@@ -10,13 +10,11 @@ namespace treelib {
 class Node
 {
 public:
-    Node(std::string _tag, std::string _identifier, void* _data, std::string parent);
+    Node(std::string _tag, std::string _identifier, std::string parent);
 
     std::string tag;
     std::string identifier;
     std::string parent;
-    std::string path;
-    void* data;
 
     bool is_matching_search;
     bool is_ancestor_of_matching_search;
@@ -39,9 +37,6 @@ public:
     bool is_search_visible(void) const {
         return is_matching_search or is_ancestor_of_matching_search;
     }
-
-private:
-    std::shared_ptr< Node > parent_node;
 };
 
 }

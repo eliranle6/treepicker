@@ -143,8 +143,8 @@ static std::vector<std::string> print_lines(treelib::TreePrinter& tree_printer,
 
 TEST(treeprinter, tags_are_printed_as_is) {
     treelib::Tree tree;
-    tree.create_node("root", "root", "", nullptr);
-    tree.create_node("100%_%s%n.txt", "file", "root", nullptr);
+    tree.create_node("root", "root", "");
+    tree.create_node("100%_%s%n.txt", "file", "root");
     treelib::TreePrinter tree_printer(tree);
 
     auto lines = print_lines(tree_printer, tree.get_root(), 10);
@@ -154,8 +154,8 @@ TEST(treeprinter, tags_are_printed_as_is) {
 
 TEST(treeprinter, control_characters_in_tags_are_printed_as_question_marks) {
     treelib::Tree tree;
-    tree.create_node("ro\tot", "root", "", nullptr);
-    tree.create_node("line\nbreak\x1b[31m", "file", "root", nullptr);
+    tree.create_node("ro\tot", "root", "");
+    tree.create_node("line\nbreak\x1b[31m", "file", "root");
     treelib::TreePrinter tree_printer(tree);
 
     auto lines = print_lines(tree_printer, tree.get_root(), 10);
@@ -360,9 +360,9 @@ TEST(treeprinter, a_picked_roots_color_ends_with_its_line) {
 
 TEST(treeprinter, an_empty_dir_looks_like_a_dir) {
     treelib::Tree tree;
-    tree.create_node("root", "root", "", nullptr);
-    tree.create_node("empty", "empty", "root", nullptr)->kind = 'd';
-    tree.create_node("file", "file", "root", nullptr)->kind = 'f';
+    tree.create_node("root", "root", "");
+    tree.create_node("empty", "empty", "root")->kind = 'd';
+    tree.create_node("file", "file", "root")->kind = 'f';
     treelib::TreePrinter tree_printer(tree);
     std::ostringstream out;
     tree_printer.print(out, false, tree.get_root(), 10);

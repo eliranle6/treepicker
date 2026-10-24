@@ -127,13 +127,13 @@ std::string scan_errors_warning(const std::string& dir, const std::vector<std::s
 
 void add_list_from_stream(treelib::Tree& tree, std::istream& in, char delimiter) {
     if (tree.get_root() == nullptr) {
-        tree.create_node(".", "", "", nullptr);
+        tree.create_node(".", "", "");
     }
     const std::string root_id = tree.get_root()->identifier;
     std::string line;
     while (std::getline(in, line, delimiter)) {
         if (not line.empty()) {
-            tree.get_or_create_node(line, line, root_id, nullptr);
+            tree.get_or_create_node(line, line, root_id);
         }
     }
 }

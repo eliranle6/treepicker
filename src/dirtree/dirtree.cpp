@@ -138,11 +138,11 @@ void DirTree::add_path(const std::string& path, char kind) {
     const auto last_slash = cleaned.rfind('/');
     const std::string parent = last_slash == std::string::npos ? "" : cleaned.substr(0, last_slash);
     const std::string name = last_slash == std::string::npos ? cleaned : cleaned.substr(last_slash + 1);
-    auto node = get_or_create_node(name, cleaned, parent, nullptr);
+    auto node = get_or_create_node(name, cleaned, parent);
     if (node == nullptr) {
         // The parent isn't in the tree yet
         add_path(parent, 'd');
-        node = create_node(name, cleaned, parent, nullptr);
+        node = create_node(name, cleaned, parent);
     }
     if (kind != 0) {
         node->kind = kind;
@@ -171,7 +171,7 @@ std::vector<std::string> DirTree::files_not_in(treelib::Tree& other) {
 
 void DirTree::add_root(const std::string& tag) {
     if (get_root() == nullptr) {
-        create_node(tag, "", "", nullptr);
+        create_node(tag, "", "");
     }
 }
 

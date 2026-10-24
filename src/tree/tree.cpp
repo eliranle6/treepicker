@@ -3,7 +3,7 @@
 namespace treelib {
 
 Tree::CreateResult Tree::try_create_node(const std::string& tag, const std::string& identifier,
-                                         const std::string& parent, void* data, node_t& node) {
+                                         const std::string& parent, node_t& node) {
     // Each map lookup compares strings, so look each id up once
     const bool is_root_node_creation = root == nullptr;
     std::shared_ptr< Node > parent_node;
@@ -19,13 +19,11 @@ Tree::CreateResult Tree::try_create_node(const std::string& tag, const std::stri
         return CreateResult::EXISTS;
     }
 
-    node = std::make_shared< Node >(tag, identifier, data, parent);
+    node = std::make_shared< Node >(tag, identifier, parent);
     if (is_root_node_creation) {
         root = node;
-        node->path = std::string("/") + tag;
     } else {
         // Set as child of designated parent
-        node->path = parent_node->path + std::string("/") + tag;
         parent_node->add_child(node);
     }
     inserted.first->second = node;
@@ -33,9 +31,9 @@ Tree::CreateResult Tree::try_create_node(const std::string& tag, const std::stri
 }
 
 std::shared_ptr< Node >Tree::create_node(const std::string& tag, const std::string& identifier,
-                                         const std::string& parent, void* data) {
+                                         const std::string& parent) {
     node_t node;
-    switch (try_create_node(tag, identifier, parent, data, node)) {
+    switch (try_create_node(tag, identifier, parent, node)) {
         case CreateResult::NO_PARENT:
             throw std::invalid_argument("Parent node does not exist");
         case CreateResult::EXISTS:
@@ -48,9 +46,9 @@ std::shared_ptr< Node >Tree::create_node(const std::string& tag, const std::stri
 
 std::shared_ptr< Node > Tree::get_or_create_node(const std::string& tag,
                                                  const std::string& identifier,
-                                                 const std::string& parent, void* data) {
+                                                 const std::string& parent) {
     node_t node;
-    const auto result = try_create_node(tag, identifier, parent, data, node);
+    const auto result = try_create_node(tag, identifier, parent, node);
     return result == CreateResult::NO_PARENT ? nullptr : node;
 }
 

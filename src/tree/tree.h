@@ -24,12 +24,12 @@ public:
     {}
     // Today i learned: shared_ptr
     node_t create_node(const std::string& tag, const std::string& identifier,
-                       const std::string& parent, void* data);
+                       const std::string& parent);
 
     // Like create_node(), but if the id is already in the tree, returns that node instead of
     // throwing, and if the parent isn't, returns nullptr (adding nothing) instead of throwing
     node_t get_or_create_node(const std::string& tag, const std::string& identifier,
-                              const std::string& parent, void* data);
+                              const std::string& parent);
     node_t get_node(const std::string& identifier);
     const node_t& get_root(void) const { return root; }
     const std::vector<node_t> & children(const std::string& identifier);
@@ -46,7 +46,7 @@ protected:
 private:
     enum class CreateResult { CREATED, EXISTS, NO_PARENT };
     CreateResult try_create_node(const std::string& tag, const std::string& identifier,
-                                 const std::string& parent, void* data, node_t& node);
+                                 const std::string& parent, node_t& node);
     node_t root;
 };
 

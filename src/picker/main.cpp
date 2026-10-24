@@ -23,13 +23,13 @@ int main(int argc, char* argv[]) {
     }
 
     treelib::Tree tree;
-    tree.create_node("People", "people", "", nullptr);
-        tree.create_node("Dumb people", "dumb", "people", nullptr);
-            tree.create_node("Rich dumb people", "rich-dumb", "dumb", nullptr);
-            tree.create_node("Poor dumb people", "poor-dumb", "dumb", nullptr);
-        tree.create_node("Smart people", "smart", "people", nullptr);
-            tree.create_node("Rich smart people", "rich-smart", "smart", nullptr);
-            tree.create_node("Poor smart people", "poor-smart", "smart", nullptr);
+    tree.create_node("People", "people", "");
+        tree.create_node("Dumb people", "dumb", "people");
+            tree.create_node("Rich dumb people", "rich-dumb", "dumb");
+            tree.create_node("Poor dumb people", "poor-dumb", "dumb");
+        tree.create_node("Smart people", "smart", "people");
+            tree.create_node("Rich smart people", "rich-smart", "smart");
+            tree.create_node("Poor smart people", "poor-smart", "smart");
 
     return picker::pick_and_print(tree, options);
 }

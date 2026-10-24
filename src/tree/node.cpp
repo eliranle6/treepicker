@@ -2,11 +2,10 @@
 
 namespace treelib {
 
-Node::Node(std::string _tag, std::string _identifier, void* _data, std::string _parent):
+Node::Node(std::string _tag, std::string _identifier, std::string _parent):
         tag(_tag),
         identifier(_identifier),
         parent(_parent),
-        data(_data),
         is_matching_search(true),
         is_ancestor_of_matching_search(true),
         is_search_highlighted(false),
