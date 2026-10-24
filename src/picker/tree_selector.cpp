@@ -52,6 +52,23 @@ void TreeSelector::move_to_first_sibling(void) {
     }
 }
 
+std::pair<std::size_t, std::size_t> TreeSelector::get_place_among_siblings(bool filter) {
+    if (_selection == nullptr or _selection == _tree.get_root()) {
+        return {0, 0};
+    }
+    std::size_t place = 0, nr_siblings = 0;
+    for (auto& sibling : _tree.get_node(_selection->parent)->children) {
+        if (filter and not sibling->is_search_visible()) {
+            continue;
+        }
+        ++nr_siblings;
+        if (sibling == _selection) {
+            place = nr_siblings;
+        }
+    }
+    return {place, nr_siblings};
+}
+
 void TreeSelector::move_to_last_sibling(void) {
     if (_selection == nullptr or _selection == _tree.get_root()) {
         return;

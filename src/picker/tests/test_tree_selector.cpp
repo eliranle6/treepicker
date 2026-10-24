@@ -621,3 +621,19 @@ TEST(tree_selector, move_to_prev_past_the_first_printed_node) {
     print(tree_printer, tree_selector, 3);
     ASSERT_TRUE(tree_printer.was_selection_printed());
 }
+
+TEST(tree_selector, place_among_siblings) {
+    auto tree = get_simple_tree();
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    using Place = std::pair<std::size_t, std::size_t>;
+    ASSERT_EQ(tree_selector.get_place_among_siblings(false), Place(0, 0));
+    tree_selector.explore_children_of_selection();
+    ASSERT_EQ(tree_selector.get_place_among_siblings(false), Place(1, 2));
+    tree_selector.move_to_last_sibling();
+    ASSERT_EQ(tree_selector.get_place_among_siblings(false), Place(2, 2));
+    // Filtered, only the siblings shown count
+    treelib::Search(tree).search("Smart");
+    ASSERT_EQ(tree_selector.get_place_among_siblings(true), Place(1, 1));
+    ASSERT_EQ(tree_selector.get_place_among_siblings(false), Place(2, 2));
+}

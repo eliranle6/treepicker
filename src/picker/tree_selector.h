@@ -23,6 +23,9 @@ public:
 
     // Select the first/last of the selection's siblings (that an ongoing search doesn't hide)
     void move_to_first_sibling(void);
+    // The selection's place among its siblings, both counted from 1: {place, number of siblings}.
+    // Counts only the siblings a search shows when filter is set. {0, 0} for the root.
+    std::pair<std::size_t, std::size_t> get_place_among_siblings(bool filter);
     void move_to_last_sibling(void);
 
     // If an ongoing search hides the selection, select its closest visible ancestor

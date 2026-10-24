@@ -299,6 +299,12 @@ void TreeKeyboardSelector::print_tree(void) {
         }
         stats_line += std::string(", selected: ") +
             guishell::printable(_tree_selector.get_selection()->tag);
+        // Where it is in its dir, which a long one shows only part of
+        const auto place = _tree_selector.get_place_among_siblings(not _applied_keyword.empty());
+        if (place.second > 1) {
+            stats_line += " (" + std::to_string(place.first) + "/" +
+                std::to_string(place.second) + ")";
+        }
         // Room for the label, which is drawn over it
         const std::string label = _options.label.empty() ? "" :
             " " + guishell::printable(_options.label) + " ";
