@@ -42,7 +42,8 @@ src/treeprinter/  TreePrinter (lays out and prints the part of the tree that fit
 src/picker/       TreeSelector (the selection, and picked nodes: a dir is picked when all
                   under it is, partly picked when some is), TreeKeyboardSelector (keys,
                   modes, the screen's layout: header, tree, stats line, search line),
-                  KeyboardReactor (the key loop), Picker, cli (the programs' shared options
+                  KeyboardReactor (the key loop, which also reads --updates' fd),
+                  UpdatesReader (--updates: changes to tags while picking), Picker, cli (the programs' shared options
                   and output), keys_help (the key list, for --help and the ? key, made from
                   TreeKeyboardSelector's key table)
 src/utils/        guishell (curses on /dev/tty, colors, cutting lines by display width),

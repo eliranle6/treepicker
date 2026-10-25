@@ -19,6 +19,10 @@ const std::string CLI_OPTIONS_USAGE = std::string(
     "  --label-color COLOR\n"
     "                 the label's color: red, green, yellow, blue (default), magenta, cyan\n"
     "  --picked FILE  with -m, start with the nodes whose paths are in FILE (as printed) picked\n"
+    "  --updates FD   while picking, read changes to what nodes are shown as from file\n"
+    "                 descriptor FD: each is the node's path (or option), a tab, and what\n"
+    "                 to show, ending like the paths do (see -0). It's still printed by its\n"
+    "                 path when picked.\n"
     "  -0             paths end with '\\0' rather than a newline (read ones and printed ones)\n"
     "  -h, --help     show this help\n"
     "\n"
@@ -53,13 +57,15 @@ CliOptions parse_cli(int argc, char* argv[]) {
             } else {
                 options.picked_file = argv[++i];
             }
-        } else if (arg == "--max-depth") {
+        } else if (arg == "--max-depth" or arg == "--updates") {
             char* end = nullptr;
             const long value = i + 1 < argc ? std::strtol(argv[i + 1], &end, 10) : -1;
             if (i + 1 == argc or end == argv[i + 1] or *end != '\0' or value < 0) {
-                options.error = "--max-depth needs a number (0 or more)";
-            } else {
+                options.error = arg + " needs a number (0 or more)";
+            } else if (arg == "--max-depth") {
                 options.max_depth = value;
+            } else {
+                options.updates_fd = value;
             }
             ++i;
         } else if (arg == "--typed") {
@@ -90,6 +96,8 @@ int pick_and_print(treelib::Tree& tree, const CliOptions& options) {
     // A list's root is only its title
     picker_options.is_first_child_selected_first = options.is_list;
     picker_options.is_root_pickable = not options.is_list;
+    picker_options.updates_fd = options.updates_fd;
+    picker_options.updates_delimiter = delimiter;
     if (not options.picked_file.empty()) {
         std::ifstream picked_file(options.picked_file);
         if (not picked_file) {

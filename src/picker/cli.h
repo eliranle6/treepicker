@@ -31,6 +31,8 @@ struct CliOptions {
     std::string picked_file;
     // --max-depth N: when scanning a dir, go at most N levels below it (-1: no limit)
     int max_depth = -1;
+    // --updates FD: read changes to the nodes' shown names from FD while picking (-1: none)
+    int updates_fd = -1;
 
     bool is_help_requested = false;
     // Set if the command line isn't valid

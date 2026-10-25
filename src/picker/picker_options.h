@@ -21,6 +21,10 @@ struct PickerOptions {
     bool is_root_pickable = true;
     // With is_multi, the ids of the nodes to start picked (each on its own, not with its subtree)
     std::vector<std::string> initially_picked_ids;
+    // A file descriptor to read changes to the nodes' tags from while picking (see
+    // UpdatesReader), each ending with updates_delimiter; -1: none
+    int updates_fd = -1;
+    char updates_delimiter = '\n';
 };
 
 } // namespace picker

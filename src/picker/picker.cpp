@@ -6,8 +6,13 @@ namespace picker {
 Picker::Picker(treelib::Tree& tree, const PickerOptions& options) :
     _tree_keyboard_selector(tree, options),
     _tree(tree),
+    _updates_reader(options.updates_delimiter),
     _keyboard_reactor([&](void) { _tree_keyboard_selector.initialize(); },
-                      [&](int c) { return _tree_keyboard_selector.char_pressed(c); })
+                      [&](int c) { return _tree_keyboard_selector.char_pressed(c); },
+                      options.updates_fd,
+                      [&](const std::string& data) {
+                          _tree_keyboard_selector.set_tags(_updates_reader.feed(data));
+                      })
 {}
 
 std::vector<std::shared_ptr<treelib::Node>> Picker::run(void) {

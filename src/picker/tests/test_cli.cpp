@@ -89,6 +89,15 @@ TEST(cli, max_depth) {
     ASSERT_FALSE(parse({"--max-depth", ""}).error.empty());
 }
 
+TEST(cli, updates) {
+    ASSERT_EQ(parse({}).updates_fd, -1);
+    ASSERT_EQ(parse({"--updates", "5", "--list"}).updates_fd, 5);
+    ASSERT_TRUE(parse({"--updates", "5", "--list"}).is_list);
+    ASSERT_FALSE(parse({"--updates"}).error.empty());
+    ASSERT_FALSE(parse({"--updates", "x"}).error.empty());
+    ASSERT_NE(parse({"--updates", "-1"}).error.find("--updates"), std::string::npos);
+}
+
 TEST(cli, scan_errors_warning) {
     ASSERT_EQ(picker::scan_errors_warning("/d", {}), "");
     ASSERT_EQ(picker::scan_errors_warning("/d", {"find: '/d/a': Permission denied"}),

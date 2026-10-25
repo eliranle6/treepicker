@@ -8,6 +8,7 @@
 #include "picker/keyboardreactor.h"
 #include "picker/picker_options.h"
 #include "picker/tree_keyboard_selector.h"
+#include "picker/updates.h"
 
 namespace picker {
 
@@ -21,6 +22,7 @@ public:
 private:
     TreeKeyboardSelector _tree_keyboard_selector;
     treelib::Tree& _tree;
+    UpdatesReader _updates_reader;
     KeyboardReactor _keyboard_reactor;
 };
 

@@ -71,6 +71,10 @@ public:
 
     void initialize(void);
 
+    // Show the nodes with these ids by these tags (id, tag), from now on. Ids that aren't in the
+    // tree are skipped.
+    void set_tags(const std::vector<std::pair<std::string, std::string>>& tags);
+
 private:
     // Number of nodes that page up/down move
     static constexpr int PAGE_SIZE = 10;

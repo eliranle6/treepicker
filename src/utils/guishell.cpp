@@ -196,6 +196,7 @@ GuiShell::GuiShell(NCursesSink &buff) :
         throw std::runtime_error(std::string("Cannot open the terminal (/dev/tty): ") +
                                  strerror(errno));
     }
+    _terminal_fd = fileno(terminal);
     set_term(newterm(nullptr, terminal, terminal));
     // Get each key as it's pressed (Ctrl-C included, as a key rather than a signal), without
     // echoing it onto the screen

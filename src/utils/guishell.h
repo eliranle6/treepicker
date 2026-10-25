@@ -83,7 +83,12 @@ public:
 
   void clear(void);
 
+  // The terminal's file descriptor, which keys are read from
+  int terminal_fd(void) const { return _terminal_fd; }
+
 private:
+  int _terminal_fd;
+
   GuiShell(NCursesSink &buff);
 };
 

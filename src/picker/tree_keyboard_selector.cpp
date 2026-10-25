@@ -458,4 +458,22 @@ void TreeKeyboardSelector::initialize(void) {
     print_tree();
 }
 
+void TreeKeyboardSelector::set_tags(const std::vector<std::pair<std::string, std::string>>& tags) {
+    if (tags.empty()) {
+        return;
+    }
+    for (const auto& id_and_tag : tags) {
+        auto node = _tree.get_node(id_and_tag.first);
+        if (node != nullptr) {
+            node->tag = id_and_tag.second;
+        }
+    }
+    // Searches match tags
+    if (not _applied_keyword.empty()) {
+        _search.search(_applied_keyword, _is_filtering);
+        _tree_selector.select_visible_ancestor();
+    }
+    print_tree();
+}
+
 } // namespace picker
