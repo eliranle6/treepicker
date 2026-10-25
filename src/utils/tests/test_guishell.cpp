@@ -11,7 +11,14 @@ TEST(guishell, color_without_curses) {
     ASSERT_FALSE(guishell::GuiShell::is_initialized);
     std::ostringstream out;
     out << guishell::Color(guishell::BLUE) << "text" << guishell::Color(guishell::DEFAULT);
-    ASSERT_EQ(out.str(), "\x1B[34mtext\x1B[39m");
+    ASSERT_EQ(out.str(), "\x1B[34mtext\x1B[39;49m");
+}
+
+TEST(guishell, styles_with_a_background_without_curses) {
+    // Both colors, in the codes ANSI has for them
+    std::ostringstream out;
+    out << guishell::Color(guishell::SELECTED_DIRECTORY) << guishell::Color(guishell::BLACK_ON_WHITE);
+    ASSERT_EQ(out.str(), "\x1B[94;44m\x1B[30;47m");
 }
 
 TEST(guishell, printable) {

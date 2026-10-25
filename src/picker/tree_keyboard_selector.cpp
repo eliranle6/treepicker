@@ -365,9 +365,9 @@ void TreeKeyboardSelector::print_tree(void) {
             stats_line += std::string(stats_width + 1 - guishell::display_width(stats_line), ' ') +
                 HELP_HINT;
         }
-        attron(COLOR_PAIR(::guishell::BLACK_ON_WHITE));
+        attron(COLOR_PAIR(guishell::color_pair(guishell::BLACK_ON_WHITE)));
         print_line(layout.stats_row, stats_line, window_width, true);
-        attroff(COLOR_PAIR(::guishell::BLACK_ON_WHITE));
+        attroff(COLOR_PAIR(guishell::color_pair(guishell::BLACK_ON_WHITE)));
         if (not label.empty()) {
             const int pair = guishell::label_color_pair(_options.label_color);
             attron(COLOR_PAIR(pair));

@@ -75,8 +75,38 @@ const LabelColor LABEL_COLORS[] = {
     {"magenta", COLOR_MAGENTA, COLOR_WHITE},
     {"cyan", COLOR_CYAN, COLOR_BLACK},
 };
-// Past the pairs of the Colors enum
-const short FIRST_LABEL_COLOR_PAIR = 120;
+
+struct StyleColors {
+    Style style;
+    short foreground;
+    short background;
+    const char* ansi_code;
+};
+// -1: the terminal's default. Color 12 is bright blue (of 16 colors), which is ANSI's 94.
+const StyleColors STYLES[] = {
+    {DEFAULT, -1, -1, "39;49"},
+    {RED, COLOR_RED, -1, "31"},
+    {MAGENTA, COLOR_MAGENTA, -1, "35"},
+    {YELLOW, COLOR_YELLOW, -1, "33"},
+    {BLUE, COLOR_BLUE, -1, "34"},
+    {DIRECTORY, 12, -1, "94"},
+    {SELECTED_DIRECTORY, 12, COLOR_BLUE, "94;44"},
+    {WHITE_ON_BLUE, COLOR_WHITE, COLOR_BLUE, "37;44"},
+    {BLACK_ON_BLUE, COLOR_BLACK, COLOR_BLUE, "30;44"},
+    {BLACK_ON_WHITE, COLOR_BLACK, COLOR_WHITE, "30;47"},
+    {RED_ON_BLUE, COLOR_RED, COLOR_BLUE, "31;44"},
+    {MAGENTA_ON_BLUE, COLOR_MAGENTA, COLOR_BLUE, "35;44"},
+};
+static_assert(sizeof(STYLES) / sizeof(STYLES[0]) == NR_STYLES, "a style without colors");
+
+// Pair 0 is curses' own (the default colors, unchangeable): styles' pairs start at 1
+const short FIRST_STYLE_COLOR_PAIR = 1;
+// Past the styles' pairs
+const short FIRST_LABEL_COLOR_PAIR = FIRST_STYLE_COLOR_PAIR + NR_STYLES;
+}
+
+int color_pair(Style style) {
+    return FIRST_STYLE_COLOR_PAIR + style;
 }
 
 bool is_label_color(const std::string& color) {
@@ -180,24 +210,9 @@ GuiShell::GuiShell(NCursesSink &buff) :
     start_color();
     use_default_colors();
     is_initialized = true;
-    init_pair(DEFAULT, -1, -1);
-    init_pair(BLACK, COLOR_BLACK, -1);
-    init_pair(RED, COLOR_RED, -1);
-    init_pair(GREEN, COLOR_GREEN, -1);
-    init_pair(YELLOW, COLOR_YELLOW, -1);
-    init_pair(BLUE, COLOR_BLUE, -1);
-    init_pair(MAGENTA, COLOR_MAGENTA, -1);
-    init_pair(CYAN, COLOR_CYAN, -1);
-    init_pair(WHITE, COLOR_WHITE, -1);
-
-    init_pair(NON_SELECTED_DIRECTORY, DIRECTORY, -1);
-    init_pair(SELECTED_DIRECTORY, DIRECTORY, COLOR_BLUE);
-
-    init_pair(WHITE_ON_BLUE, COLOR_WHITE, COLOR_BLUE);
-    init_pair(BLACK_ON_BLUE, COLOR_BLACK, COLOR_BLUE);
-    init_pair(BLACK_ON_WHITE, COLOR_BLACK, COLOR_WHITE);
-    init_pair(RED_ON_BLUE, COLOR_RED, COLOR_BLUE);
-    init_pair(MAGENTA_ON_BLUE, COLOR_MAGENTA, COLOR_BLUE);
+    for (auto& style : STYLES) {
+        init_pair(color_pair(style.style), style.foreground, style.background);
+    }
 }
 
 GuiShell& GuiShell::get_instance(void) {
@@ -223,15 +238,15 @@ void GuiShell::clear(void) {
 
 bool GuiShell::is_initialized = false;
 
-Color::Color(int code) : _code(code)
+Color::Color(Style style) : _style(style)
 {}
 
 std::ostream& operator<< (std::ostream &out, const Color &color) {
     if (GuiShell::is_initialized) {
         out.flush();
-        attron(COLOR_PAIR(color._code));
+        attron(COLOR_PAIR(color_pair(color._style)));
     } else {
-        out << "\e[" << color._code << "m";
+        out << "\e[" << STYLES[color._style].ansi_code << "m";
     }
     return out;
 }

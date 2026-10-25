@@ -24,10 +24,5 @@ roughly by impact. A backlog to pick from; the done ones are in git history.
    depth that fits, with the selection's siblings paginated), then drawing it, would remove most of
    that state.
 
-4. **Styles apart from codes.** guishell's `Colors` enum mixes ANSI codes (`BLUE = 34`, written when
-   curses isn't running) with curses color pair ids (`SELECTED_DIRECTORY = 101`), and each color's
-   pair id is its ANSI code. Two ids once collided (a bug fixed in 8f02164). A style enum with
-   separate ANSI and curses mappings would remove the coincidences.
-
-5. **Thin layers.** `KeyboardReactor` is a 10-line loop and `Picker` only wires it to
+4. **Thin layers.** `KeyboardReactor` is a 10-line loop and `Picker` only wires it to
    `TreeKeyboardSelector`; one class would do.

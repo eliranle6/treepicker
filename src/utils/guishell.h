@@ -10,33 +10,26 @@
 
 namespace guishell {
 
-enum Colors {
-    DEFAULT = 39,
-    BLACK = 30,
-    RED = 31,
-    GREEN = 32,
-    YELLOW = 33,
-    BLUE = 34,
-    MAGENTA = 35,
-    CYAN = 36,
-    LIGHT_GRAY = 37,
-    DARK_GRAY = 90,
-    LIGHT_RED = 91,
-    LIGHT_GREEN = 92,
-    LIGHT_YELLOW = 93,
-    LIGHT_BLUE = 94,
-    LIGHT_MAGENTA = 95,
-    LIGHT_CYAN = 96,
-    WHITE = 97,
-    WHITE_ON_BLUE = 98,
-    BLACK_ON_BLUE = 99,
-    BLACK_ON_WHITE = 100,
-    DIRECTORY = 12,
-    SELECTED_DIRECTORY = 101,
-    NON_SELECTED_DIRECTORY = 102,
-    RED_ON_BLUE = 103,
-    MAGENTA_ON_BLUE = 104
+// How text is drawn. Each style has its curses colors, and its ANSI escape code for when curses
+// isn't running (see guishell.cpp's STYLES); its curses color pair is its own, not a color code.
+enum Style {
+    DEFAULT,
+    RED,
+    MAGENTA,
+    YELLOW,
+    BLUE,
+    DIRECTORY,
+    SELECTED_DIRECTORY,
+    WHITE_ON_BLUE,
+    BLACK_ON_BLUE,
+    BLACK_ON_WHITE,
+    RED_ON_BLUE,
+    MAGENTA_ON_BLUE,
+    NR_STYLES
 };
+
+// The curses color pair of a style, for attron()
+int color_pair(Style style);
 
 // The number of bytes from the start of s (n bytes of UTF-8, with no newline) that fit in
 // nr_columns screen columns, without splitting a character
@@ -94,14 +87,15 @@ private:
   GuiShell(NCursesSink &buff);
 };
 
+// Written to a stream, switches it to a style
 class Color
 {
 public:
-    Color(int code);
+    Color(Style style);
     friend std::ostream& operator<< (std::ostream &out, const Color &color);
 
 private:
-    int _code;
+    Style _style;
 };
 
 class Bold

@@ -355,7 +355,7 @@ TEST(treeprinter, a_picked_roots_color_ends_with_its_line) {
     auto lines = split_string_by_newline(out.str());
     ASSERT_TRUE(does_string_contain_substring(lines[0], "\x1B[35m"));
     // Back to the default color before anything of the next line
-    ASSERT_EQ(lines[1].substr(0, 5), "\x1B[39m");
+    ASSERT_EQ(lines[1].substr(0, 8), "\x1B[39;49m");
 }
 
 TEST(treeprinter, an_empty_dir_looks_like_a_dir) {

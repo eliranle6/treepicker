@@ -104,8 +104,7 @@ void print_node(
 
         // Dirs look like dirs even when they're empty, if the tree knows they're dirs
         if (pn.node->children.size() or pn.node->kind == 'd') {
-            auto color = is_selection ? guishell::SELECTED_DIRECTORY :
-                guishell::NON_SELECTED_DIRECTORY;
+            auto color = is_selection ? guishell::SELECTED_DIRECTORY : guishell::DIRECTORY;
             if (is_picked) {
                 color = is_selection ? guishell::RED_ON_BLUE : guishell::RED;
             } else if (is_partly_picked) {
