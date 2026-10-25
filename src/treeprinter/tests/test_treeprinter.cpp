@@ -196,8 +196,8 @@ TEST(treeprinter, node_with_hidden_children_is_marked) {
 
     auto lines = print_lines(tree_printer, tree.get_root(), 3);
 
-    ASSERT_TRUE(does_string_contain_substring(lines[1], "Dumb people (...)"));
-    ASSERT_TRUE(does_string_contain_substring(lines[2], "Smart people (...)"));
+    ASSERT_TRUE(does_string_contain_substring(lines[1], "Dumb people/ (...)"));
+    ASSERT_TRUE(does_string_contain_substring(lines[2], "Smart people/ (...)"));
 }
 
 TEST(treeprinter, siblings_that_dont_fit_are_counted) {
@@ -371,4 +371,24 @@ TEST(treeprinter, an_empty_dir_looks_like_a_dir) {
     // Dirs are bold
     ASSERT_TRUE(does_string_contain_substring(lines[1], "\x1B[1mempty"));
     ASSERT_FALSE(does_string_contain_substring(lines[2], "\x1B[1m"));
+}
+
+TEST(treeprinter, dirs_end_with_a_slash) {
+    // Like ls -F: dirs, known as dirs or by their children, end with '/'; files don't
+    treelib::Tree tree;
+    tree.create_node("root", "root", "");
+    tree.create_node("empty", "empty", "root")->kind = 'd';
+    tree.create_node("full", "full", "root");
+    tree.create_node("file", "file", "full")->kind = 'f';
+    tree.create_node("untyped", "untyped", "root");
+    treelib::TreePrinter tree_printer(tree);
+
+    auto lines = print_lines(tree_printer, tree.get_root(), 10);
+
+    ASSERT_TRUE(does_string_contain_substring(lines[1], " empty/"));
+    ASSERT_TRUE(does_string_contain_substring(lines[2], " full/"));
+    ASSERT_TRUE(does_string_contain_substring(lines[3], " file"));
+    ASSERT_FALSE(does_string_contain_substring(lines[3], "/"));
+    // Neither known as a dir nor with children: a file
+    ASSERT_FALSE(does_string_contain_substring(lines[4], "/"));
 }

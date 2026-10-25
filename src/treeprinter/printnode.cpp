@@ -90,14 +90,21 @@ void print_node(
         // Print node text
         out << " ";
 
+        // Dirs look like dirs even when they're empty, if the tree knows they're dirs: in their
+        // color, and ending with '/', like ls -F shows them, so they're told from files without
+        // colors too
+        const bool is_dir = pn.node->children.size() or pn.node->kind == 'd';
+
         // Create current node text
         auto tag = guishell::printable(pn.node->tag);
+        if (is_dir) {
+            tag += '/';
+        }
         if (pn.node->children.size() and not pn.are_children_printed) {
             tag += std::string(" (...)");
         }
 
-        // Dirs look like dirs even when they're empty, if the tree knows they're dirs
-        if (pn.node->children.size() or pn.node->kind == 'd') {
+        if (is_dir) {
             auto color = is_selection ? guishell::SELECTED_DIRECTORY : guishell::DIRECTORY;
             if (is_picked) {
                 color = is_selection ? guishell::RED_ON_BLUE : guishell::RED;
