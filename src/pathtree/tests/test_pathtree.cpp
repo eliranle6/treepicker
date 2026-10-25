@@ -11,13 +11,13 @@
 
 #include <filesystem>
 
-#include "dirtree/dirtree.h"
+#include "pathtree/pathtree.h"
 
 // A temporary dir, removed (with everything in it) when the object is destroyed
 class TempDir {
 public:
     TempDir(void) {
-        char path_template[] = "/tmp/test_dirtree_XXXXXX";
+        char path_template[] = "/tmp/test_pathtree_XXXXXX";
         path = mkdtemp(path_template);
     }
     ~TempDir(void) {
@@ -48,7 +48,7 @@ public:
 *          │   └── file_in_subdir.txt
 *          └── yetanotherfile.txt
 */
-dirtree::DirTree create_example_tree() {
+pathtree::PathTree create_example_tree() {
     TempDir temp;
     temp.make_dir("subdir_for_tests/firstdir");
     temp.make_file("subdir_for_tests/firstdir/anotherfile.txt");
@@ -62,29 +62,29 @@ dirtree::DirTree create_example_tree() {
             (temp.path + "/subdir_for_tests/firstdir/link_to_file_in_third").c_str());
 
     // The tree is read into memory, so the dir can go once the function returns
-    dirtree::DirTree dir(temp.path + "/subdir_for_tests");
+    pathtree::PathTree dir(temp.path + "/subdir_for_tests");
     dir.update_from_filesystem();
     return dir;
 }
 
-TEST(dirtree, dirpath) {
-    dirtree::DirTree dir("/some/path");
+TEST(pathtree, dirpath) {
+    pathtree::PathTree dir("/some/path");
     ASSERT_EQ(dir.path.string(), "/some/path");
 }
 
-TEST(dirtree, rootnode_properties) {
-    dirtree::DirTree dir = create_example_tree();
+TEST(pathtree, rootnode_properties) {
+    pathtree::PathTree dir = create_example_tree();
     ASSERT_EQ(dir.get_root()->tag, "subdir_for_tests");
     ASSERT_EQ(dir.get_root()->identifier, "");
 }
 
-TEST(dirtree, read_flat_dir__nr_children_of_root) {
-    dirtree::DirTree dir = create_example_tree();
+TEST(pathtree, read_flat_dir__nr_children_of_root) {
+    pathtree::PathTree dir = create_example_tree();
     ASSERT_EQ(dir.get_root()->children.size(), 3);
 }
 
-TEST(dirtree, read_flat_dir__tree_node_tags) {
-    dirtree::DirTree dir = create_example_tree();
+TEST(pathtree, read_flat_dir__tree_node_tags) {
+    pathtree::PathTree dir = create_example_tree();
     ASSERT_EQ(dir.get_root()->children[0]->tag, "firstdir");
         ASSERT_EQ(dir.get_root()->children[0]->children[0]->tag, "anotherfile.txt");
         ASSERT_EQ(dir.get_root()->children[0]->children[1]->tag, "somefile.txt");
@@ -97,8 +97,8 @@ TEST(dirtree, read_flat_dir__tree_node_tags) {
         ASSERT_EQ(dir.get_root()->children[2]->children[1]->tag, "yetanotherfile.txt");
 }
 
-TEST(dirtree, read_flat_dir__tree_node_identifiers) {
-    dirtree::DirTree dir = create_example_tree();
+TEST(pathtree, read_flat_dir__tree_node_identifiers) {
+    pathtree::PathTree dir = create_example_tree();
     ASSERT_EQ(dir.get_root()->children[0]->identifier,
               "firstdir");
         ASSERT_EQ(dir.get_root()->children[0]->children[0]->identifier,
@@ -119,7 +119,7 @@ TEST(dirtree, read_flat_dir__tree_node_identifiers) {
                   "thirddir/yetanotherfile.txt");
 }
 
-static std::vector<std::string> tags_of_children(dirtree::DirTree& dir, const std::string& id) {
+static std::vector<std::string> tags_of_children(pathtree::PathTree& dir, const std::string& id) {
     std::vector<std::string> tags;
     for (auto& child : dir.get_node(id)->children) {
         tags.push_back(child->tag);
@@ -127,12 +127,12 @@ static std::vector<std::string> tags_of_children(dirtree::DirTree& dir, const st
     return tags;
 }
 
-TEST(dirtree, nonexistent_dir_throws) {
-    dirtree::DirTree dir("/no/such/dir/for/test_dirtree");
+TEST(pathtree, nonexistent_dir_throws) {
+    pathtree::PathTree dir("/no/such/dir/for/test_pathtree");
     ASSERT_THROW(dir.update_from_filesystem(), std::runtime_error);
 }
 
-TEST(dirtree, children_are_sorted) {
+TEST(pathtree, children_are_sorted) {
     TempDir temp;
     for (auto name : {"b", "c", "a", "B", "a-b"}) {
         temp.make_file(name);
@@ -140,7 +140,7 @@ TEST(dirtree, children_are_sorted) {
     temp.make_dir("a.d");
     temp.make_file("a.d/z");
     temp.make_file("a.d/y");
-    dirtree::DirTree dir(temp.path);
+    pathtree::PathTree dir(temp.path);
     dir.update_from_filesystem();
 
     std::vector<std::string> expected = {"B", "a", "a-b", "a.d", "b", "c"};
@@ -149,13 +149,13 @@ TEST(dirtree, children_are_sorted) {
     ASSERT_EQ(tags_of_children(dir, "a.d"), expected);
 }
 
-TEST(dirtree, unusual_file_names) {
+TEST(pathtree, unusual_file_names) {
     TempDir temp;
     temp.make_dir("dir with spaces");
     temp.make_file("dir with spaces/100% %s %n.txt");
     temp.make_file("dir with spaces/line\nbreak");
     temp.make_file("dir with spaces/\xd7\xa9\xd7\x9c\xd7\x95\xd7\x9d");
-    dirtree::DirTree dir(temp.path);
+    pathtree::PathTree dir(temp.path);
     dir.update_from_filesystem();
 
     std::vector<std::string> expected = {"100% %s %n.txt", "line\nbreak",
@@ -164,34 +164,34 @@ TEST(dirtree, unusual_file_names) {
     ASSERT_EQ(dir.get_nr_nodes(), 5);
 }
 
-TEST(dirtree, symlinks_are_skipped) {
+TEST(pathtree, symlinks_are_skipped) {
     TempDir temp;
     temp.make_dir("real");
     temp.make_file("real/file");
     ASSERT_EQ(symlink((temp.path + "/real").c_str(), (temp.path + "/link").c_str()), 0);
-    dirtree::DirTree dir(temp.path);
+    pathtree::PathTree dir(temp.path);
     dir.update_from_filesystem();
 
     std::vector<std::string> expected = {"real"};
     ASSERT_EQ(tags_of_children(dir, ""), expected);
 }
 
-TEST(dirtree, empty_dir) {
+TEST(pathtree, empty_dir) {
     TempDir temp;
-    dirtree::DirTree dir(temp.path);
+    pathtree::PathTree dir(temp.path);
     dir.update_from_filesystem();
     ASSERT_EQ(dir.get_nr_nodes(), 1);
     ASSERT_EQ(dir.get_root()->children.size(), 0);
 }
 
-TEST(dirtree, big_flat_dir) {
+TEST(pathtree, big_flat_dir) {
     // More output than a pipe holds (64KB), and too many files to add with a linear scan each
     TempDir temp;
     for (int i = 0; i < 20000; ++i) {
         temp.make_file("file" + std::to_string(i));
     }
     auto start = std::chrono::steady_clock::now();
-    dirtree::DirTree dir(temp.path);
+    pathtree::PathTree dir(temp.path);
     dir.update_from_filesystem();
     auto elapsed = std::chrono::steady_clock::now() - start;
 
@@ -199,21 +199,21 @@ TEST(dirtree, big_flat_dir) {
     ASSERT_LT(elapsed, std::chrono::seconds(5));
 }
 
-static dirtree::DirTree tree_from_text(const std::string& text, char delimiter = '\n') {
-    dirtree::DirTree dir("-");
+static pathtree::PathTree tree_from_text(const std::string& text, char delimiter = '\n') {
+    pathtree::PathTree dir("-");
     std::istringstream in(text);
     dir.update_from_stream(in, delimiter);
     return dir;
 }
 
-TEST(dirtree, stream_paths_keep_their_order) {
+TEST(pathtree, stream_paths_keep_their_order) {
     auto dir = tree_from_text("b\nc\na\n");
     std::vector<std::string> expected = {"b", "c", "a"};
     ASSERT_EQ(tags_of_children(dir, ""), expected);
     ASSERT_EQ(dir.get_root()->tag, ".");
 }
 
-TEST(dirtree, stream_adds_missing_parents) {
+TEST(pathtree, stream_adds_missing_parents) {
     auto dir = tree_from_text("a/b/c.txt\n");
     ASSERT_EQ(dir.get_nr_nodes(), 4);
     ASSERT_EQ(dir.get_node("a")->tag, "a");
@@ -221,7 +221,7 @@ TEST(dirtree, stream_adds_missing_parents) {
     ASSERT_EQ(dir.get_node("a/b/c.txt")->tag, "c.txt");
 }
 
-TEST(dirtree, stream_paths_are_cleaned) {
+TEST(pathtree, stream_paths_are_cleaned) {
     auto dir = tree_from_text("./a//b/\n/c\n./\n\n.\nd/./e\n");
     std::vector<std::string> expected = {"a", "c", "d"};
     ASSERT_EQ(tags_of_children(dir, ""), expected);
@@ -230,36 +230,36 @@ TEST(dirtree, stream_paths_are_cleaned) {
     ASSERT_EQ(dir.get_nr_nodes(), 6);
 }
 
-TEST(dirtree, stream_skips_paths_already_added) {
+TEST(pathtree, stream_skips_paths_already_added) {
     // Including a dir that was added for a path under it
     auto dir = tree_from_text("a/b\na/b\na\n");
     ASSERT_EQ(dir.get_nr_nodes(), 3);
     ASSERT_EQ(dir.get_node("a")->children.size(), 1);
 }
 
-TEST(dirtree, stream_null_separated) {
+TEST(pathtree, stream_null_separated) {
     auto dir = tree_from_text(std::string("line\nbreak/x\0y\0", 16), '\0');
     std::vector<std::string> expected = {"line\nbreak", "y"};
     ASSERT_EQ(tags_of_children(dir, ""), expected);
 }
 
-TEST(dirtree, stream_last_path_without_delimiter) {
+TEST(pathtree, stream_last_path_without_delimiter) {
     auto dir = tree_from_text("a\nb");
     std::vector<std::string> expected = {"a", "b"};
     ASSERT_EQ(tags_of_children(dir, ""), expected);
 }
 
-TEST(dirtree, empty_stream) {
+TEST(pathtree, empty_stream) {
     auto dir = tree_from_text("");
     ASSERT_EQ(dir.get_nr_nodes(), 1);
 }
 
-TEST(dirtree, max_depth) {
+TEST(pathtree, max_depth) {
     TempDir temp;
     temp.make_dir("a/b/c");
     temp.make_file("a/b/c/deep.txt");
     temp.make_file("top.txt");
-    dirtree::DirTree dir(temp.path);
+    pathtree::PathTree dir(temp.path);
     dir.update_from_filesystem(2);
 
     ASSERT_NE(dir.get_node("a/b"), nullptr);
@@ -267,7 +267,7 @@ TEST(dirtree, max_depth) {
     ASSERT_NE(dir.get_node("top.txt"), nullptr);
 }
 
-TEST(dirtree, scan_errors) {
+TEST(pathtree, scan_errors) {
     if (geteuid() == 0) {
         GTEST_SKIP() << "root can read anything";
     }
@@ -277,7 +277,7 @@ TEST(dirtree, scan_errors) {
     temp.make_file("open.txt");
     chmod((temp.path + "/locked").c_str(), 0);
 
-    dirtree::DirTree dir(temp.path);
+    pathtree::PathTree dir(temp.path);
     dir.update_from_filesystem();
     chmod((temp.path + "/locked").c_str(), 0755);
 
@@ -286,20 +286,20 @@ TEST(dirtree, scan_errors) {
     ASSERT_NE(dir.get_node("open.txt"), nullptr);
 }
 
-TEST(dirtree, no_scan_errors) {
+TEST(pathtree, no_scan_errors) {
     TempDir temp;
     temp.make_file("a.txt");
-    dirtree::DirTree dir(temp.path);
+    pathtree::PathTree dir(temp.path);
     dir.update_from_filesystem();
     ASSERT_TRUE(dir.scan_errors.empty());
 }
 
-TEST(dirtree, scan_knows_files_from_dirs) {
+TEST(pathtree, scan_knows_files_from_dirs) {
     TempDir temp;
     temp.make_dir("empty");
     temp.make_dir("a");
     temp.make_file("a/b.txt");
-    dirtree::DirTree dir(temp.path);
+    pathtree::PathTree dir(temp.path);
     dir.update_from_filesystem();
     for (auto id : {"empty", "a", "a/b.txt"}) {
         ASSERT_NE(dir.get_node(id), nullptr) << id;
@@ -310,9 +310,9 @@ TEST(dirtree, scan_knows_files_from_dirs) {
     ASSERT_EQ(dir.get_root()->kind, 'd');
 }
 
-TEST(dirtree, typed_stream) {
+TEST(pathtree, typed_stream) {
     // A type letter and a space, then the path: others are skipped
-    dirtree::DirTree dir("-");
+    pathtree::PathTree dir("-");
     std::istringstream in("d empty\nf music/a.mp3\nl a-symlink\nnot typed\n");
     dir.update_from_stream(in, '\n', true);
 
@@ -324,14 +324,14 @@ TEST(dirtree, typed_stream) {
     ASSERT_EQ(dir.get_nr_nodes(), 4);
 }
 
-TEST(dirtree, untyped_stream_kinds_are_unknown) {
+TEST(pathtree, untyped_stream_kinds_are_unknown) {
     auto dir = tree_from_text("a/b\n");
     ASSERT_EQ(dir.get_node("a/b")->kind, 0);
     // a was added for a/b, so it's a dir
     ASSERT_EQ(dir.get_node("a")->kind, 'd');
 }
 
-TEST(dirtree, files_not_in) {
+TEST(pathtree, files_not_in) {
     TempDir a, b;
     for (auto dir : {"music", "music/album", "only_a"}) {
         a.make_dir(dir);
@@ -342,7 +342,7 @@ TEST(dirtree, files_not_in) {
     b.make_dir("music");
     b.make_file("music/x.mp3");
     b.make_file("top.txt");
-    dirtree::DirTree tree_a(a.path), tree_b(b.path);
+    pathtree::PathTree tree_a(a.path), tree_b(b.path);
     tree_a.update_from_filesystem();
     tree_b.update_from_filesystem();
 

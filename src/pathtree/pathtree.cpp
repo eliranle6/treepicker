@@ -7,16 +7,16 @@
 #include <sstream>
 #include <stdexcept>
 #include <vector>
-#include "dirtree.h"
+#include "pathtree.h"
 #include "utils/subprocess.h"
 
-namespace dirtree {
+namespace pathtree {
 
-DirTree::DirTree(std::string _path) : path(_path)
+PathTree::PathTree(std::string _path) : path(_path)
 {
 }
 
-void DirTree::update_from_filesystem(int max_depth) {
+void PathTree::update_from_filesystem(int max_depth) {
     // Create root node
     char* realpath_ret_value = realpath(path.c_str(), nullptr);
     if (realpath_ret_value == nullptr) {
@@ -76,13 +76,13 @@ void DirTree::update_from_filesystem(int max_depth) {
     // Sorted paths also list each dir before what's in it, which create_node needs.
     std::sort(entries.begin(), entries.end());
 
-    // Populate dirtree
+    // Populate pathtree
     for (auto& path_and_kind : entries) {
         add_path(path_and_kind.first, path_and_kind.second);
     }
 }
 
-void DirTree::update_from_stream(std::istream& in, char delimiter, bool is_typed) {
+void PathTree::update_from_stream(std::istream& in, char delimiter, bool is_typed) {
     add_root(".");
     std::string entry;
     while (getline(in, entry, delimiter)) {
@@ -128,7 +128,7 @@ static std::string clean_path(const std::string& path) {
     return cleaned;
 }
 
-void DirTree::add_path(const std::string& path, char kind) {
+void PathTree::add_path(const std::string& path, char kind) {
     const std::string cleaned = needs_cleaning(path) ? clean_path(path) : path;
     if (cleaned.empty()) {
         return;
@@ -149,7 +149,7 @@ void DirTree::add_path(const std::string& path, char kind) {
     }
 }
 
-std::vector<std::string> DirTree::files_not_in(treelib::Tree& other) {
+std::vector<std::string> PathTree::files_not_in(treelib::Tree& other) {
     std::vector<std::string> missing;
     if (get_root() == nullptr) {
         return missing;
@@ -169,10 +169,10 @@ std::vector<std::string> DirTree::files_not_in(treelib::Tree& other) {
     return missing;
 }
 
-void DirTree::add_root(const std::string& tag) {
+void PathTree::add_root(const std::string& tag) {
     if (get_root() == nullptr) {
         create_node(tag, "", "");
     }
 }
 
-} // namespace dirtree
+} // namespace pathtree

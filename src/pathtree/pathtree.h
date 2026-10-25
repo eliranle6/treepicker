@@ -1,5 +1,5 @@
-#ifndef __DIRTREE_H
-#define __DIRTREE_H
+#ifndef __PATHTREE_H
+#define __PATHTREE_H
 
 #include <istream>
 #include <string>
@@ -9,13 +9,13 @@
 #include "tree/tree.h"
 #include "utils/subprocess.h"
 
-namespace dirtree {
+namespace pathtree {
 
-class DirTree : public treelib::Tree
+class PathTree : public treelib::Tree
 {
 public:
     std::filesystem::path path;
-    DirTree(std::string _path);
+    PathTree(std::string _path);
 
     // Add the dir's contents (found with `find`), sorted by name, down to max_depth levels below
     // the dir (-1: all)
@@ -46,6 +46,6 @@ private:
     void add_root(const std::string& tag);
 };
 
-} // namespace dirtree
+} // namespace pathtree
 
 #endif

@@ -2,7 +2,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "dirtree/dirtree.h"
+#include "pathtree/pathtree.h"
 
 static const char USAGE[] =
     "Usage: dirdiff [-0] [--max-depth N] A B\n"
@@ -46,9 +46,9 @@ int main(int argc, char* argv[]) {
 
     try {
         std::ios::sync_with_stdio(false);
-        dirtree::DirTree a(dirs[0]);
+        pathtree::PathTree a(dirs[0]);
         a.update_from_filesystem(max_depth);
-        dirtree::DirTree b(dirs[1]);
+        pathtree::PathTree b(dirs[1]);
         b.update_from_filesystem(max_depth);
         for (auto& error : a.scan_errors) {
             std::cerr << error << "\n";

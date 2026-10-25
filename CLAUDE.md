@@ -1,13 +1,13 @@
 # cpptree
 
-A C++ tree library and `dirpicker`, a fast terminal tree picker built on it (like fzf, but for
+A C++ tree library and `treepick`, a fast terminal tree picker built on it (like fzf, but for
 trees: it shows a tree, lets the user move around, search and pick, and prints what was picked).
 It's the author's C++ practice project, and dirdelta's picker: dirdelta
-(github.com/levioctl/dirdelta) has it as a git submodule at `lib/cpptree` and runs `dirpicker` as
+(github.com/levioctl/dirdelta) has it as a git submodule at `lib/cpptree` and runs `treepick` as
 a subprocess for every pick and menu. Speed with big trees (100k+ nodes) is the point: keep each
 key press well under a few ms, and loading linear.
 
-README.md has the usage; `dirpicker --help` lists the options and keys. Ideas not done yet:
+README.md has the usage; `treepick --help` lists the options and keys. Ideas not done yet:
 `docs/improvement-ideas.md`.
 
 ## Building and testing
@@ -15,7 +15,7 @@ README.md has the usage; `dirpicker --help` lists the options and keys. Ideas no
 A plain Makefile, everything built into `build/` (C++17, ncurses; Google Test for the tests):
 
 ```
-make            # build/dirpicker, build/dirdiff, build/picker (a demo), build/libcpptree.a
+make            # build/treepick, build/dirdiff, build/picker (a demo), build/libcpptree.a
 make test       # builds the programs and a binary per test, runs them all
 make clean
 make install PREFIX=~/.local
@@ -47,9 +47,9 @@ src/picker/       TreeSelector (the selection, and picked nodes: a dir is picked
                   TreeKeyboardSelector's key table)
 src/utils/        guishell (curses on /dev/tty, colors, cutting lines by display width),
                   subprocess (running find)
-src/dirtree/      DirTree: a tree of paths, from find (sorted) or from a stream (in order)
-src/dirpicker/    the dirpicker program; src/picker/main.cpp is the demo program
-src/dirdiff/      the dirdiff program: the files of a dir that another lacks (DirTree::files_not_in),
+src/pathtree/     PathTree: a tree of paths, from find (sorted) or from a stream (in order)
+src/treepick/     the treepick program; src/picker/main.cpp is the demo program
+src/dirdiff/      the dirdiff program: the files of a dir that another lacks (PathTree::files_not_in),
                   for dirdelta
 ```
 
@@ -69,7 +69,7 @@ a program's `main.cpp` only builds its tree and calls `picker::pick_and_print()`
   `// Today i learned: <feature>` comment and mention it in the commit message (see README.md).
   Several features came in without it in 2026-10; ask before adding the comments.
 - The tree is agnostic of what it holds: it doesn't sort; whoever fills it decides the order
-  (DirTree sorts find's output).
+  (PathTree sorts find's output).
 - No Boost: the standard library only.
 - Don't push; commit locally. The working copy at /home/eliran/code/cpptree and dirdelta's
   `lib/cpptree` are separate clones: commit here, then move dirdelta's submodule to it (fetch

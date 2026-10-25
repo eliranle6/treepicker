@@ -3,7 +3,7 @@
 #include <sstream>
 #include "tree_keyboard_selector.h"
 #include "picker/keys_help.h"
-#include "dirtree/dirtree.h"
+#include "pathtree/pathtree.h"
 
 namespace picker {
 

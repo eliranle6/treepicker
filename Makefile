@@ -12,12 +12,12 @@ PREFIX ?= /usr/local
 BUILD = build
 
 # The core, shared by all programs
-LIB_SOURCES = $(filter-out %/main.cpp src/dirpicker/% src/dirdiff/%, $(wildcard src/*/*.cpp))
+LIB_SOURCES = $(filter-out %/main.cpp src/treepick/% src/dirdiff/%, $(wildcard src/*/*.cpp))
 LIB = $(BUILD)/libcpptree.a
 
 # Each program: build/<name> from its dir's sources
-PROGRAMS = $(BUILD)/dirpicker $(BUILD)/dirdiff $(BUILD)/picker
-DIRPICKER_SOURCES = $(wildcard src/dirpicker/*.cpp)
+PROGRAMS = $(BUILD)/treepick $(BUILD)/dirdiff $(BUILD)/picker
+TREEPICK_SOURCES = $(wildcard src/treepick/*.cpp)
 PICKER_SOURCES = src/picker/main.cpp
 
 # Each test: build/tests/<name> from src/*/tests/<name>.cpp
@@ -42,7 +42,7 @@ $(BUILD)/obj/%.o: src/%.cpp
 $(LIB): $(call objects,$(LIB_SOURCES))
 	$(AR) rcs $@ $^
 
-$(BUILD)/dirpicker: $(call objects,$(DIRPICKER_SOURCES)) $(LIB)
+$(BUILD)/treepick: $(call objects,$(TREEPICK_SOURCES)) $(LIB)
 	$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 $(BUILD)/dirdiff: $(call objects,src/dirdiff/main.cpp) $(LIB)
