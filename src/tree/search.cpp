@@ -43,15 +43,17 @@ void Search::search(std::string keyword, bool hide_non_matching) {
 
         // Visit node. Match its name rather than its path: with paths, a dir that matched made
         // everything under it match too, and the root's name matched every node.
-        bool found = keyword.empty() or does_text_match(node->tag, keyword, ignore_case);
-        node->is_matching_search = found;
-        node->is_search_highlighted = found and not keyword.empty();
-        // Mark 'ancestor of matching' as false, by default, to be updated later. Not hiding
-        // anything: mark every node, so all are shown.
-        node->is_ancestor_of_matching_search = not hide_non_matching;
-
-        if (found) {
-            mark_ancestors(node->identifier);
+        const bool is_match = not keyword.empty() and
+            does_text_match(node->tag, keyword, ignore_case);
+        node->is_search_match = is_match;
+        // Hidden until it or a node under it matches (found after it: its children come later),
+        // unless nothing is hidden
+        node->is_search_visible = keyword.empty() or not hide_non_matching;
+        if (is_match) {
+            node->is_search_visible = true;
+            show_ancestors(node);
+        }
+        if (is_match or keyword.empty()) {
             ++_nr_matching;
         }
 
@@ -62,17 +64,16 @@ void Search::search(std::string keyword, bool hide_non_matching) {
     }
 }
 
-void Search::mark_ancestors(std::string &identifier) {
+void Search::show_ancestors(const node_t& node) {
     const node_t root = _tree.get_root();
-
-    node_t current = _tree.get_node(identifier);
+    node_t current = node;
     while (current != root) {
         current = _tree.get_node(current->parent);
-
-        if (current->is_ancestor_of_matching_search) {
+        // Then so are its ancestors
+        if (current->is_search_visible) {
             break;
         }
-        current->is_ancestor_of_matching_search = true;
+        current->is_search_visible = true;
     };
 }
 

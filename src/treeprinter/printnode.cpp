@@ -110,14 +110,14 @@ void print_node(
                 color = is_selection ? guishell::RED_ON_BLUE : guishell::RED;
             } else if (is_partly_picked) {
                 color = is_selection ? guishell::MAGENTA_ON_BLUE : guishell::MAGENTA;
-            } else if (pn.node->is_search_highlighted and not is_selection) {
+            } else if (pn.node->is_search_match and not is_selection) {
                 color = guishell::YELLOW;
             }
             out << guishell::Color(color) << guishell::Bold() <<
                 tag << guishell::Unbold() << guishell::Color(guishell::DEFAULT);
 
         } else {
-            const bool is_highlighted = pn.node->is_search_highlighted and not is_selection;
+            const bool is_highlighted = pn.node->is_search_match and not is_selection;
             if (is_picked) {
                 out << guishell::Color(is_selection ? guishell::RED_ON_BLUE : guishell::RED);
             } else if (is_selection) {

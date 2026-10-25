@@ -21,9 +21,10 @@ private:
 
     std::size_t _nr_matching;
 
-    void mark_ancestors(std::string &identifier);
-
     using node_t = std::shared_ptr< Node >;
+
+    // Show the node's ancestors, which hide_non_matching hid
+    void show_ancestors(const node_t& node);
 };
 
 } // namespace treelib

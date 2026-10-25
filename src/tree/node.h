@@ -16,10 +16,11 @@ public:
     std::string identifier;
     std::string parent;
 
-    bool is_matching_search;
-    bool is_ancestor_of_matching_search;
+    // Whether an ongoing search shows this node: it matches, or a node under it does (or the
+    // search hides nothing)
+    bool is_search_visible;
     // Whether it matches an ongoing search's (non-empty) keyword, to be shown highlighted
-    bool is_search_highlighted;
+    bool is_search_match;
 
     // Whether the user picked this node (when picking several). A node with children is picked
     // when all of them are, and partly picked when only some of them are (picked or partly).
@@ -32,11 +33,6 @@ public:
 
     std::vector< std::shared_ptr< Node > > children;
     void add_child(std::shared_ptr< Node > node);
-
-    // Whether an ongoing search shows this node (it, or a node under it, matches)
-    bool is_search_visible(void) const {
-        return is_matching_search or is_ancestor_of_matching_search;
-    }
 };
 
 }

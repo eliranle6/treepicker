@@ -97,12 +97,9 @@ TEST(tree_selector, move_one_up_does_not_pass_bounds) {
 
 TEST(tree_selector, explore_selection_skips_non_maching_children) {
     auto tree = get_simple_tree();
-    tree.get_node("dumb")->is_matching_search = false;
-    tree.get_node("dumb")->is_ancestor_of_matching_search = false;
-        tree.get_node("rich-dumb")->is_matching_search = false;
-        tree.get_node("rich-dumb")->is_ancestor_of_matching_search = false;
-        tree.get_node("poor-dumb")->is_matching_search = false;
-        tree.get_node("poor-dumb")->is_ancestor_of_matching_search = false;
+    tree.get_node("dumb")->is_search_visible = false;
+        tree.get_node("rich-dumb")->is_search_visible = false;
+        tree.get_node("poor-dumb")->is_search_visible = false;
 
     treelib::TreePrinter tree_printer(tree);
     picker::TreeSelector tree_selector(tree, tree_printer);
@@ -114,10 +111,8 @@ TEST(tree_selector, next_skips_non_matching_children) {
     // Setup
     auto tree = get_simple_tree();
     // Leave only root, dumb and empty
-    tree.get_node("rich-dumb")->is_ancestor_of_matching_search = false;
-    tree.get_node("poor-dumb")->is_ancestor_of_matching_search = false;
-    tree.get_node("rich-dumb")->is_matching_search = false;
-    tree.get_node("poor-dumb")->is_matching_search = false;
+    tree.get_node("rich-dumb")->is_search_visible = false;
+    tree.get_node("poor-dumb")->is_search_visible = false;
     treelib::TreePrinter tree_printer(tree);
     picker::TreeSelector tree_selector(tree, tree_printer);
     // Go to first subnode of root, 'dumb'
@@ -266,7 +261,7 @@ TEST(tree_selector, random_walks_keep_the_selection_shown) {
 
             auto selection = tree_selector.get_selection();
             ASSERT_NE(selection, nullptr);
-            ASSERT_TRUE(selection == tree.get_root() or selection->is_search_visible());
+            ASSERT_TRUE(selection == tree.get_root() or selection->is_search_visible);
             auto lines = print(tree_printer, tree_selector, window_height, not keyword.empty());
             std::string screen;
             for (auto& line : lines) {
@@ -284,7 +279,7 @@ TEST(tree_selector, walk_through_a_filtered_dir_bigger_than_the_window) {
     treelib::Search(tree).search("5");  // child000005, child000015, ... child000050..59
     std::vector<std::shared_ptr<treelib::Node>> visible_children;
     for (auto& child : tree.get_root()->children) {
-        if (child->is_search_visible()) {
+        if (child->is_search_visible) {
             visible_children.push_back(child);
         }
     }
@@ -428,8 +423,7 @@ TEST(tree_selector, move_to_first_and_last_sibling_skips_hidden_ones) {
     auto tree = get_flat_tree(10);
     // As if a search hid the first and the last
     for (auto id : {"child000000", "child000009"}) {
-        tree.get_node(id)->is_matching_search = false;
-        tree.get_node(id)->is_ancestor_of_matching_search = false;
+        tree.get_node(id)->is_search_visible = false;
     }
     treelib::TreePrinter tree_printer(tree);
     picker::TreeSelector tree_selector(tree, tree_printer);

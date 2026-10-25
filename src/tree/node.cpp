@@ -6,9 +6,8 @@ Node::Node(std::string _tag, std::string _identifier, std::string _parent):
         tag(_tag),
         identifier(_identifier),
         parent(_parent),
-        is_matching_search(true),
-        is_ancestor_of_matching_search(true),
-        is_search_highlighted(false),
+        is_search_visible(true),
+        is_search_match(false),
         is_picked(false),
         is_partly_picked(false),
         kind(0)

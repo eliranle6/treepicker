@@ -22,7 +22,7 @@ void TreeSelector::explore_children_of_selection(void) {
     }
     // Select the first child that an ongoing search doesn't hide, if there is one
     for (auto& child : _selection->children) {
-        if (child->is_search_visible()) {
+        if (child->is_search_visible) {
             _selection = child;
             return;
         }
@@ -45,7 +45,7 @@ void TreeSelector::move_to_first_sibling(void) {
         return;
     }
     for (auto& sibling : _tree.get_node(_selection->parent)->children) {
-        if (sibling->is_search_visible()) {
+        if (sibling->is_search_visible) {
             _selection = sibling;
             return;
         }
@@ -58,7 +58,7 @@ std::pair<std::size_t, std::size_t> TreeSelector::get_place_among_siblings(bool 
     }
     std::size_t place = 0, nr_siblings = 0;
     for (auto& sibling : _tree.get_node(_selection->parent)->children) {
-        if (filter and not sibling->is_search_visible()) {
+        if (filter and not sibling->is_search_visible) {
             continue;
         }
         ++nr_siblings;
@@ -75,7 +75,7 @@ void TreeSelector::move_to_last_sibling(void) {
     }
     auto& siblings = _tree.get_node(_selection->parent)->children;
     for (auto sibling = siblings.rbegin(); sibling != siblings.rend(); ++sibling) {
-        if ((*sibling)->is_search_visible()) {
+        if ((*sibling)->is_search_visible) {
             _selection = *sibling;
             return;
         }
@@ -117,7 +117,7 @@ TreeSelector::NodePtr TreeSelector::get_next_beyond_screen(NodePtr node) {
         auto& siblings = _tree.get_node(node->parent)->children;
         auto position = std::find(siblings.begin(), siblings.end(), node);
         for (auto sibling = position + 1; sibling < siblings.end(); ++sibling) {
-            if ((*sibling)->is_search_visible()) {
+            if ((*sibling)->is_search_visible) {
                 return *sibling;
             }
         }
@@ -236,7 +236,7 @@ void TreeSelector::select_visible_ancestor(void) {
         return;
     }
     // The root is always shown
-    while (_selection != _tree.get_root() and not _selection->is_search_visible()) {
+    while (_selection != _tree.get_root() and not _selection->is_search_visible) {
         _selection = _tree.get_node(_selection->parent);
     }
 }

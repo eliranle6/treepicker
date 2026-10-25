@@ -29,8 +29,5 @@ roughly by impact. A backlog to pick from; the done ones are in git history.
    pair id is its ANSI code. Two ids once collided (a bug fixed in 8f02164). A style enum with
    separate ANSI and curses mappings would remove the coincidences.
 
-5. **Fewer search flags.** Nodes have `is_matching_search`, `is_ancestor_of_matching_search` and
-   `is_search_highlighted`, for two things: whether the node is shown, and whether it matches.
-
-6. **Thin layers.** `KeyboardReactor` is a 10-line loop and `Picker` only wires it to
+5. **Thin layers.** `KeyboardReactor` is a 10-line loop and `Picker` only wires it to
    `TreeKeyboardSelector`; one class would do.

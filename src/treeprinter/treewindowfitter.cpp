@@ -21,7 +21,7 @@ int get_nr_levels_that_fit_in_window(
         std::vector<NodeP> next_level;
         for (auto& node : level) {
             for (auto& child : node->children) {
-                if (not child->is_search_visible()) {
+                if (not child->is_search_visible) {
                     continue;
                 }
                 if (nr_nodes + static_cast<int>(next_level.size()) + 1 > window_size) {

@@ -43,7 +43,7 @@ bool TreePrinter::should_node_be_skipped(
     // The root is shown even when nothing matches, so the screen is never empty
     return (filter_search_nodes
         and node != _tree.get_root()
-        and not node->is_search_visible());
+        and not node->is_search_visible);
 }
 
 int TreePrinter::print(std::ostream &out,

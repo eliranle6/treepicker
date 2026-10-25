@@ -19,25 +19,24 @@ TEST(treesearch, simple_search_matching_nodes) {
     treelib::Tree tree = get_example_tree();
     treelib::Search(tree).search("child1");
 
-    ASSERT_FALSE(tree.get_node("root_id")->is_matching_search);
-    ASSERT_TRUE(tree.get_node("child1_id")->is_matching_search);
-    ASSERT_TRUE(tree.get_node("child1.1_id")->is_matching_search);
-    ASSERT_TRUE(tree.get_node("child1.2_id")->is_matching_search);
-    ASSERT_FALSE(tree.get_node("child2_id")->is_matching_search);
-    ASSERT_FALSE(tree.get_node("child2.1_id")->is_matching_search);
-    ASSERT_FALSE(tree.get_node("child2.2_id")->is_matching_search);
+    ASSERT_FALSE(tree.get_node("root_id")->is_search_match);
+    ASSERT_TRUE(tree.get_node("child1_id")->is_search_match);
+    ASSERT_TRUE(tree.get_node("child1.1_id")->is_search_match);
+    ASSERT_TRUE(tree.get_node("child1.2_id")->is_search_match);
+    ASSERT_FALSE(tree.get_node("child2_id")->is_search_match);
+    ASSERT_FALSE(tree.get_node("child2.1_id")->is_search_match);
+    ASSERT_FALSE(tree.get_node("child2.2_id")->is_search_match);
 }
 
-TEST(treesearch, simple_search_ancestors_of_matching_nodes) {
+TEST(treesearch, matches_and_their_ancestors_are_shown) {
     treelib::Tree tree = get_example_tree();
     treelib::Search(tree).search("child1");
-    ASSERT_TRUE(tree.get_node("root_id")->is_ancestor_of_matching_search);
-    ASSERT_TRUE(tree.get_node("child1_id")->is_ancestor_of_matching_search);
-    ASSERT_FALSE(tree.get_node("child1.1_id")->is_ancestor_of_matching_search);
-    ASSERT_FALSE(tree.get_node("child1.2_id")->is_ancestor_of_matching_search);
-    ASSERT_FALSE(tree.get_node("child2_id")->is_ancestor_of_matching_search);
-    ASSERT_FALSE(tree.get_node("child2.1_id")->is_ancestor_of_matching_search);
-    ASSERT_FALSE(tree.get_node("child2.2_id")->is_ancestor_of_matching_search);
+    for (auto id : {"root_id", "child1_id", "child1.1_id", "child1.2_id"}) {
+        ASSERT_TRUE(tree.get_node(id)->is_search_visible) << id;
+    }
+    for (auto id : {"child2_id", "child2.1_id", "child2.2_id"}) {
+        ASSERT_FALSE(tree.get_node(id)->is_search_visible) << id;
+    }
 }
 
 TEST(treesearch, search_matches_names_not_paths) {
@@ -51,8 +50,8 @@ TEST(treesearch, search_matches_names_not_paths) {
     // The root's name is part of every path
     search.search("root");
     ASSERT_EQ(search.get_nr_matching(), 1);
-    ASSERT_TRUE(tree.get_node("root_id")->is_matching_search);
-    ASSERT_FALSE(tree.get_node("child1_id")->is_matching_search);
+    ASSERT_TRUE(tree.get_node("root_id")->is_search_match);
+    ASSERT_FALSE(tree.get_node("child1_id")->is_search_match);
 }
 
 TEST(treesearch, lowercase_keyword_ignores_case) {
@@ -61,8 +60,8 @@ TEST(treesearch, lowercase_keyword_ignores_case) {
     tree.create_node("README.md", "readme", "root");
     tree.create_node("notes.txt", "notes", "root");
     treelib::Search(tree).search("readme");
-    ASSERT_TRUE(tree.get_node("readme")->is_matching_search);
-    ASSERT_FALSE(tree.get_node("notes")->is_matching_search);
+    ASSERT_TRUE(tree.get_node("readme")->is_search_match);
+    ASSERT_FALSE(tree.get_node("notes")->is_search_match);
 }
 
 TEST(treesearch, keyword_with_uppercase_is_case_sensitive) {
@@ -71,8 +70,8 @@ TEST(treesearch, keyword_with_uppercase_is_case_sensitive) {
     tree.create_node("README.md", "upper", "root");
     tree.create_node("readme.md", "lower", "root");
     treelib::Search(tree).search("README");
-    ASSERT_TRUE(tree.get_node("upper")->is_matching_search);
-    ASSERT_FALSE(tree.get_node("lower")->is_matching_search);
+    ASSERT_TRUE(tree.get_node("upper")->is_search_match);
+    ASSERT_FALSE(tree.get_node("lower")->is_search_match);
 }
 
 TEST(treesearch, empty_keyword_matches_everything) {
@@ -81,8 +80,10 @@ TEST(treesearch, empty_keyword_matches_everything) {
     search.search("child1");
     search.search("");
     ASSERT_EQ(search.get_nr_matching(), 7);
+    // All shown, none highlighted
     for (auto id : {"root_id", "child1_id", "child1.1_id", "child2_id", "child2.2_id"}) {
-        ASSERT_TRUE(tree.get_node(id)->is_matching_search) << id;
+        ASSERT_TRUE(tree.get_node(id)->is_search_visible) << id;
+        ASSERT_FALSE(tree.get_node(id)->is_search_match) << id;
     }
 }
 
@@ -101,21 +102,21 @@ TEST(treesearch, new_search_replaces_the_previous_one) {
     treelib::Search search(tree);
     search.search("child1.1");
     search.search("child2.2");
-    ASSERT_FALSE(tree.get_node("child1.1_id")->is_matching_search);
-    ASSERT_FALSE(tree.get_node("child1_id")->is_ancestor_of_matching_search);
-    ASSERT_TRUE(tree.get_node("child2.2_id")->is_matching_search);
-    ASSERT_TRUE(tree.get_node("child2_id")->is_ancestor_of_matching_search);
-    ASSERT_TRUE(tree.get_node("root_id")->is_ancestor_of_matching_search);
+    ASSERT_FALSE(tree.get_node("child1.1_id")->is_search_match);
+    ASSERT_FALSE(tree.get_node("child1_id")->is_search_visible);
+    ASSERT_TRUE(tree.get_node("child2.2_id")->is_search_match);
+    ASSERT_TRUE(tree.get_node("child2_id")->is_search_visible);
+    ASSERT_TRUE(tree.get_node("root_id")->is_search_visible);
 }
 
 TEST(treesearch, is_search_visible) {
     treelib::Tree tree = get_example_tree();
     treelib::Search(tree).search("child1.2");
-    ASSERT_TRUE(tree.get_node("root_id")->is_search_visible());
-    ASSERT_TRUE(tree.get_node("child1_id")->is_search_visible());
-    ASSERT_TRUE(tree.get_node("child1.2_id")->is_search_visible());
-    ASSERT_FALSE(tree.get_node("child1.1_id")->is_search_visible());
-    ASSERT_FALSE(tree.get_node("child2_id")->is_search_visible());
+    ASSERT_TRUE(tree.get_node("root_id")->is_search_visible);
+    ASSERT_TRUE(tree.get_node("child1_id")->is_search_visible);
+    ASSERT_TRUE(tree.get_node("child1.2_id")->is_search_visible);
+    ASSERT_FALSE(tree.get_node("child1.1_id")->is_search_visible);
+    ASSERT_FALSE(tree.get_node("child2_id")->is_search_visible);
 }
 
 TEST(treesearch, search_tree_without_nodes) {
@@ -132,19 +133,19 @@ TEST(treesearch, search_without_hiding_highlights_the_matches) {
 
     ASSERT_EQ(search.get_nr_matching(), 1);
     for (auto id : {"root_id", "child1_id", "child1.1_id", "child1.2_id", "child2_id", "child2.2_id"}) {
-        ASSERT_TRUE(tree.get_node(id)->is_search_visible()) << id;
+        ASSERT_TRUE(tree.get_node(id)->is_search_visible) << id;
     }
-    ASSERT_TRUE(tree.get_node("child1.1_id")->is_search_highlighted);
-    ASSERT_FALSE(tree.get_node("child1.2_id")->is_search_highlighted);
-    ASSERT_FALSE(tree.get_node("child1_id")->is_search_highlighted);
+    ASSERT_TRUE(tree.get_node("child1.1_id")->is_search_match);
+    ASSERT_FALSE(tree.get_node("child1.2_id")->is_search_match);
+    ASSERT_FALSE(tree.get_node("child1_id")->is_search_match);
 }
 
 TEST(treesearch, matches_are_highlighted_when_hiding_too) {
     treelib::Tree tree = get_example_tree();
     treelib::Search(tree).search("child1.1");
-    ASSERT_TRUE(tree.get_node("child1.1_id")->is_search_highlighted);
+    ASSERT_TRUE(tree.get_node("child1.1_id")->is_search_match);
     // Shown since a node under it matches, but doesn't match itself
-    ASSERT_FALSE(tree.get_node("child1_id")->is_search_highlighted);
+    ASSERT_FALSE(tree.get_node("child1_id")->is_search_match);
 }
 
 TEST(treesearch, empty_keyword_highlights_nothing) {
@@ -152,5 +153,5 @@ TEST(treesearch, empty_keyword_highlights_nothing) {
     treelib::Search search(tree);
     search.search("child1.1");
     search.search("");
-    ASSERT_FALSE(tree.get_node("child1.1_id")->is_search_highlighted);
+    ASSERT_FALSE(tree.get_node("child1.1_id")->is_search_match);
 }
