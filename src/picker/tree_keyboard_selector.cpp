@@ -428,8 +428,8 @@ TreeKeyboardSelector::Layout TreeKeyboardSelector::get_layout(void) {
 void TreeKeyboardSelector::layout_tree(void) {
     const int tree_max_height = get_layout().tree_height;
     if (tree_max_height > 0) {
-        _tree_printer.scan_nodes_to_print(_out, not _applied_keyword.empty(),
-                                          _tree_selector.get_selection(), tree_max_height);
+        _tree_printer.layout(not _applied_keyword.empty(), _tree_selector.get_selection(),
+                             tree_max_height);
     }
 }
 

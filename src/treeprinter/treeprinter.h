@@ -1,7 +1,6 @@
 #ifndef __TREE_PRINTER_H
 #define __TREE_PRINTER_H
 
-#include <array>
 #include <ostream>
 #include <vector>
 
@@ -13,6 +12,9 @@ namespace treelib {
 
 class Tree;
 
+// Prints the part of the tree that fits in the window around the selection. It lays out the lines
+// to show first (layout()), then draws them (print()), and says what was laid out, so the
+// selection can move through what's shown.
 class TreePrinter
 {
 public:
@@ -20,11 +22,14 @@ public:
     using node_t = const std::shared_ptr< Node >;
 
     TreePrinter(Tree &tree);
-    // window_width (0: no limit) keeps the breadcrumbs from being cut by the screen's edge
+    // Lay out and draw; returns the number of lines drawn. window_width (0: no limit) keeps the
+    // breadcrumbs from being cut by the screen's edge.
     int print(std::ostream &out, bool filter_search_nodes, node_t selection, int window_height,
               int window_width = 0);
-    void scan_nodes_to_print(std::ostream& out, bool filter_search_nodes,
-              node_t selection, int window_height);
+    // Lay out without drawing. filter_search_nodes hides what a search doesn't show.
+    void layout(bool filter_search_nodes, node_t selection, int window_height);
+
+    // What the last layout showed
     std::shared_ptr<treelib::Node> get_next_printed_node_after_selected(void);
     std::shared_ptr<treelib::Node> get_printed_node_before_selected(void);
     bool was_selection_printed(void);
@@ -33,59 +38,25 @@ public:
     std::shared_ptr<treelib::Node> get_printed_subtree_root(void);
 
 private:
-    void init_pre_dfs_state(std::shared_ptr<treelib::Node> selection,
-                            int window_height);
-    void update_mid_dfs_state(std::shared_ptr<Node> node,
-        std::shared_ptr<Node> selection,
-        int depth,
-        std::vector<PrintedNode>& result);
-    void expand_dfs_to_children_of_node(std::shared_ptr<Node> node,
-                                   std::shared_ptr<Node> selection,
-                                   int window_height,
-                                   int rel_depth);
-    void update_depth_to_next_sibling_map(int previous_depth,
-                                          int depth,
-                                          std::shared_ptr<Node> previous_node,
-        std::vector<PrintedNode>& nodes_to_print);
-    void populate_stack_with_paginated_children_of_node(node_t node,
-                                       node_t selection,
-                                       int child_depth,
-                                       int window_height);
-    void populate_stack_with_all_children_of_node(std::shared_ptr<Node> node,
-                                                  int children_depth);
-
-    std::stack<std::pair<node_t, int>> _dfs_stack;
-    bool should_node_be_skipped(bool filter_search_nodes,
-                                const std::shared_ptr<Node>& node);
-    void print_breadcrumbs(std::ostream &out);
-    bool will_children_of_node_be_printed(int depth);
+    // Add node's shown children, and theirs, down to max_depth
+    void add_descendants(const std::shared_ptr<Node>& node, int depth, int max_depth);
+    // Add the root's shown children, as many as fit around the selection, with a "... N more"
+    // line for those that don't
+    void add_paginated_children(const std::shared_ptr<Node>& root, node_t selection,
+                                int window_height);
+    // The node's children that are shown (pointers, since copying shared_ptrs of 100k children
+    // took ms)
+    std::vector<const std::shared_ptr<Node>*> get_shown_children(const std::shared_ptr<Node>& node);
+    bool is_shown(const std::shared_ptr<Node>& node);
 
     Tree& _tree;
+    std::shared_ptr< Node > _printed_subtree_root;
+    bool _filter_search_nodes;
+    // The lines to draw, from the top: the printed subtree root first
+    std::vector<PrintedLine> _lines;
     std::shared_ptr< Node > _printed_node_before_selected;
     std::shared_ptr< Node > _next_printed_node_after_selected;
-    std::shared_ptr< Node > _printed_subtree_root;
-    std::shared_ptr< Node > _first_printed_node;
-    int _printed_subtree_root_depth;
-    int _nr_levels_that_fit_in_window;
-    int _selection_depth;
-    static constexpr std::size_t MAX_DEPTH = 512;
-
-    // To be used during first iteration (DFS) in order to populate PrintedNode.next_sibling
-    std::vector<int> _depth_to_prev_printed_node;
-    // To be used during second iteration
-    std::array<bool, MAX_DEPTH> depth_to_next_sibling;
-    std::vector<PrintedNode> _nodes_to_print;
-
-    std::shared_ptr<Node> _previously_printed_node;
-    std::shared_ptr<Node> _first_sibling_in_pagination;
-    std::shared_ptr<Node> _last_sibling_in_pagination;
-    std::size_t _nr_items_removed_at_the_beginning;
-    std::size_t _nr_items_removed_at_the_end;
-    bool _was_previously_printed_node_selected;
-    bool _has_paginated_in_current_print;
     bool _was_selection_printed;
-    bool _filter_search_nodes;
-    bool _will_children_of_node_be_printed;
 };
 } // namespace treelib
 

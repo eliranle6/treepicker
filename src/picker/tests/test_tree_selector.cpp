@@ -40,15 +40,14 @@ TEST(tree_selector, move_one_next) {
     // Setup
     auto tree = get_simple_tree();
     treelib::TreePrinter tree_printer(tree);
-    std::ostringstream out;
     picker::TreeSelector tree_selector(tree, tree_printer);
     ASSERT_EQ(tree_selector.get_selection()->identifier, "people");
-    tree_printer.scan_nodes_to_print(out, true, tree.get_root(), 100);
+    tree_printer.layout(true, tree.get_root(), 100);
     tree_selector.explore_children_of_selection();
     ASSERT_EQ(tree_selector.get_selection()->identifier, "dumb");
 
     // Run
-    tree_printer.scan_nodes_to_print(std::cout, true, tree_selector.get_selection(), 100);
+    tree_printer.layout(true, tree_selector.get_selection(), 100);
     tree_selector.move_to_next();
 
     // Validate
@@ -60,9 +59,9 @@ TEST(tree_selector, move_one_prev) {
     treelib::TreePrinter tree_printer(tree);
     picker::TreeSelector tree_selector(tree, tree_printer);
     tree_selector.explore_children_of_selection();
-    tree_printer.scan_nodes_to_print(std::cout, true, tree_selector.get_selection(), 100);
+    tree_printer.layout(true, tree_selector.get_selection(), 100);
     tree_selector.move_to_next();
-    tree_printer.scan_nodes_to_print(std::cout, true, tree_selector.get_selection(), 100);
+    tree_printer.layout(true, tree_selector.get_selection(), 100);
     tree_selector.move_to_prev();
     ASSERT_EQ(tree_selector.get_selection()->identifier, "dumb");
 }
@@ -120,8 +119,7 @@ TEST(tree_selector, next_skips_non_matching_children) {
     ASSERT_EQ(tree_selector.get_selection()->identifier, "dumb");
 
     // Move next, skipping subnodes of dumb
-    std::ostringstream out;
-    tree_printer.scan_nodes_to_print(std::cout, true, tree_selector.get_selection(), 100);
+    tree_printer.layout(true, tree_selector.get_selection(), 100);
     tree_selector.move_to_next();
 
     ASSERT_EQ(tree_selector.get_selection()->identifier, "smart");

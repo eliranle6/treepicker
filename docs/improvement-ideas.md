@@ -17,12 +17,5 @@ roughly by impact. A backlog to pick from; the done ones are in git history.
 
 ## Code
 
-3. **A simpler printer.** Printing is `treeprinter.cpp`, `treewindowfitter.cpp`, `paginator.cpp`
-   and `printnode.cpp`, about 600 lines, with ~15 fields of state kept during its DFS (the first
-   and last paginated siblings, the node printed before/after the selection, depth bookkeeping for
-   the connector lines...). Building the list of lines to show once (the visible nodes down to the
-   depth that fits, with the selection's siblings paginated), then drawing it, would remove most of
-   that state.
-
-4. **Thin layers.** `KeyboardReactor` is a 10-line loop and `Picker` only wires it to
+3. **Thin layers.** `KeyboardReactor` is a 10-line loop and `Picker` only wires it to
    `TreeKeyboardSelector`; one class would do.

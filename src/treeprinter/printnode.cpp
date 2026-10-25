@@ -27,24 +27,28 @@
 
 namespace treelib {
 
+// The vertical lines of the ancestors that have siblings after them, under the printed subtree
+// root's children (depth 1), which hang from the root's line
+static void print_ancestors_lines(std::ostream &out, int depth,
+                                  const std::vector<bool>& has_next_sibling) {
+    for (int depth_idx = 1; depth_idx < depth; ++depth_idx) {
+        if (has_next_sibling[depth_idx])
+            out << VERTICAL_TREE_LINE << "   ";
+        else
+            out << "    ";
+    }
+}
+
 void print_node(
         std::ostream &out,
-        PrintedNode& printed_node,
+        const PrintedLine& line,
         const std::shared_ptr<Node> selection,
         std::shared_ptr<Node> printed_subtree_root,
         Tree& tree,
-        bool* depth_to_next_sibling,
-        bool is_last_in_pagination,
+        const std::vector<bool>& has_next_sibling,
         int window_width
         ) {
-    assert(depth_to_next_sibling != nullptr);
-    PrintedNode& pn = printed_node;
-
-    // Before printing, maintain the array of depth to -
-    // [whether a next (=not printed yet) sibling exists]
-    // in order to know whether to print connecting lines to next sibling of that
-    // depth (node depth corresponds to indentation level), if siblint such exists
-    //update_depth_to_next_sibling_map(pn.previous_depth, pn.depth, pn.previous_node);
+    const PrintedLine& pn = line;
 
     // Print selection marker if node is selected node
     const bool is_selection = pn.node == selection;
@@ -62,21 +66,11 @@ void print_node(
         out << (is_picked ? "X" : is_partly_picked ? "-" : " ");
     }
 
-    // Print connecting lines for each depth (node depth is manifested by the indentation
-    // level
-    for (int depth_idx = 1; depth_idx < pn.depth; ++depth_idx) {
-        if (depth_to_next_sibling[depth_idx])
-            out << VERTICAL_TREE_LINE << "   ";
-        else
-            out << "    ";
-    }
-    // Connecting lines special case - if node is last node in level
+    // The tree's lines: the ancestors', then the node's own connector
+    print_ancestors_lines(out, pn.depth, has_next_sibling);
     if (pn.node->identifier != printed_subtree_root->identifier) {
-        const auto is_last_child = depth_to_next_sibling[pn.depth];
-        if (is_last_child or is_last_in_pagination)
-            out << MIDDLE_CHILD_CONNECTOR << HORIZONTAL_TREE_LINE << HORIZONTAL_TREE_LINE;
-        else
-            out << LAST_CHILD_CONNECTOR << HORIZONTAL_TREE_LINE << HORIZONTAL_TREE_LINE;
+        out << (pn.is_last_sibling ? LAST_CHILD_CONNECTOR : MIDDLE_CHILD_CONNECTOR)
+            << HORIZONTAL_TREE_LINE << HORIZONTAL_TREE_LINE;
     }
 
     // If printing root, print breadcrumbs up to node before printed subtree root
@@ -177,15 +171,11 @@ void _print_breadcrumbs(
 }
 
 void print_scroll_indicator(std::ostream &out, std::size_t nr_hidden_items, int depth,
-                            const bool* depth_to_next_sibling, bool is_after_printed_siblings) {
+                            const std::vector<bool>& has_next_sibling,
+                            bool is_after_printed_siblings) {
     // Where a node has its selection marker and picked columns
     out << "  ";
-    for (int depth_idx = 1; depth_idx < depth; ++depth_idx) {
-        if (depth_to_next_sibling[depth_idx])
-            out << VERTICAL_TREE_LINE << "   ";
-        else
-            out << "    ";
-    }
+    print_ancestors_lines(out, depth, has_next_sibling);
     out << (is_after_printed_siblings ? LAST_CHILD_CONNECTOR : MIDDLE_CHILD_CONNECTOR)
         << HORIZONTAL_TREE_LINE << HORIZONTAL_TREE_LINE
         << " ... " << nr_hidden_items << " more" << std::endl;

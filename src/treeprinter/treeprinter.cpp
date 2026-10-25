@@ -1,3 +1,4 @@
+#include <cassert>
 #include "treeprinter.h"
 #include "paginator.h"
 #include "printnode.h"
@@ -6,274 +7,135 @@
 namespace treelib {
 
 TreePrinter::TreePrinter(Tree& tree): _tree(tree),
-                                            _printed_subtree_root(tree.get_root())
+                                      _printed_subtree_root(tree.get_root()),
+                                      _filter_search_nodes(false),
+                                      _was_selection_printed(false)
 {}
 
-void TreePrinter::init_pre_dfs_state(std::shared_ptr<treelib::Node> selection,
-                                        int window_height) {
-    _next_printed_node_after_selected.reset();
-    _printed_node_before_selected.reset();
-    _previously_printed_node.reset();
-    _last_sibling_in_pagination.reset();
-    _first_sibling_in_pagination.reset();
-
-    _selection_depth = _tree.get_node_depth(selection);
-
-    // Determine the printed subtree root
-    auto printed_subtree_root_info =
-        choose_printed_subtree_root(_tree,
-            selection,
-            _selection_depth,
-            window_height,
-            _printed_subtree_root);
-    _printed_subtree_root = std::get<0>(printed_subtree_root_info);
-    _printed_subtree_root_depth = std::get<1>(printed_subtree_root_info);
-    _nr_levels_that_fit_in_window = std::get<2>(printed_subtree_root_info);
-
-    _was_previously_printed_node_selected = false;
-    _has_paginated_in_current_print = false;
-    _was_selection_printed = false;
-    _first_printed_node = nullptr;
-    _depth_to_prev_printed_node.clear();
-}
-
-bool TreePrinter::should_node_be_skipped(
-                           bool filter_search_nodes,
-                           const std::shared_ptr<Node>& node) {
+bool TreePrinter::is_shown(const std::shared_ptr<Node>& node) {
     // The root is shown even when nothing matches, so the screen is never empty
-    return (filter_search_nodes
-        and node != _tree.get_root()
-        and not node->is_search_visible);
+    return not _filter_search_nodes or node == _tree.get_root() or node->is_search_visible;
 }
 
-int TreePrinter::print(std::ostream &out,
-                          bool filter_search_nodes,
-                          std::shared_ptr<Node> selection,
-                          int window_height,
-                          int window_width) {
-    scan_nodes_to_print(out, filter_search_nodes, selection, window_height);
-
-    for (auto& printed_node: _nodes_to_print) {
-        // Before printing, maintain the array of depth to -
-        // [whether a next (=not printed yet) sibling exists]
-        // in order to know whether to print connecting lines to next sibling of that
-        // depth (node depth corresponds to indentation level), if siblint such exists
-        const bool is_first_in_pagination = printed_node.node == _first_sibling_in_pagination;
-        const bool is_last_in_pagination = printed_node.node == _last_sibling_in_pagination;
-        if (is_first_in_pagination) {
-            print_scroll_indicator(out, _nr_items_removed_at_the_beginning, printed_node.depth,
-                                   &depth_to_next_sibling[0], false);
-        }
-        depth_to_next_sibling[printed_node.depth] = printed_node.next_sibling_exists;
-        print_node(out, printed_node, selection, _printed_subtree_root, _tree,
-            &depth_to_next_sibling[0], is_last_in_pagination, window_width);
-        if (is_last_in_pagination) {
-            print_scroll_indicator(out, _nr_items_removed_at_the_end, printed_node.depth,
-                                   &depth_to_next_sibling[0], true);
-        }
-
-    }
-
-    return _nodes_to_print.size();
-}
-
-void TreePrinter::scan_nodes_to_print(std::ostream &out,
-                          bool filter_search_nodes,
-                          std::shared_ptr<Node> selection,
-                          int window_height) {
-    assert(selection);
-
-    _nodes_to_print.clear();
-    if (nullptr == _tree.get_root()) {
-        return;
-    }
-
-    _filter_search_nodes = filter_search_nodes;
-    init_pre_dfs_state(selection, window_height);
-
-    // Prepare variables for DFS scan for printing
-    int depth = 0;
-    auto node = _printed_subtree_root;
-    _dfs_stack.push(std::make_pair(node, depth));
-
-    // DFS scan
-    while (not _dfs_stack.empty()) {
-        // Extract node from DFS stack
-        node = std::get<0>(_dfs_stack.top());
-        depth = std::get<1>(_dfs_stack.top());
-        _dfs_stack.pop();
-
-        // Skip nodes that don't match an ongoing search
-        if (should_node_be_skipped(filter_search_nodes, node)) {
-            continue;
-        }
-
-        // Print ('visit') node
-        _nodes_to_print.emplace_back(node, depth, will_children_of_node_be_printed(depth));
-
-        // Add children to DFS stack
-        expand_dfs_to_children_of_node(node, selection, depth, window_height);
-
-        // Update state that requires update during iteration
-        update_mid_dfs_state(node, selection, depth, _nodes_to_print);
-    }
-}
-
-void TreePrinter::expand_dfs_to_children_of_node(std::shared_ptr<Node> node,
-        std::shared_ptr<Node> selection,
-        int rel_depth,
-        int window_height) {
-    // Determine whether printed subtree fits window
-    int children_rel_depth = rel_depth + 1;
-    const int highest_rel_depth_that_fits_window = _nr_levels_that_fit_in_window - 1;
-    const bool printed_subtree_fits_window =
-        children_rel_depth <= highest_rel_depth_that_fits_window;
-
-    if (printed_subtree_fits_window) {
-        // Print whole subtree
-        populate_stack_with_all_children_of_node(node, children_rel_depth);
-    } else if (not _has_paginated_in_current_print) {
-        // Determine whether should paginate printed subtree
-        int selection_rel_depth = _selection_depth - _printed_subtree_root_depth;
-        bool should_paginate =
-            (// Selection is in the deepest printed level (which is to paginate)
-             // and so are the node's children that are to print
-             selection_rel_depth == highest_rel_depth_that_fits_window + 1
-             and children_rel_depth == highest_rel_depth_that_fits_window + 1)
-            or node == _printed_subtree_root;
-
-        // Print as paginated
-        if (should_paginate) {
-            _has_paginated_in_current_print = true;
-            populate_stack_with_paginated_children_of_node(node,
-                                                        selection,
-                                                        children_rel_depth,
-                                                        window_height);
-        }
-    }
-}
-
-void TreePrinter::update_mid_dfs_state(std::shared_ptr<Node> node,
-        std::shared_ptr<Node> selection,
-        int depth,
-        std::vector<PrintedNode>& result) {
-    // Set the 'whether a next sibling exists' for previous sibling,
-    // if such exists (=current node is not a first sibling), to true.
-    // Current node is first sibling iff its depth is bigger than
-    // previously iterated-on node (since it's DFS)
-    const bool is_root = depth == 0;
-    if (not is_root) {
-        assert(result.size() >= 2); // root and at least another node
-        auto prev_node_idx = result.size() - 2;
-        auto previous_depth = result[prev_node_idx].depth;
-        const bool is_first_sibling = depth == previous_depth + 1;
-        if (not is_first_sibling) {
-            assert(depth <= previous_depth);
-            auto& prev_node = result[_depth_to_prev_printed_node[depth]];
-            prev_node.next_sibling_exists = true;
-        }
-    }
-    // Maintain the depth to previously-printed-node vector
-    // (which is used for above logic of setting the 'whether a next
-    // sibling exists')
-    unsigned int required_size = depth + 1;
-    _depth_to_prev_printed_node.resize(required_size);
-    _depth_to_prev_printed_node[depth] = result.size() - 1;
-
-    // Update next printed node after selected
-    const bool is_selection = node == selection;
-    if (is_selection) {
-        _was_previously_printed_node_selected = true;
-        _printed_node_before_selected = _previously_printed_node;
-        _was_selection_printed = true;
-    } else if (_was_previously_printed_node_selected) {
-        _next_printed_node_after_selected = node;
-        _was_previously_printed_node_selected = false;
-    }
-
-    // Update previously printed node
-    _previously_printed_node = node;
-}
-
-void TreePrinter::populate_stack_with_all_children_of_node(std::shared_ptr<Node> node,
-                                                              int children_depth) {
-    // Add children of current node to DFS stack.
-    // Iterate in reverse to cancel the stack's reverse effect
-    for (auto iter = node->children.rbegin(); iter != node->children.rend(); ++iter) {
-        auto current_node_depth_pair = std::make_pair(*iter, children_depth);
-        _dfs_stack.push(current_node_depth_pair);
-    }
-}
-
-void TreePrinter::populate_stack_with_paginated_children_of_node(
-        std::shared_ptr<Node> node,
-        std::shared_ptr<Node> selection,
-        int child_depth,
-        int window_height) {
-    // Paginate the children that are shown: hidden ones would take no rows, and the node after
-    // the selection must be one that's shown. Points at the node's own children rather than
-    // copying them, since copying a shared_ptr updates its reference count: 100k of those took
-    // 7ms, on every key press. Reserve, since growing the vector step by step took 1-2ms more.
+std::vector<const std::shared_ptr<Node>*> TreePrinter::get_shown_children(
+        const std::shared_ptr<Node>& node) {
     std::vector<const std::shared_ptr<Node>*> children;
+    // Reserved, since growing the vector step by step took 1-2ms for 100k children
     children.reserve(node->children.size());
     for (auto& child : node->children) {
-        if (not should_node_be_skipped(_filter_search_nodes, child)) {
+        if (is_shown(child)) {
             children.push_back(&child);
         }
     }
-    std::size_t nr_children = children.size();
+    return children;
+}
 
-    // Find index of selected child
-    std::size_t selection_idx_in_level = 0;
-    for (auto iter = children.begin();
-             iter != children.end() and **iter != selection;
-             ++iter, ++selection_idx_in_level);
-    if (selection_idx_in_level == children.size()) {
-        selection_idx_in_level = 0;
+int TreePrinter::print(std::ostream &out,
+                       bool filter_search_nodes,
+                       std::shared_ptr<Node> selection,
+                       int window_height,
+                       int window_width) {
+    layout(filter_search_nodes, selection, window_height);
+
+    // Whether the line last drawn at each depth has siblings after it, so the lines under it
+    // continue its parent's vertical line
+    std::vector<bool> has_next_sibling;
+    for (auto& line : _lines) {
+        has_next_sibling.resize(std::max<std::size_t>(has_next_sibling.size(), line.depth + 1));
+        has_next_sibling[line.depth] = not line.is_last_sibling;
+        if (line.node == nullptr) {
+            print_scroll_indicator(out, line.nr_hidden, line.depth, has_next_sibling,
+                                   line.is_last_sibling);
+        } else {
+            print_node(out, line, selection, _printed_subtree_root, _tree, has_next_sibling,
+                       window_width);
+        }
+    }
+    return _lines.size();
+}
+
+void TreePrinter::layout(bool filter_search_nodes, std::shared_ptr<Node> selection,
+                         int window_height) {
+    assert(selection);
+    _lines.clear();
+    _printed_node_before_selected.reset();
+    _next_printed_node_after_selected.reset();
+    _was_selection_printed = false;
+    if (nullptr == _tree.get_root()) {
+        return;
+    }
+    _filter_search_nodes = filter_search_nodes;
+
+    int nr_levels;
+    std::tie(_printed_subtree_root, std::ignore, nr_levels) = choose_printed_subtree_root(
+        _tree, selection, _tree.get_node_depth(selection), window_height, _printed_subtree_root);
+
+    // The root and the levels under it that fit in the window. If not even its children all fit,
+    // the ones around the selection: choose_printed_subtree_root() keeps the selection at most
+    // one level under the root then, so only the root's children are ever paginated.
+    _lines.push_back(PrintedLine{_printed_subtree_root, 0, true, nr_levels > 1, 0});
+    if (nr_levels > 1) {
+        add_descendants(_printed_subtree_root, 1, nr_levels - 1);
+    } else {
+        add_paginated_children(_printed_subtree_root, selection, window_height);
     }
 
-    // Calculate number of children to hide from start and from end
-    std::tie(_nr_items_removed_at_the_beginning, _nr_items_removed_at_the_end) =
-        paginate(nr_children, window_height - 1, selection_idx_in_level);
-
-    // Skip invisible children
-    std::size_t counter = 0;
-    auto iter = children.rbegin();
-    for (;iter != children.rend() and counter < _nr_items_removed_at_the_end;
-             ++iter, ++counter);
-
-    // Iterate on visible children and push them to stack
-    std::size_t nr_items_to_print = nr_children - _nr_items_removed_at_the_beginning
-        - _nr_items_removed_at_the_end;
-    for (counter = 0; counter < nr_items_to_print and iter != children.rend();
-             ++counter, ++iter) {
-
-        // Update the first/last sibling pointers, in order for the print loop to
-        // know when to add '... N more' rows at the beginning and/or end.
-        const bool is_last_sibling = counter == 0;
-        if (is_last_sibling and _nr_items_removed_at_the_end > 0) {
-            _last_sibling_in_pagination = **iter;
-        } else if (_nr_items_removed_at_the_beginning) {
-            const bool is_first_sibling = counter == nr_items_to_print - 1;
-            if (is_first_sibling and not is_last_sibling) {
-                _first_sibling_in_pagination = **iter;
-            }
+    // The nodes around the selection, for moving through what's shown
+    std::shared_ptr<Node> previous;
+    for (auto& line : _lines) {
+        if (line.node == nullptr) {
+            continue;
         }
+        if (_was_selection_printed) {
+            _next_printed_node_after_selected = line.node;
+            break;
+        }
+        if (line.node == selection) {
+            _was_selection_printed = true;
+            _printed_node_before_selected = previous;
+        }
+        previous = line.node;
+    }
+}
 
-        _dfs_stack.push(std::make_pair(**iter, child_depth));
+void TreePrinter::add_descendants(const std::shared_ptr<Node>& node, int depth, int max_depth) {
+    const auto children = get_shown_children(node);
+    for (std::size_t i = 0; i < children.size(); ++i) {
+        const auto& child = *children[i];
+        _lines.push_back(PrintedLine{child, depth, i == children.size() - 1, depth < max_depth, 0});
+        if (depth < max_depth) {
+            add_descendants(child, depth + 1, max_depth);
+        }
+    }
+}
+
+void TreePrinter::add_paginated_children(const std::shared_ptr<Node>& root,
+                                         std::shared_ptr<Node> selection, int window_height) {
+    const auto children = get_shown_children(root);
+    std::size_t selection_index = 0;
+    while (selection_index < children.size() and *children[selection_index] != selection) {
+        ++selection_index;
+    }
+    if (selection_index == children.size()) {
+        selection_index = 0;
     }
 
-    // Update the next printed (_next_printed_node_after_selected), in case
-    // selected node is the last printed node (in which case it won't be
-    // updated in update_mid_dfs_state)
-    const bool is_selecting_last_item = selection_idx_in_level >=
-        _nr_items_removed_at_the_beginning + nr_items_to_print - 1;
-    if (is_selecting_last_item) {
-        std::size_t next_item_idx = selection_idx_in_level + 1;
-        const bool next_item_exists = next_item_idx < nr_children;
-        if (next_item_exists) {
-            _next_printed_node_after_selected = *children[selection_idx_in_level + 1];
-        }
+    // The root's line takes a row
+    int nr_hidden_before, nr_hidden_after;
+    std::tie(nr_hidden_before, nr_hidden_after) =
+        paginate(children.size(), window_height - 1, selection_index);
+    if (nr_hidden_before > 0) {
+        _lines.push_back(PrintedLine{nullptr, 1, false, false,
+                                     static_cast<std::size_t>(nr_hidden_before)});
+    }
+    const std::size_t end = children.size() - nr_hidden_after;
+    for (std::size_t i = nr_hidden_before; i < end; ++i) {
+        const bool is_last = i == end - 1 and nr_hidden_after == 0;
+        _lines.push_back(PrintedLine{*children[i], 1, is_last, false, 0});
+    }
+    if (nr_hidden_after > 0) {
+        _lines.push_back(PrintedLine{nullptr, 1, true, false,
+                                     static_cast<std::size_t>(nr_hidden_after)});
     }
 }
 
@@ -290,24 +152,16 @@ bool TreePrinter::was_selection_printed(void) {
 }
 
 std::shared_ptr<treelib::Node> TreePrinter::get_first_printed_node(void) {
-    std::shared_ptr<treelib::Node> result;
-    if (_nodes_to_print.size()) {
-        result = _nodes_to_print[0].node;
-    }
-    return result;
+    return _lines.empty() ? nullptr : _lines.front().node;
 }
 
 std::shared_ptr<treelib::Node> TreePrinter::get_last_printed_node(void) {
-    std::shared_ptr<treelib::Node> result;
-    if (_nodes_to_print.size()) {
-        result = _nodes_to_print[_nodes_to_print.size() - 1].node;
+    for (auto line = _lines.rbegin(); line != _lines.rend(); ++line) {
+        if (line->node != nullptr) {
+            return line->node;
+        }
     }
-    return result;
-}
-
-bool TreePrinter::will_children_of_node_be_printed(int depth) {
-    const int highest_rel_depth_that_fits_window = _nr_levels_that_fit_in_window - 1;
-    return depth < highest_rel_depth_that_fits_window;
+    return nullptr;
 }
 
 std::shared_ptr<treelib::Node> TreePrinter::get_printed_subtree_root(void) {
