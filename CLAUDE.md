@@ -72,6 +72,6 @@ a program's `main.cpp` only builds its tree and calls `picker::pick_and_print()`
 - The tree is agnostic of what it holds: it doesn't sort; whoever fills it decides the order
   (PathTree sorts find's output).
 - No Boost: the standard library only.
-- Don't push; commit locally. The working copy at /home/eliran/code/cpptree and dirdelta's
+- Don't push; commit locally. The working copy at /home/eliran/code/treepicker and dirdelta's
   `lib/treepicker` are separate clones: commit here, then move dirdelta's submodule to it (fetch
   from this repo in `lib/treepicker`, fast-forward, commit the pin in dirdelta).
