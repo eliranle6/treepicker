@@ -27,7 +27,7 @@ struct CliOptions {
     // --typed: each path on stdin starts with its type and a space, like find -printf '%y %p'
     bool is_typed = false;
     // --picked FILE: with -m, start with the paths in FILE (one per line, or with -0 ending with
-    // '\0') picked, like what treepick printed
+    // '\0') picked, like what treepicker printed
     std::string picked_file;
     // --max-depth N: when scanning a dir, go at most N levels below it (-1: no limit)
     int max_depth = -1;

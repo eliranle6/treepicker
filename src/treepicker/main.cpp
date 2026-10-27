@@ -5,8 +5,8 @@
 #include "pathtree/pathtree.h"
 
 static const char USAGE[] =
-    "Usage: treepick [OPTIONS] [DIR | -]\n"
-    "       treepick [OPTIONS] --list\n"
+    "Usage: treepicker [OPTIONS] [DIR | -]\n"
+    "       treepicker [OPTIONS] --list\n"
     "Pick a node of a tree of paths.\n"
     "\n"
     "  DIR            the dir to pick from (default: the current dir)\n"
@@ -28,13 +28,13 @@ int main(int argc, char* argv[]) {
         return 0;
     }
     if (not options.error.empty() or options.args.size() > 1) {
-        std::cerr << "treepick: " << (options.error.empty() ? "too many arguments" : options.error)
+        std::cerr << "treepicker: " << (options.error.empty() ? "too many arguments" : options.error)
                   << "\n\n" << USAGE << picker::CLI_OPTIONS_USAGE;
         return 2;
     }
     const std::string dir = options.args.empty() ? (options.is_list ? "-" : ".") : options.args[0];
     if (options.is_list and dir != "-") {
-        std::cerr << "treepick: --list reads from stdin, so it takes no DIR\n";
+        std::cerr << "treepicker: --list reads from stdin, so it takes no DIR\n";
         return 2;
     }
 
@@ -57,7 +57,7 @@ int main(int argc, char* argv[]) {
         }
         return picker::pick_and_print(tree, options);
     } catch (const std::exception& e) {
-        std::cerr << "treepick: " << e.what() << "\n";
+        std::cerr << "treepicker: " << e.what() << "\n";
         return 2;
     }
 }

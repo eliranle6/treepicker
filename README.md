@@ -1,4 +1,4 @@
-# cpptree
+# treepicker
 A small and simple C++ tree library.
 
 This is for C++ practice only, so obviously i'm going to use features that are not necessarily needed.
@@ -10,26 +10,26 @@ Needs a C++17 compiler, ncurses (`libncurses-dev`) and, for the tests, Google Te
 or `scripts/install-google-test.sh`).
 
 ```
-$ make            # builds build/treepick, build/dirdiff and build/picker
+$ make            # builds build/treepicker, build/dirdiff and build/picker
 $ make test       # builds and runs the tests
 $ make install    # copies the programs to /usr/local/bin (or: make install PREFIX=~/.local)
 $ make clean      # removes build/
 ```
 
-## treepick
+## treepicker
 A fast tree picker for the terminal, like fzf but for trees: it shows a tree, lets you move around
 and search it, and prints what you picked.
 
 ```
-$ treepick [DIR]                   # pick under DIR (default: .); prints the picked path
-$ find . -name '*.mp3' | treepick -        # pick from paths read from stdin
-$ treepick -m -0 --header 'Pick files' - < paths    # several nodes, '\0'-separated
-$ printf 'Copy\nRemove\n' | treepick --list          # a menu
+$ treepicker [DIR]                   # pick under DIR (default: .); prints the picked path
+$ find . -name '*.mp3' | treepicker -        # pick from paths read from stdin
+$ treepicker -m -0 --header 'Pick files' - < paths    # several nodes, '\0'-separated
+$ printf 'Copy\nRemove\n' | treepicker --list          # a menu
 ```
 
 It draws on the terminal (`/dev/tty`), so stdin and stdout are free for the tree and the result.
-It exits with 0 if something was picked, and 1 if the user quit. `treepick --help` lists the
-options and keys. dirdelta (github.com/levioctl/dirdelta) uses it for all of its pickers.
+It exits with 0 if something was picked, and 1 if the user quit. `treepicker --help` lists the
+options and keys. dirdelta (github.com/eliranle6/dirdelta) uses it for all of its pickers.
 
 ## dirdiff
 Prints the files of one dir that another doesn't have, by path only (no content comparison):
@@ -38,6 +38,6 @@ Prints the files of one dir that another doesn't have, by path only (no content 
 $ dirdiff A B        # A's files (paths relative to A) that B lacks; -0 ends them with '\0'
 ```
 
-It scans both with the same fast scan as treepick; what find couldn't read goes to stderr.
+It scans both with the same fast scan as treepicker; what find couldn't read goes to stderr.
 dirdelta uses it to diff two local dirs.
 
