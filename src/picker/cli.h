@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "picker/picker_options.h"
 #include "tree/tree.h"
 
 namespace picker {
@@ -19,9 +20,9 @@ struct CliOptions {
     std::string header;
     // --root NAME: the name shown for the tree's root (e.g. a stdin tree's, which is ".")
     std::string root_name;
-    // --label TEXT, --label-color COLOR: a label at the start of the stats line
-    std::string label;
-    std::string label_color = "blue";
+    // --label TEXT, each followed by an optional --label-color COLOR: labels at the start of
+    // the stats line
+    std::vector<Label> labels;
     // --list: the input is a flat list of options (one per line), rather than paths
     bool is_list = false;
     // --typed: each path on stdin starts with its type and a space, like find -printf '%y %p'

@@ -25,6 +25,7 @@ enum Style {
     BLACK_ON_WHITE,
     RED_ON_BLUE,
     MAGENTA_ON_BLUE,
+    GREY,
     NR_STYLES
 };
 

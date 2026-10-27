@@ -6,8 +6,9 @@ UpdatesReader::UpdatesReader(char delimiter) :
     _delimiter(delimiter)
 {}
 
-std::vector<std::pair<std::string, std::string>> UpdatesReader::feed(const std::string& data) {
-    std::vector<std::pair<std::string, std::string>> updates;
+std::vector<Update> UpdatesReader::feed(const std::string& data) {
+    static const std::string DISABLED = "\tdisabled";
+    std::vector<Update> updates;
     _pending += data;
     std::size_t start = 0;
     for (std::size_t end; (end = _pending.find(_delimiter, start)) != std::string::npos;
@@ -15,7 +16,14 @@ std::vector<std::pair<std::string, std::string>> UpdatesReader::feed(const std::
         const std::string update = _pending.substr(start, end - start);
         const std::size_t tab = update.find('\t');
         if (tab != std::string::npos) {
-            updates.emplace_back(update.substr(0, tab), update.substr(tab + 1));
+            std::string tag = update.substr(tab + 1);
+            // A tag can't end with it: tabs are shown as '?' anyway
+            const bool is_disabled = tag.size() >= DISABLED.size() and
+                tag.compare(tag.size() - DISABLED.size(), DISABLED.size(), DISABLED) == 0;
+            if (is_disabled) {
+                tag.resize(tag.size() - DISABLED.size());
+            }
+            updates.push_back({update.substr(0, tab), tag, is_disabled});
         }
     }
     _pending.erase(0, start);

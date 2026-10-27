@@ -96,6 +96,8 @@ const StyleColors STYLES[] = {
     {BLACK_ON_WHITE, COLOR_BLACK, COLOR_WHITE, "30;47"},
     {RED_ON_BLUE, COLOR_RED, COLOR_BLUE, "31;44"},
     {MAGENTA_ON_BLUE, COLOR_MAGENTA, COLOR_BLUE, "35;44"},
+    // Color 8 is bright black, which is ANSI's 90
+    {GREY, 8, -1, "90"},
 };
 static_assert(sizeof(STYLES) / sizeof(STYLES[0]) == NR_STYLES, "a style without colors");
 

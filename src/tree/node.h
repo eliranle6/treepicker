@@ -31,6 +31,9 @@ public:
     // types)
     char kind;
 
+    // Whether the node can't be picked (e.g. an option with nothing to do), shown greyed
+    bool is_disabled;
+
     // Whether children holds all of the node's children. A tree that loads nodes lazily (see
     // Tree::load_children()) adds a node's children only when they're needed.
     bool are_children_loaded;

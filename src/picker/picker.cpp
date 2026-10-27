@@ -11,7 +11,7 @@ Picker::Picker(treelib::Tree& tree, const PickerOptions& options) :
                       [&](int c) { return _tree_keyboard_selector.char_pressed(c); },
                       options.updates_fd,
                       [&](const std::string& data) {
-                          _tree_keyboard_selector.set_tags(_updates_reader.feed(data));
+                          _tree_keyboard_selector.apply_updates(_updates_reader.feed(data));
                       })
 {}
 

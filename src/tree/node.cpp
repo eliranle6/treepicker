@@ -11,6 +11,7 @@ Node::Node(std::string _tag, std::string _identifier, std::string _parent):
         is_picked(false),
         is_partly_picked(false),
         kind(0),
+        is_disabled(false),
         are_children_loaded(true)
 {
 }

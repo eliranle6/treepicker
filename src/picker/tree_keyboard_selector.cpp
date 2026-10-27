@@ -217,7 +217,9 @@ bool TreeKeyboardSelector::move_one_up(void) {
 
 bool TreeKeyboardSelector::pick(void) {
     if (not _options.is_multi) {
-        if (_options.is_root_pickable or _tree_selector.get_selection() != _tree.get_root()) {
+        auto selection = _tree_selector.get_selection();
+        if ((_options.is_root_pickable or selection != _tree.get_root()) and
+                not selection->is_disabled) {
             _picked = {_tree_selector.get_selection()};
             return true;
         }
@@ -229,7 +231,7 @@ bool TreeKeyboardSelector::pick(void) {
 }
 
 bool TreeKeyboardSelector::toggle_pick(void) {
-    if (_options.is_multi) {
+    if (_options.is_multi and not _tree_selector.get_selection()->is_disabled) {
         _tree_selector.toggle_pick_of_selection();
     }
     return false;
@@ -351,12 +353,14 @@ void TreeKeyboardSelector::print_tree(void) {
             stats_line += " (" + std::to_string(place.first) + "/" +
                 std::to_string(place.second) + ")";
         }
-        // Room for the label, which is drawn over it
-        const std::string label = _options.label.empty() ? "" :
-            " " + guishell::printable(_options.label) + " ";
-        if (not label.empty()) {
-            stats_line = std::string(guishell::display_width(label) + 1, ' ') + stats_line;
+        // Room for the labels, which are drawn over it, each followed by a space
+        std::vector<std::string> labels;
+        int labels_width = 0;
+        for (auto& label : _options.labels) {
+            labels.push_back(" " + guishell::printable(label.text) + " ");
+            labels_width += guishell::display_width(labels.back()) + 1;
         }
+        stats_line = std::string(labels_width, ' ') + stats_line;
         // With a reminder of the help key at the right end, which the stats give way to
         static const std::string HELP_HINT = "?: help";
         const int width = window_width - 1;
@@ -370,15 +374,17 @@ void TreeKeyboardSelector::print_tree(void) {
         attron(COLOR_PAIR(guishell::color_pair(guishell::BLACK_ON_WHITE)));
         print_line(layout.stats_row, stats_line, window_width, true);
         attroff(COLOR_PAIR(guishell::color_pair(guishell::BLACK_ON_WHITE)));
-        if (not label.empty()) {
-            const int pair = guishell::label_color_pair(_options.label_color);
+        int column = 0;
+        for (std::size_t i = 0; i < labels.size(); ++i) {
+            const int pair = guishell::label_color_pair(_options.labels[i].color);
             attron(COLOR_PAIR(pair));
             attron(A_BOLD);
-            const int width = std::max(0, window_width - 1);
-            mvaddnstr(layout.stats_row, 0, label.data(),
-                      guishell::nr_bytes_that_fit(label.data(), label.size(), width));
+            const int width = std::max(0, window_width - 1 - column);
+            mvaddnstr(layout.stats_row, column, labels[i].data(),
+                      guishell::nr_bytes_that_fit(labels[i].data(), labels[i].size(), width));
             attroff(A_BOLD);
             attroff(COLOR_PAIR(pair));
+            column += guishell::display_width(labels[i]) + 1;
         }
     }
 
@@ -500,14 +506,15 @@ void TreeKeyboardSelector::initialize(void) {
     print_tree();
 }
 
-void TreeKeyboardSelector::set_tags(const std::vector<std::pair<std::string, std::string>>& tags) {
-    if (tags.empty()) {
+void TreeKeyboardSelector::apply_updates(const std::vector<Update>& updates) {
+    if (updates.empty()) {
         return;
     }
-    for (const auto& id_and_tag : tags) {
-        auto node = _tree.get_node(id_and_tag.first);
+    for (const auto& update : updates) {
+        auto node = _tree.get_node(update.id);
         if (node != nullptr) {
-            node->tag = id_and_tag.second;
+            node->tag = update.tag;
+            node->is_disabled = update.is_disabled;
         }
     }
     // Searches match tags

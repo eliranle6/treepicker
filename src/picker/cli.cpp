@@ -15,14 +15,17 @@ const std::string CLI_OPTIONS_USAGE = std::string(
     "                 it (or unpicks them), and Enter finishes\n"
     "  --header TEXT  show TEXT (one or more lines) above the tree\n"
     "  --root NAME    show the tree's root as NAME\n"
-    "  --label TEXT   show TEXT in bold at the start of the bottom line, e.g. a mode\n"
+    "  --label TEXT   show TEXT in bold at the start of the bottom line, e.g. a mode. Given\n"
+    "                 again, the labels are shown side by side.\n"
     "  --label-color COLOR\n"
-    "                 the label's color: red, green, yellow, blue (default), magenta, cyan\n"
+    "                 the color of the --label before it: red, green, yellow, blue (default),\n"
+    "                 magenta, cyan\n"
     "  --picked FILE  with -m, start with the nodes whose paths are in FILE (as printed) picked\n"
     "  --updates FD   while picking, read changes to what nodes are shown as from file\n"
     "                 descriptor FD: each is the node's path (or option), a tab, and what\n"
     "                 to show, ending like the paths do (see -0). It's still printed by its\n"
-    "                 path when picked.\n"
+    "                 path when picked. With a tab and 'disabled' after what to show, the node\n"
+    "                 is shown in grey and can't be picked, until an update without them.\n"
     "  -0             paths end with '\\0' rather than a newline (read ones and printed ones)\n"
     "  -h, --help     show this help\n"
     "\n"
@@ -48,11 +51,15 @@ CliOptions parse_cli(int argc, char* argv[]) {
             } else if (arg == "--root") {
                 options.root_name = argv[++i];
             } else if (arg == "--label") {
-                options.label = argv[++i];
+                options.labels.push_back({argv[++i]});
             } else if (arg == "--label-color") {
-                options.label_color = argv[++i];
-                if (not guishell::is_label_color(options.label_color)) {
-                    options.error = "unknown --label-color '" + options.label_color + "'";
+                const std::string color = argv[++i];
+                if (options.labels.empty()) {
+                    options.error = "--label-color goes after the --label it's for";
+                } else if (not guishell::is_label_color(color)) {
+                    options.error = "unknown --label-color '" + color + "'";
+                } else {
+                    options.labels.back().color = color;
                 }
             } else {
                 options.picked_file = argv[++i];
@@ -95,8 +102,7 @@ int pick_and_print(treelib::Tree& tree, const CliOptions& options) {
     PickerOptions picker_options;
     picker_options.is_multi = options.is_multi;
     picker_options.header = options.header;
-    picker_options.label = options.label;
-    picker_options.label_color = options.label_color;
+    picker_options.labels = options.labels;
     // A list's root is only its title
     picker_options.is_first_child_selected_first = options.is_list;
     picker_options.is_root_pickable = not options.is_list;

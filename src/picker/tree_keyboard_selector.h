@@ -11,6 +11,7 @@
 #include "tree_selector.h"
 #include "tree/search.h"
 #include "picker/picker_options.h"
+#include "picker/updates.h"
 
 namespace picker {
 
@@ -71,9 +72,9 @@ public:
 
     void initialize(void);
 
-    // Show the nodes with these ids by these tags (id, tag), from now on. Ids that aren't in the
-    // tree are skipped.
-    void set_tags(const std::vector<std::pair<std::string, std::string>>& tags);
+    // Show the nodes with these ids by these tags, enabled or disabled, from now on. Ids that
+    // aren't in the tree are skipped.
+    void apply_updates(const std::vector<Update>& updates);
 
 private:
     // Number of nodes that page up/down move

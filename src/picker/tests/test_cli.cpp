@@ -117,14 +117,28 @@ TEST(cli, picked_file) {
 
 TEST(cli, label) {
     auto options = parse({"--label", "DRY RUN", "--label-color", "green"});
-    ASSERT_EQ(options.label, "DRY RUN");
-    ASSERT_EQ(options.label_color, "green");
+    ASSERT_EQ(options.labels.size(), 1u);
+    ASSERT_EQ(options.labels[0].text, "DRY RUN");
+    ASSERT_EQ(options.labels[0].color, "green");
     ASSERT_TRUE(options.error.empty());
-    ASSERT_EQ(parse({}).label_color, "blue");
+    ASSERT_TRUE(parse({}).labels.empty());
+}
+
+TEST(cli, labels_each_with_its_color) {
+    auto options = parse({"--label", "LIVE", "--label-color", "red", "--label", "COPY"});
+    ASSERT_EQ(options.labels.size(), 2u);
+    ASSERT_EQ(options.labels[0].color, "red");
+    ASSERT_EQ(options.labels[1].text, "COPY");
+    ASSERT_EQ(options.labels[1].color, "blue");
 }
 
 TEST(cli, unknown_label_color) {
-    ASSERT_NE(parse({"--label-color", "plaid"}).error.find("plaid"), std::string::npos);
+    ASSERT_NE(parse({"--label", "A", "--label-color", "plaid"}).error.find("plaid"),
+              std::string::npos);
+}
+
+TEST(cli, label_color_without_a_label) {
+    ASSERT_FALSE(parse({"--label-color", "red"}).error.empty());
 }
 
 TEST(cli, dirs_only_and_lazy) {
