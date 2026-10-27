@@ -70,6 +70,10 @@ CliOptions parse_cli(int argc, char* argv[]) {
             ++i;
         } else if (arg == "--typed") {
             options.is_typed = true;
+        } else if (arg == "--dirs-only") {
+            options.is_dirs_only = true;
+        } else if (arg == "--lazy") {
+            options.is_lazy = true;
         } else if (arg == "--list") {
             options.is_list = true;
         } else if (arg == "-0") {

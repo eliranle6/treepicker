@@ -324,6 +324,140 @@ TEST(pathtree, typed_stream) {
     ASSERT_EQ(dir.get_nr_nodes(), 4);
 }
 
+TEST(pathtree, typed_stream_dirs_only) {
+    pathtree::PathTree dir("-");
+    std::istringstream in("d empty\nf top.txt\nf music/a.mp3\n");
+    dir.update_from_stream(in, '\n', true, true);
+
+    ASSERT_NE(dir.get_node("empty"), nullptr);
+    ASSERT_EQ(dir.get_node("top.txt"), nullptr);
+    // A file's dir isn't added for it, since the file isn't
+    ASSERT_EQ(dir.get_node("music"), nullptr);
+}
+
+TEST(pathtree, scan_dirs_only) {
+    TempDir temp;
+    temp.make_dir("a/b");
+    temp.make_file("a/b/deep.txt");
+    temp.make_file("top.txt");
+    pathtree::PathTree dir(temp.path);
+    dir.update_from_filesystem(-1, true);
+
+    ASSERT_NE(dir.get_node("a/b"), nullptr);
+    ASSERT_EQ(dir.get_node("a/b/deep.txt"), nullptr);
+    ASSERT_EQ(dir.get_node("top.txt"), nullptr);
+    ASSERT_EQ(dir.get_nr_nodes(), 3);
+}
+
+TEST(pathtree, lazy_starts_with_the_root_only) {
+    TempDir temp;
+    temp.make_dir("a");
+    temp.make_file("top.txt");
+    pathtree::PathTree dir(temp.path);
+    dir.update_lazily_from_filesystem();
+
+    ASSERT_EQ(dir.get_nr_nodes(), 1);
+    ASSERT_EQ(dir.get_root()->kind, 'd');
+    ASSERT_FALSE(dir.get_root()->are_children_loaded);
+}
+
+TEST(pathtree, root_dir_is_named_slash) {
+    pathtree::PathTree dir("/");
+    dir.update_lazily_from_filesystem();
+    ASSERT_EQ(dir.get_root()->tag, "/");
+}
+
+TEST(pathtree, lazy_loads_a_dir_at_a_time) {
+    TempDir temp;
+    temp.make_dir("b/inner");
+    temp.make_file("b/inner/deep.txt");
+    temp.make_file("b/x.txt");
+    temp.make_file("c.txt");
+    temp.make_dir("a");
+    pathtree::PathTree dir(temp.path);
+    dir.update_lazily_from_filesystem();
+
+    ASSERT_TRUE(dir.load_children(dir.get_root()));
+    // Sorted by name, like a scan's
+    ASSERT_EQ(tags_of_children(dir, ""), std::vector<std::string>({"a", "b", "c.txt"}));
+    ASSERT_EQ(dir.get_node("b")->kind, 'd');
+    ASSERT_EQ(dir.get_node("c.txt")->kind, 'f');
+    // Dirs' children are still to be loaded, files have none
+    ASSERT_FALSE(dir.get_node("b")->are_children_loaded);
+    ASSERT_TRUE(dir.get_node("c.txt")->are_children_loaded);
+    ASSERT_EQ(dir.get_node("b/x.txt"), nullptr);
+
+    ASSERT_TRUE(dir.load_children(dir.get_node("b")));
+    ASSERT_EQ(tags_of_children(dir, "b"), std::vector<std::string>({"inner", "x.txt"}));
+    ASSERT_EQ(dir.get_node("b/inner")->identifier, "b/inner");
+    ASSERT_TRUE(dir.load_children(dir.get_node("b/inner")));
+    ASSERT_NE(dir.get_node("b/inner/deep.txt"), nullptr);
+
+    // Once only
+    ASSERT_FALSE(dir.load_children(dir.get_node("b")));
+    ASSERT_EQ(dir.get_node("b")->children.size(), 2);
+    // An empty dir loads nothing
+    ASSERT_FALSE(dir.load_children(dir.get_node("a")));
+    ASSERT_TRUE(dir.get_node("a")->are_children_loaded);
+}
+
+TEST(pathtree, lazy_dirs_only) {
+    TempDir temp;
+    temp.make_dir("a");
+    temp.make_file("top.txt");
+    pathtree::PathTree dir(temp.path);
+    dir.update_lazily_from_filesystem(-1, true);
+    dir.load_children(dir.get_root());
+    ASSERT_EQ(tags_of_children(dir, ""), std::vector<std::string>({"a"}));
+}
+
+TEST(pathtree, lazy_skips_symlinks) {
+    TempDir temp;
+    temp.make_dir("a");
+    symlink("a", (temp.path + "/link_to_a").c_str());
+    pathtree::PathTree dir(temp.path);
+    dir.update_lazily_from_filesystem();
+    dir.load_children(dir.get_root());
+    ASSERT_EQ(tags_of_children(dir, ""), std::vector<std::string>({"a"}));
+}
+
+TEST(pathtree, lazy_max_depth) {
+    TempDir temp;
+    temp.make_dir("a/b/c");
+    pathtree::PathTree dir(temp.path);
+    dir.update_lazily_from_filesystem(2);
+    dir.load_children(dir.get_root());
+    dir.load_children(dir.get_node("a"));
+    ASSERT_FALSE(dir.load_children(dir.get_node("a/b")));
+    ASSERT_EQ(dir.get_node("a/b/c"), nullptr);
+}
+
+TEST(pathtree, lazy_unreadable_dir_is_empty) {
+    if (geteuid() == 0) {
+        GTEST_SKIP() << "root can read anything";
+    }
+    TempDir temp;
+    temp.make_dir("locked");
+    temp.make_file("locked/secret.txt");
+    chmod((temp.path + "/locked").c_str(), 0);
+    pathtree::PathTree dir(temp.path);
+    dir.update_lazily_from_filesystem();
+    dir.load_children(dir.get_root());
+    const bool is_loaded = dir.load_children(dir.get_node("locked"));
+    chmod((temp.path + "/locked").c_str(), 0755);
+
+    ASSERT_FALSE(is_loaded);
+    ASSERT_TRUE(dir.get_node("locked")->children.empty());
+}
+
+TEST(pathtree, loaded_tree_has_nothing_to_load) {
+    TempDir temp;
+    temp.make_dir("a");
+    pathtree::PathTree dir(temp.path);
+    dir.update_from_filesystem();
+    ASSERT_FALSE(dir.load_children(dir.get_root()));
+}
+
 TEST(pathtree, untyped_stream_kinds_are_unknown) {
     auto dir = tree_from_text("a/b\n");
     ASSERT_EQ(dir.get_node("a/b")->kind, 0);

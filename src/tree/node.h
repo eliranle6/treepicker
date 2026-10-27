@@ -31,6 +31,10 @@ public:
     // types)
     char kind;
 
+    // Whether children holds all of the node's children. A tree that loads nodes lazily (see
+    // Tree::load_children()) adds a node's children only when they're needed.
+    bool are_children_loaded;
+
     std::vector< std::shared_ptr< Node > > children;
     void add_child(std::shared_ptr< Node > node);
 };

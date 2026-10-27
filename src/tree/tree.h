@@ -22,6 +22,7 @@ public:
     Tree(void) :
         root(nullptr)
     {}
+    virtual ~Tree(void) {}
     // Today i learned: shared_ptr
     node_t create_node(const std::string& tag, const std::string& identifier,
                        const std::string& parent);
@@ -38,6 +39,11 @@ public:
 
     int get_node_depth(std::shared_ptr<Node> node);
     int get_nr_nodes(void) { return node_map.size(); };
+
+    // Add the node's children, unless they're loaded (Node::are_children_loaded), for a tree
+    // that loads them only when they're needed. Returns whether it added any. A tree that has
+    // all of its nodes from the start has nothing to load.
+    virtual bool load_children(const node_t& node) { (void)node; return false; }
 
 protected:
     std::map<std::string, node_t > node_map;

@@ -22,6 +22,7 @@ and search it, and prints what you picked.
 
 ```
 $ treepicker [DIR]                   # pick under DIR (default: .); prints the picked path
+$ treepicker --lazy --dirs-only /    # pick a dir, reading each only when it's shown
 $ find . -name '*.mp3' | treepicker -        # pick from paths read from stdin
 $ treepicker -m -0 --header 'Pick files' - < paths    # several nodes, '\0'-separated
 $ printf 'Copy\nRemove\n' | treepicker --list          # a menu

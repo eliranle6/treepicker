@@ -127,6 +127,15 @@ TEST(cli, unknown_label_color) {
     ASSERT_NE(parse({"--label-color", "plaid"}).error.find("plaid"), std::string::npos);
 }
 
+TEST(cli, dirs_only_and_lazy) {
+    ASSERT_FALSE(parse({}).is_dirs_only);
+    ASSERT_FALSE(parse({}).is_lazy);
+    auto options = parse({"--dirs-only", "--lazy", "/"});
+    ASSERT_TRUE(options.is_dirs_only);
+    ASSERT_TRUE(options.is_lazy);
+    ASSERT_EQ(options.args, std::vector<std::string>({"/"}));
+}
+
 TEST(cli, typed) {
     ASSERT_FALSE(parse({}).is_typed);
     ASSERT_TRUE(parse({"--typed", "-"}).is_typed);

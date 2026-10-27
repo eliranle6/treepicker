@@ -130,6 +130,10 @@ private:
     // be printed
     void layout_tree(void);
 
+    // For a tree that loads nodes lazily (Tree::load_children()): load what may be shown
+    // around the selection, and what the keys may move to (its children)
+    void load_around_selection(void);
+
     treelib::Tree& _tree;
     guishell::GuiShell& _out;
     // The keyword shown in the search line, maybe being edited

@@ -11,6 +11,10 @@ static const char USAGE[] =
     "\n"
     "  DIR            the dir to pick from (default: the current dir)\n"
     "  --max-depth N  scan DIR at most N levels deep\n"
+    "  --dirs-only    only dirs: DIR's (or, with - and --typed, the tree's) files aren't shown\n"
+    "  --lazy         read DIR a dir at a time, only what's shown, rather than all of it at the\n"
+    "                 start: for a huge DIR (e.g. /). A search finds only what was read. Not with\n"
+    "                 -m, whose picks would miss what wasn't read.\n"
     "  -              read the tree from stdin: one path per line, relative to the tree's root,\n"
     "                 with '/' between dirs. Dirs that aren't listed (e.g. \"a\" for \"a/b\")\n"
     "                 are added.\n"
@@ -37,6 +41,10 @@ int main(int argc, char* argv[]) {
         std::cerr << "treepicker: --list reads from stdin, so it takes no DIR\n";
         return 2;
     }
+    if (options.is_lazy and (dir == "-" or options.is_multi)) {
+        std::cerr << "treepicker: --lazy reads a DIR, and not with -m\n";
+        return 2;
+    }
 
     try {
         pathtree::PathTree tree(dir);
@@ -46,9 +54,11 @@ int main(int argc, char* argv[]) {
             picker::add_list_from_stream(tree, std::cin, delimiter);
         } else if (dir == "-") {
             std::ios::sync_with_stdio(false);
-            tree.update_from_stream(std::cin, delimiter, options.is_typed);
+            tree.update_from_stream(std::cin, delimiter, options.is_typed, options.is_dirs_only);
+        } else if (options.is_lazy) {
+            tree.update_lazily_from_filesystem(options.max_depth, options.is_dirs_only);
         } else {
-            tree.update_from_filesystem(options.max_depth);
+            tree.update_from_filesystem(options.max_depth, options.is_dirs_only);
             // Above the caller's header
             const auto warning = picker::scan_errors_warning(dir, tree.scan_errors);
             if (not warning.empty()) {

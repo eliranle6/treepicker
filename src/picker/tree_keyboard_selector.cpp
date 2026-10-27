@@ -68,6 +68,7 @@ bool TreeKeyboardSelector::char_pressed(int c)
     }
 
     if (_mode == mode::MODE_NAVIGATION) {
+        load_around_selection();
         for (auto& command : get_key_commands()) {
             for (auto& binding : command.bindings) {
                 if (binding.first == c) {
@@ -309,6 +310,7 @@ void TreeKeyboardSelector::print_tree(void) {
         print_help();
         return;
     }
+    load_around_selection();
     const int window_width = getmaxx(stdscr);
     const Layout layout = get_layout();
 
@@ -426,10 +428,50 @@ TreeKeyboardSelector::Layout TreeKeyboardSelector::get_layout(void) {
 }
 
 void TreeKeyboardSelector::layout_tree(void) {
+    load_around_selection();
     const int tree_max_height = get_layout().tree_height;
     if (tree_max_height > 0) {
         _tree_printer.layout(not _applied_keyword.empty(), _tree_selector.get_selection(),
                              tree_max_height);
+    }
+}
+
+void TreeKeyboardSelector::load_around_selection(void) {
+    auto selection = _tree_selector.get_selection();
+    if (selection == nullptr) {
+        return;
+    }
+    bool is_any_loaded = _tree.load_children(selection);
+
+    // The printer shows a subtree, down as many levels as fit: from the root it showed last, or
+    // from the selection's parent (see choose_printed_subtree_root()). So from each, the nodes of
+    // the levels under it, until there are more than fit on the screen (which a whole level then
+    // doesn't).
+    const int nr_rows = getmaxy(stdscr);
+    auto parent = selection == _tree.get_root() ? selection : _tree.get_node(selection->parent);
+    for (auto& top : {_tree_printer.get_printed_subtree_root(), parent}) {
+        std::vector<std::shared_ptr<treelib::Node>> level = {top};
+        int nr_nodes = 1;
+        while (not level.empty() and nr_nodes <= nr_rows) {
+            std::vector<std::shared_ptr<treelib::Node>> next_level;
+            for (auto& node : level) {
+                is_any_loaded = _tree.load_children(node) or is_any_loaded;
+                for (auto& child : node->children) {
+                    if (nr_nodes > nr_rows) {
+                        break;
+                    }
+                    next_level.push_back(child);
+                    ++nr_nodes;
+                }
+            }
+            level = std::move(next_level);
+        }
+    }
+
+    // New nodes are shown, whatever a search would say of them
+    if (is_any_loaded and not _applied_keyword.empty()) {
+        _search.search(_applied_keyword, _is_filtering);
+        _tree_selector.select_visible_ancestor();
     }
 }
 

@@ -100,7 +100,9 @@ void print_node(
         if (is_dir) {
             tag += '/';
         }
-        if (pn.node->children.size() and not pn.are_children_printed) {
+        // Children not loaded yet (see Tree::load_children()) may be there too
+        const bool may_have_children = pn.node->children.size() or not pn.node->are_children_loaded;
+        if (may_have_children and not pn.are_children_printed) {
             tag += std::string(" (...)");
         }
 

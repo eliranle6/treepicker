@@ -48,7 +48,9 @@ src/picker/       TreeSelector (the selection, and picked nodes: a dir is picked
                   TreeKeyboardSelector's key table)
 src/utils/        guishell (curses on /dev/tty, colors, cutting lines by display width),
                   subprocess (running find)
-src/pathtree/     PathTree: a tree of paths, from find (sorted) or from a stream (in order)
+src/pathtree/     PathTree: a tree of paths, from find (sorted), from a stream (in order), or
+                  read lazily a dir at a time (--lazy: Tree::load_children(), which
+                  TreeKeyboardSelector calls for what may be shown around the selection)
 src/treepicker/     the treepicker program; src/picker/main.cpp is the demo program
 src/dirdiff/      the dirdiff program: the files of a dir that another lacks (PathTree::files_not_in),
                   for dirdelta

@@ -16,8 +16,7 @@ PathTree::PathTree(std::string _path) : path(_path)
 {
 }
 
-void PathTree::update_from_filesystem(int max_depth) {
-    // Create root node
+void PathTree::add_dir_root(void) {
     char* realpath_ret_value = realpath(path.c_str(), nullptr);
     if (realpath_ret_value == nullptr) {
         throw std::runtime_error("Cannot read directory '" + path.string() + "': " +
@@ -25,8 +24,16 @@ void PathTree::update_from_filesystem(int max_depth) {
     }
     std::string root_tag = std::string(basename(realpath_ret_value));
     free(realpath_ret_value);
+    // "/" has no name after its last '/'
+    if (root_tag.empty()) {
+        root_tag = "/";
+    }
     add_root(root_tag);
     get_root()->kind = 'd';
+}
+
+void PathTree::update_from_filesystem(int max_depth, bool is_dirs_only) {
+    add_dir_root();
 
     // Execute the `find` command to explore the dir contents. Entries end with '\0' rather
     // than '\n', since file names may contain newlines.
@@ -50,7 +57,7 @@ void PathTree::update_from_filesystem(int max_depth) {
     std::string entry;
     while (getline(*entries_stream, entry, '\0')) {
         const bool is_dir_or_file = entry.size() > 2 and entry[1] == ' ' and
-            (entry[0] == 'd' or entry[0] == 'f');
+            (entry[0] == 'd' or (entry[0] == 'f' and not is_dirs_only));
         if (is_dir_or_file) {
             entries.emplace_back(entry.substr(2), entry[0]);
         }
@@ -82,13 +89,63 @@ void PathTree::update_from_filesystem(int max_depth) {
     }
 }
 
-void PathTree::update_from_stream(std::istream& in, char delimiter, bool is_typed) {
+void PathTree::update_lazily_from_filesystem(int max_depth, bool is_dirs_only) {
+    add_dir_root();
+    _lazy_max_depth = max_depth;
+    _is_lazy_dirs_only = is_dirs_only;
+    get_root()->are_children_loaded = false;
+}
+
+bool PathTree::load_children(const node_t& node) {
+    if (node->are_children_loaded) {
+        return false;
+    }
+    node->are_children_loaded = true;
+    if (_lazy_max_depth >= 0 and get_node_depth(node) >= _lazy_max_depth) {
+        return false;
+    }
+
+    // Like find's scan: dirs and files, not what symlinks point at (so not into a symlinked dir)
+    std::vector<std::pair<std::string, char>> entries;
+    std::error_code error;
+    const auto dir = node == get_root() ? path : path / node->identifier;
+    std::filesystem::directory_iterator entry(dir, error), end;
+    for (; not error and entry != end; entry.increment(error)) {
+        const auto status = entry->symlink_status(error);
+        if (error) {
+            // Gone since it was listed, or unreadable: skip it, like find does
+            error.clear();
+            continue;
+        }
+        if (std::filesystem::is_directory(status)) {
+            entries.emplace_back(entry->path().filename().string(), 'd');
+        } else if (std::filesystem::is_regular_file(status) and not _is_lazy_dirs_only) {
+            entries.emplace_back(entry->path().filename().string(), 'f');
+        }
+    }
+    // A dir that can't be read (or fails midway) keeps what was read of it
+
+    // By name, like update_from_filesystem()
+    std::sort(entries.begin(), entries.end());
+    const std::string prefix = node == get_root() ? "" : node->identifier + "/";
+    for (auto& name_and_kind : entries) {
+        auto child = create_node(name_and_kind.first, prefix + name_and_kind.first,
+                                 node->identifier);
+        child->kind = name_and_kind.second;
+        child->are_children_loaded = name_and_kind.second != 'd';
+    }
+    return not entries.empty();
+}
+
+void PathTree::update_from_stream(std::istream& in, char delimiter, bool is_typed,
+                                  bool is_dirs_only) {
     add_root(".");
     std::string entry;
     while (getline(in, entry, delimiter)) {
         if (not is_typed) {
             add_path(entry);
-        } else if (entry.size() > 2 and entry[1] == ' ' and (entry[0] == 'f' or entry[0] == 'd')) {
+        } else if (entry.size() > 2 and entry[1] == ' ' and
+                   (entry[0] == 'd' or (entry[0] == 'f' and not is_dirs_only))) {
             add_path(entry.substr(2), entry[0]);
         }
     }
