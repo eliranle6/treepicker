@@ -42,6 +42,9 @@ struct CliOptions {
     std::string expect_keys;
     // --select PATH: the node to start with selected ("." for the root)
     std::string selected_path;
+    // --print-selection: print the selected node's path before the picked ones, so the caller
+    // can show the tree again where it was
+    bool is_selection_printed = false;
     // --preview FD: read the lines to show beside the tree for nodes from FD while picking (see
     // PreviewsReader); -1: none
     int preview_fd = -1;

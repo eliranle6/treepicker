@@ -31,6 +31,9 @@ const std::string CLI_OPTIONS_USAGE = std::string(
     "                 the key pressed (or an empty line for Enter), the selected node's path\n"
     "                 after it, then the picked ones (with -m). Not keys treepicker uses.\n"
     "  --select PATH  start with the node at PATH (as printed) selected, rather than the root\n"
+    "  --print-selection\n"
+    "                 print the selected node's path first (after --expect's key), whatever\n"
+    "                 finished picking, so the caller can --select it again\n"
     "  --preview FD   show text beside the tree for the selected node, in a column on the right\n"
     "                 (p hides or shows it), read from file descriptor FD while picking (a\n"
     "                 file's or a pipe's): each is the node's path (as printed), a tab and the\n"
@@ -117,6 +120,8 @@ CliOptions parse_cli(int argc, char* argv[]) {
             options.is_typed = true;
         } else if (arg == "--dirs-only") {
             options.is_dirs_only = true;
+        } else if (arg == "--print-selection") {
+            options.is_selection_printed = true;
         } else if (arg == "--lazy") {
             options.is_lazy = true;
         } else if (arg == "--list") {
@@ -171,9 +176,11 @@ int pick_and_print(treelib::Tree& tree, const CliOptions& options) {
     // The screen is the terminal's, so stdout is only the picked nodes (and with --expect, the
     // key first)
     const int key = picker.get_expected_key();
-    if (not options.expect_keys.empty() and (key != 0 or not picked.empty())) {
-        std::cout << (key != 0 ? std::string(1, static_cast<char>(key)) : "") << delimiter;
-        if (key != 0) {
+    if (key != 0 or not picked.empty()) {
+        if (not options.expect_keys.empty()) {
+            std::cout << (key != 0 ? std::string(1, static_cast<char>(key)) : "") << delimiter;
+        }
+        if (key != 0 or options.is_selection_printed) {
             std::cout << path(picker.get_selection()) << delimiter;
         }
     }

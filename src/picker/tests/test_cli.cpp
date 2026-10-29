@@ -183,6 +183,12 @@ TEST(cli, expect_and_select_are_in_the_usage) {
     ASSERT_NE(picker::CLI_OPTIONS_USAGE.find("--select PATH"), std::string::npos);
 }
 
+TEST(cli, print_selection) {
+    ASSERT_FALSE(parse({}).is_selection_printed);
+    ASSERT_TRUE(parse({"--print-selection", "-"}).is_selection_printed);
+    ASSERT_NE(picker::CLI_OPTIONS_USAGE.find("--print-selection"), std::string::npos);
+}
+
 TEST(cli, preview) {
     ASSERT_EQ(parse({}).preview_fd, -1);
     ASSERT_EQ(parse({"--preview", "5", "-"}).preview_fd, 5);
