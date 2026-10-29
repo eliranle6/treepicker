@@ -35,6 +35,8 @@ public:
     bool was_selection_printed(void);
     std::shared_ptr< Node > get_first_printed_node(void);
     std::shared_ptr< Node > get_last_printed_node(void);
+    // The first node printed under the printed subtree root (or the root, if it's alone)
+    std::shared_ptr< Node > get_top_printed_node(void);
     std::shared_ptr<treelib::Node> get_printed_subtree_root(void);
 
 private:

@@ -150,9 +150,10 @@ const std::vector<TreeKeyboardSelector::KeyCommand>& TreeKeyboardSelector::get_k
             {KEYCODE_J, &T::move_to_next}, {KEY_DOWN, &T::move_to_next},
             {KEYCODE_H, &T::move_one_up}, {KEY_LEFT, &T::move_one_up},
             {KEYCODE_L, &T::explore_children}, {KEY_RIGHT, &T::explore_children}}},
-        {"g/G, Home/End", "first/last sibling", {
-            {KEYCODE_LOWER_G, &T::move_to_first_sibling}, {KEY_HOME, &T::move_to_first_sibling},
-            {KEYCODE_UPPER_G, &T::move_to_last_sibling}, {KEY_END, &T::move_to_last_sibling}}},
+        {"g/G", "first/last line on the screen", {
+            {KEYCODE_LOWER_G, &T::move_to_first_shown}, {KEYCODE_UPPER_G, &T::move_to_last_shown}}},
+        {"Home/End", "first/last sibling", {
+            {KEY_HOME, &T::move_to_first_sibling}, {KEY_END, &T::move_to_last_sibling}}},
         {"Ctrl-D/Ctrl-U", "page down/up", {
             {KEYCODE_CTRL_D, &T::page_down}, {KEY_NPAGE, &T::page_down},
             {KEYCODE_CTRL_U, &T::page_up}, {KEY_PPAGE, &T::page_up}}},
@@ -215,6 +216,24 @@ bool TreeKeyboardSelector::move_to_first_sibling(void) {
 
 bool TreeKeyboardSelector::move_to_last_sibling(void) {
     _tree_selector.move_to_last_sibling();
+    return false;
+}
+
+bool TreeKeyboardSelector::move_to_first_shown(void) {
+    layout_tree();
+    auto node = _tree_printer.get_top_printed_node();
+    if (node != nullptr) {
+        _tree_selector.select(node);
+    }
+    return false;
+}
+
+bool TreeKeyboardSelector::move_to_last_shown(void) {
+    layout_tree();
+    auto node = _tree_printer.get_last_printed_node();
+    if (node != nullptr) {
+        _tree_selector.select(node);
+    }
     return false;
 }
 

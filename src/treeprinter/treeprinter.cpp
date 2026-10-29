@@ -155,6 +155,15 @@ std::shared_ptr<treelib::Node> TreePrinter::get_first_printed_node(void) {
     return _lines.empty() ? nullptr : _lines.front().node;
 }
 
+std::shared_ptr<treelib::Node> TreePrinter::get_top_printed_node(void) {
+    for (std::size_t i = 1; i < _lines.size(); ++i) {
+        if (_lines[i].node != nullptr) {
+            return _lines[i].node;
+        }
+    }
+    return get_first_printed_node();
+}
+
 std::shared_ptr<treelib::Node> TreePrinter::get_last_printed_node(void) {
     for (auto line = _lines.rbegin(); line != _lines.rend(); ++line) {
         if (line->node != nullptr) {

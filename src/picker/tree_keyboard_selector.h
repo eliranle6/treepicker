@@ -100,6 +100,8 @@ private:
     bool page_up(void);
     bool move_to_first_sibling(void);
     bool move_to_last_sibling(void);
+    bool move_to_first_shown(void);
+    bool move_to_last_shown(void);
     bool explore_children(void);
     bool move_one_up(void);
     bool pick(void);
