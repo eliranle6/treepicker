@@ -140,11 +140,11 @@ void TreeSelector::move_to_prev(void) {
     }
 }
 
-void TreeSelector::toggle_pick_of_selection(void) {
+void TreeSelector::toggle_pick_of_selection(bool only_shown) {
     if (_selection == nullptr) {
         return;
     }
-    // Everything under it, whether an ongoing search shows it or not
+    // Everything under it, or only what the search shows
     const bool is_picked = not _selection->is_picked;
     std::vector<treelib::Node*> dfs_stack = {_selection.get()};
     while (not dfs_stack.empty()) {
@@ -153,8 +153,15 @@ void TreeSelector::toggle_pick_of_selection(void) {
         set_picked_flag(node, is_picked);
         node->is_partly_picked = false;
         for (auto& child : node->children) {
-            dfs_stack.push_back(child.get());
+            if (not only_shown or child->is_search_visible) {
+                dfs_stack.push_back(child.get());
+            }
         }
+    }
+    if (only_shown) {
+        // A dir with hidden nodes under it is partly picked, and so are the dirs it's in
+        update_picked_dirs();
+        return;
     }
 
     // Up from it, each node's state depends on its children's

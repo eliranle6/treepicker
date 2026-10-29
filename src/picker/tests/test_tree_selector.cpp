@@ -328,6 +328,26 @@ TEST(tree_selector, toggle_pick_picks_the_subtree) {
     ASSERT_FALSE(tree.get_node("smart")->is_picked);
 }
 
+TEST(tree_selector, toggle_pick_of_only_whats_shown_picks_the_matches) {
+    auto tree = get_simple_tree();
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    treelib::Search search(tree);
+    search.search("Poor");
+
+    // The root: only the poor people under it
+    tree_selector.toggle_pick_of_selection(true);
+
+    ASSERT_EQ(ids(tree_selector.get_picked_nodes()), std::vector<std::string>({"poor-dumb", "poor-smart"}));
+    ASSERT_TRUE(tree.get_node("people")->is_partly_picked);
+    ASSERT_TRUE(tree.get_node("dumb")->is_partly_picked);
+    ASSERT_EQ(tree_selector.get_nr_picked(), 2);
+
+    // Again: the root isn't picked (only partly), so it picks the same again
+    tree_selector.toggle_pick_of_selection(true);
+    ASSERT_EQ(tree_selector.get_nr_picked(), 2);
+}
+
 TEST(tree_selector, toggle_pick_again_unpicks) {
     auto tree = get_simple_tree();
     treelib::TreePrinter tree_printer(tree);

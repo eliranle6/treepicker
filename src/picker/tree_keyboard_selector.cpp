@@ -264,7 +264,8 @@ bool TreeKeyboardSelector::pick(void) {
 
 bool TreeKeyboardSelector::toggle_pick(void) {
     if (_options.is_multi and not _tree_selector.get_selection()->is_disabled) {
-        _tree_selector.toggle_pick_of_selection();
+        // While a search hides what doesn't match, only what it shows
+        _tree_selector.toggle_pick_of_selection(not _applied_keyword.empty() and _is_filtering);
     }
     return false;
 }

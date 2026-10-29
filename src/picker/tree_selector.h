@@ -34,9 +34,10 @@ public:
     // If an ongoing search hides the selection, select its closest visible ancestor
     void select_visible_ancestor(void);
 
-    // Pick the selection and everything under it, or, if it's picked, unpick them all. The nodes
-    // above it become picked if all under them is, and partly picked if some is.
-    void toggle_pick_of_selection(void);
+    // Pick the selection and everything under it, or, if it's picked, unpick them all; with
+    // only_shown, only what an ongoing (filtering) search shows under it. The nodes above it, and
+    // under it, become picked if all under them is, and partly picked if some is.
+    void toggle_pick_of_selection(bool only_shown = false);
 
     // Pick (or unpick) the node alone, without the nodes under it or above it; then call
     // update_picked_dirs()
