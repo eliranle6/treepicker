@@ -19,7 +19,8 @@ TreeKeyboardSelector::TreeKeyboardSelector(treelib::Tree& tree, const PickerOpti
     _mode(mode::MODE_NAVIGATION),
     _search(tree),
     _options(options),
-    _are_files_known(false)
+    _are_files_known(false),
+    _expected_key(0)
 {
     // Once, rather than on each redraw
     std::vector<treelib::Node*> dfs_stack;
@@ -45,6 +46,9 @@ TreeKeyboardSelector::TreeKeyboardSelector(treelib::Tree& tree, const PickerOpti
     if (options.is_first_child_selected_first) {
         _tree_selector.explore_children_of_selection();
     }
+    if (not options.selected_id.empty()) {
+        _tree_selector.select(_tree.get_node(options.selected_id));
+    }
     if (not options.header.empty()) {
         std::istringstream header(options.header);
         for (std::string line; std::getline(header, line);) {
@@ -69,6 +73,12 @@ bool TreeKeyboardSelector::char_pressed(int c)
 
     if (_mode == mode::MODE_NAVIGATION) {
         load_around_selection();
+        if (c > 0 and c <= 0xff and _options.expect_keys.find(static_cast<char>(c)) != std::string::npos) {
+            _expected_key = c;
+            _picked = _options.is_multi ? _tree_selector.get_picked_nodes() :
+                std::vector<std::shared_ptr<treelib::Node>>();
+            return true;
+        }
         for (auto& command : get_key_commands()) {
             for (auto& binding : command.bindings) {
                 if (binding.first == c) {

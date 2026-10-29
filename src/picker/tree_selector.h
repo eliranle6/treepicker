@@ -16,6 +16,9 @@ public:
 
     NodePtr get_selection(void);
 
+    // Select the node (ignored if it's nullptr)
+    void select(NodePtr node);
+
     void explore_children_of_selection(void);
     void move_to_next(void);
     void move_to_prev(void);

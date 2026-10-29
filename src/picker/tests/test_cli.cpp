@@ -154,3 +154,31 @@ TEST(cli, typed) {
     ASSERT_FALSE(parse({}).is_typed);
     ASSERT_TRUE(parse({"--typed", "-"}).is_typed);
 }
+
+TEST(cli, expect) {
+    ASSERT_EQ(parse({}).expect_keys, "");
+    ASSERT_EQ(parse({"--expect", "r", "-"}).expect_keys, "r");
+    ASSERT_EQ(parse({"--expect", "r", "--expect", "x1"}).expect_keys, "rx1");
+    ASSERT_TRUE(parse({"--expect", "rx"}).error.empty());
+    ASSERT_FALSE(parse({"--expect"}).error.empty());
+}
+
+TEST(cli, expect_keys_cant_be_treepickers_or_unprintable) {
+    ASSERT_NE(parse({"--expect", "rj"}).error.find("'j'"), std::string::npos);
+    ASSERT_FALSE(parse({"--expect", "q"}).error.empty());
+    ASSERT_FALSE(parse({"--expect", "?"}).error.empty());
+    ASSERT_FALSE(parse({"--expect", " "}).error.empty());
+    ASSERT_FALSE(parse({"--expect", "\t"}).error.empty());
+}
+
+TEST(cli, select) {
+    ASSERT_EQ(parse({}).selected_path, "");
+    ASSERT_EQ(parse({"--select", "a/b", "-"}).selected_path, "a/b");
+    ASSERT_EQ(parse({"--select", "a/b", "-"}).args, std::vector<std::string>({"-"}));
+    ASSERT_FALSE(parse({"--select"}).error.empty());
+}
+
+TEST(cli, expect_and_select_are_in_the_usage) {
+    ASSERT_NE(picker::CLI_OPTIONS_USAGE.find("--expect KEYS"), std::string::npos);
+    ASSERT_NE(picker::CLI_OPTIONS_USAGE.find("--select PATH"), std::string::npos);
+}

@@ -36,6 +36,17 @@ TEST(tree_selector, explore_selection_in_empty_tree) {
     ASSERT_EQ(tree_selector.get_selection(), nullptr);
 }
 
+TEST(tree_selector, select) {
+    auto tree = get_simple_tree();
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    tree_selector.select(tree.get_node("dumb"));
+    ASSERT_EQ(tree_selector.get_selection()->identifier, "dumb");
+    // Nothing to select: the selection stays
+    tree_selector.select(nullptr);
+    ASSERT_EQ(tree_selector.get_selection()->identifier, "dumb");
+}
+
 TEST(tree_selector, move_one_next) {
     // Setup
     auto tree = get_simple_tree();

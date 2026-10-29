@@ -26,13 +26,34 @@ const std::string CLI_OPTIONS_USAGE = std::string(
     "                 to show, ending like the paths do (see -0). It's still printed by its\n"
     "                 path when picked. With a tab and 'disabled' after what to show, the node\n"
     "                 is shown in grey and can't be picked, until an update without them.\n"
+    "  --expect KEYS  keys (letters, digits or punctuation) that finish picking too, so the\n"
+    "                 caller can act on the selected node: then the first line printed is\n"
+    "                 the key pressed (or an empty line for Enter), the selected node's path\n"
+    "                 after it, then the picked ones (with -m). Not keys treepicker uses.\n"
+    "  --select PATH  start with the node at PATH (as printed) selected, rather than the root\n"
     "  -0             paths end with '\\0' rather than a newline (read ones and printed ones)\n"
     "  -h, --help     show this help\n"
     "\n"
     "Keys:\n") + keys_help() +
     "\n"
-    "Prints the picked nodes' paths, in the tree's order. Exits with 0 if a node was picked, 1 if\n"
-    "not.\n";
+    "Prints the picked nodes' paths, in the tree's order. Exits with 0 if a node was picked (or an\n"
+    "--expect key was pressed), 1 if not.\n";
+
+// Why key can't be an --expect key, or "" if it can: it must be printable, and not one treepicker
+// uses
+static std::string expect_key_error(char key) {
+    if (key <= ' ' or key > '~') {
+        return "--expect keys must be letters, digits or punctuation";
+    }
+    for (auto& command : TreeKeyboardSelector::get_key_commands()) {
+        for (auto& binding : command.bindings) {
+            if (binding.first == key) {
+                return std::string("--expect key '") + key + "' is one of treepicker's keys";
+            }
+        }
+    }
+    return "";
+}
 
 CliOptions parse_cli(int argc, char* argv[]) {
     CliOptions options;
@@ -43,9 +64,18 @@ CliOptions parse_cli(int argc, char* argv[]) {
         } else if (arg == "-m" or arg == "--multi") {
             options.is_multi = true;
         } else if (arg == "--header" or arg == "--root" or arg == "--picked" or arg == "--label" or
-                   arg == "--label-color") {
+                   arg == "--label-color" or arg == "--expect" or arg == "--select") {
             if (i + 1 == argc) {
                 options.error = arg + " needs a value";
+            } else if (arg == "--expect") {
+                options.expect_keys += argv[++i];
+                for (char key : std::string(argv[i])) {
+                    if (options.error.empty()) {
+                        options.error = expect_key_error(key);
+                    }
+                }
+            } else if (arg == "--select") {
+                options.selected_path = argv[++i];
             } else if (arg == "--header") {
                 options.header = argv[++i];
             } else if (arg == "--root") {
@@ -108,6 +138,11 @@ int pick_and_print(treelib::Tree& tree, const CliOptions& options) {
     picker_options.is_root_pickable = not options.is_list;
     picker_options.updates_fd = options.updates_fd;
     picker_options.updates_delimiter = delimiter;
+    picker_options.expect_keys = options.expect_keys;
+    if (not options.selected_path.empty() and tree.get_root() != nullptr) {
+        picker_options.selected_id = options.selected_path == "." ? tree.get_root()->identifier :
+            options.selected_path;
+    }
     if (not options.picked_file.empty()) {
         std::ifstream picked_file(options.picked_file);
         if (not picked_file) {
@@ -119,12 +154,24 @@ int pick_and_print(treelib::Tree& tree, const CliOptions& options) {
                 path == "." ? tree.get_root()->identifier : path);
         }
     }
-    const auto picked = Picker(tree, picker_options).run();
-    // The screen is the terminal's, so stdout is only the picked nodes
-    for (auto& node : picked) {
-        std::cout << (node == tree.get_root() ? "." : node->identifier) << delimiter;
+    Picker picker(tree, picker_options);
+    const auto picked = picker.run();
+    const auto path = [&](const std::shared_ptr<treelib::Node>& node) {
+        return node == tree.get_root() ? std::string(".") : node->identifier;
+    };
+    // The screen is the terminal's, so stdout is only the picked nodes (and with --expect, the
+    // key first)
+    const int key = picker.get_expected_key();
+    if (not options.expect_keys.empty() and (key != 0 or not picked.empty())) {
+        std::cout << (key != 0 ? std::string(1, static_cast<char>(key)) : "") << delimiter;
+        if (key != 0) {
+            std::cout << path(picker.get_selection()) << delimiter;
+        }
     }
-    return picked.empty() ? 1 : 0;
+    for (auto& node : picked) {
+        std::cout << path(node) << delimiter;
+    }
+    return picked.empty() and key == 0 ? 1 : 0;
 }
 
 std::string scan_errors_warning(const std::string& dir, const std::vector<std::string>& errors) {

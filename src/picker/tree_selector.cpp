@@ -16,6 +16,12 @@ typename TreeSelector::NodePtr TreeSelector::get_selection(void) {
     return _selection;
 }
 
+void TreeSelector::select(NodePtr node) {
+    if (node != nullptr) {
+        _selection = node;
+    }
+}
+
 void TreeSelector::explore_children_of_selection(void) {
     if (_selection == nullptr) {
         return;

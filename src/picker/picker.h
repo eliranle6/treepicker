@@ -19,6 +19,12 @@ public:
     // Let the user pick, and return what they picked: empty if they quit
     std::vector<std::shared_ptr<treelib::Node>> run(void);
 
+    // Once run: the expect key that finished it, or 0 (see PickerOptions::expect_keys)
+    int get_expected_key(void) const { return _tree_keyboard_selector.get_expected_key(); }
+
+    // The selected node, e.g. when an expect key finished it
+    std::shared_ptr<treelib::Node> get_selection(void) { return _tree_keyboard_selector.get_selection(); }
+
 private:
     TreeKeyboardSelector _tree_keyboard_selector;
     treelib::Tree& _tree;

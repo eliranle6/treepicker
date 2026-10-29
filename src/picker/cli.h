@@ -38,6 +38,10 @@ struct CliOptions {
     bool is_lazy = false;
     // --updates FD: read changes to the nodes' shown names from FD while picking (-1: none)
     int updates_fd = -1;
+    // --expect KEYS: keys that finish picking too, printed first (see CLI_OPTIONS_USAGE)
+    std::string expect_keys;
+    // --select PATH: the node to start with selected ("." for the root)
+    std::string selected_path;
 
     bool is_help_requested = false;
     // Set if the command line isn't valid

@@ -68,6 +68,12 @@ public:
     // What was picked, once finished: empty if the user quit
     const std::vector<std::shared_ptr<treelib::Node>>& get_picked(void) const { return _picked; }
 
+    // Once finished: the expect key (see PickerOptions::expect_keys) that finished it, or 0 if
+    // none did. Then get_picked() is what's picked so far (with is_multi; else nothing).
+    int get_expected_key(void) const { return _expected_key; }
+
+    std::shared_ptr<treelib::Node> get_selection(void) { return _tree_selector.get_selection(); }
+
     void print_tree(void);
 
     void initialize(void);
@@ -155,6 +161,7 @@ private:
     // The header's lines
     std::vector<std::string> _header_lines;
     std::vector<std::shared_ptr<treelib::Node>> _picked;
+    int _expected_key;
 };
 
 }
