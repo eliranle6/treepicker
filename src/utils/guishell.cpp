@@ -60,6 +60,8 @@ int display_width(const std::string& s) {
 // Whether text reached past the bottom of the screen since it was last cleared. The sink is copied
 // into the stream, so this lives outside it.
 static bool is_screen_full = false;
+// Where the stream's lines are cut (see GuiShell::set_line_width()); 0: the screen's edge
+static int line_width = 0;
 
 namespace {
 struct LabelColor {
@@ -151,7 +153,8 @@ std::streamsize NCursesSink::write(const char *s, std::streamsize n) {
     const char *end = s + n;
     while (s < end and not is_screen_full) {
         const char *newline = std::find(s, end, '\n');
-        const int nr_columns_left = COLS - 1 - getcurx(stdscr);
+        const int right_edge = line_width > 0 ? std::min(line_width, COLS - 1) : COLS - 1;
+        const int nr_columns_left = right_edge - getcurx(stdscr);
         if (nr_columns_left > 0) {
             addnstr(s, nr_bytes_that_fit(s, newline - s, nr_columns_left));
         }
@@ -232,6 +235,11 @@ GuiShell::~GuiShell(void) {
 void GuiShell::refresh(void) {
     flush();
     ::refresh();
+}
+
+void GuiShell::set_line_width(int nr_columns) {
+    flush();
+    line_width = nr_columns;
 }
 
 void GuiShell::clear(void) {

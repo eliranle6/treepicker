@@ -30,6 +30,7 @@ enum {
     KEYCODE_K = 107,
     KEYCODE_L = 108,
     KEYCODE_LOWER_G = 103,
+    KEYCODE_P = 112,
     KEYCODE_F = 102,
     KEYCODE_QUESTION_MARK = 63,
     KEYCODE_CTRL_SLASH = 31,  // What terminals send for Ctrl-/ (and Ctrl-_)
@@ -101,6 +102,7 @@ private:
     bool drop_search(void);
     bool show_help(void);
     bool toggle_filter(void);
+    bool toggle_preview(void);
     bool start_search(void);
     bool start_search_on_enter(void);
 
@@ -117,14 +119,21 @@ private:
     // line on each side of it
     static constexpr int MIN_TREE_HEIGHT = 4;
 
-    // Where things go on the screen, from the top: the header, the tree, the stats line, the
-    // search line.
-    // A row of -1 means it isn't shown.
+    // The narrowest screen that the preview column is shown on, and the part of the screen's
+    // width it takes, in fifths
+    static constexpr int MIN_WIDTH_WITH_PREVIEW = 60;
+    static constexpr int PREVIEW_FIFTHS = 2;
+
+    // Where things go on the screen, from the top: the header, the tree (with the preview column
+    // beside it), the stats line, the search line.
+    // A row (or column) of -1 means it isn't shown.
     struct Layout {
         int nr_header_rows;
         int tree_height;
         int stats_row;
         int search_row;
+        // The column of the line between the tree and the preview column
+        int preview_column;
     };
     Layout get_layout(void);
 
@@ -132,6 +141,9 @@ private:
 
     // Draw the keys' help instead of the tree
     void print_help(void);
+
+    // Draw the selected node's preview in its column, right of the tree's rows
+    void print_preview(const Layout& layout);
 
     // Lay the tree out without drawing it, so the selection can move relative to what would
     // be printed
@@ -151,6 +163,8 @@ private:
     bool _is_search_on_enter;
     // Whether a search hides the nodes that don't match, or only highlights the ones that do
     bool _is_filtering;
+    // Whether the preview column is shown (when there are previews, and it fits)
+    bool _is_preview_shown;
     treelib::TreePrinter _tree_printer;
     TreeSelector _tree_selector;
     mode _mode;

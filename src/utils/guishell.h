@@ -84,6 +84,10 @@ public:
 
   void clear(void);
 
+  // Cut the lines written from now on at nr_columns from the screen's left edge, e.g. to leave
+  // room beside them; 0: at the screen's edge, less its last column (the default)
+  void set_line_width(int nr_columns);
+
   // The terminal's file descriptor, which keys are read from
   int terminal_fd(void) const { return _terminal_fd; }
 
