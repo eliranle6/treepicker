@@ -20,6 +20,18 @@ struct Preview {
     }
 };
 
+// A preview's line, as shown: its text, and the color of its highlight (a label color, see
+// guishell::label_color_pair: bold, on that color, across the column), or "" for none
+struct PreviewLine {
+    std::string text;
+    std::string highlight;
+};
+
+// How a preview's line is shown: one starting with HIGHLIGHT_MARK, a label color's name and
+// HIGHLIGHT_MARK again is highlighted in that color (the rest of it is its text); else it's as it is
+constexpr char HIGHLIGHT_MARK = '\x01';
+PreviewLine parse_preview_line(const std::string& line);
+
 // Previews read from a file descriptor while picking. Each is the node's path, a tab, and its
 // lines, separated by tabs, and ends with the delimiter (so it's one line without -0); a later
 // one for a path replaces the earlier.

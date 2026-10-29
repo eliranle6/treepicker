@@ -439,9 +439,21 @@ void TreeKeyboardSelector::print_preview(const Layout& layout) {
         const int row = layout.nr_header_rows + i;
         mvaddstr(row, layout.preview_column, "│");
         if (i < static_cast<int>(lines.size())) {
-            const std::string line = guishell::printable(lines[i]);
-            mvaddnstr(row, column, line.data(), guishell::nr_bytes_that_fit(line.data(),
-                                                                            line.size(), width));
+            const PreviewLine line = parse_preview_line(lines[i]);
+            std::string text = guishell::printable(line.text);
+            text.resize(guishell::nr_bytes_that_fit(text.data(), text.size(), width));
+            const int pair = line.highlight.empty() ? -1 : guishell::label_color_pair(line.highlight);
+            if (pair < 0) {
+                mvaddstr(row, column, text.c_str());
+                continue;
+            }
+            // Across the column, so it's seen at once
+            text += std::string(std::max(0, width - guishell::display_width(text)), ' ');
+            attron(COLOR_PAIR(pair));
+            attron(A_BOLD);
+            mvaddstr(row, column, text.c_str());
+            attroff(A_BOLD);
+            attroff(COLOR_PAIR(pair));
         }
     }
 }

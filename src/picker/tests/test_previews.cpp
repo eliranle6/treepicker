@@ -24,6 +24,14 @@ TEST(previews, null_delimited) {
               Previews({{"a\nb", {"one", "two"}}, {"c", {""}}}));
 }
 
+TEST(previews, a_line_may_be_highlighted) {
+    ASSERT_EQ(picker::parse_preview_line("\x01green\x01-> moved").text, "-> moved");
+    ASSERT_EQ(picker::parse_preview_line("\x01green\x01-> moved").highlight, "green");
+    ASSERT_EQ(picker::parse_preview_line("plain").highlight, "");
+    // Without the second mark, it's text (shown with '?' for the mark)
+    ASSERT_EQ(picker::parse_preview_line("\x01green").text, "\x01green");
+}
+
 TEST(previews, ones_without_a_tab_are_skipped_and_the_path_may_be_empty) {
     picker::PreviewsReader reader('\n');
     ASSERT_EQ(reader.feed("no tab\n\tWorking...\n"), Previews({{"", {"Working..."}}}));

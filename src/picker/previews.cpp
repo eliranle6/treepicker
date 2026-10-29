@@ -2,6 +2,16 @@
 
 namespace picker {
 
+PreviewLine parse_preview_line(const std::string& line) {
+    if (not line.empty() and line[0] == HIGHLIGHT_MARK) {
+        const std::size_t end = line.find(HIGHLIGHT_MARK, 1);
+        if (end != std::string::npos) {
+            return {line.substr(end + 1), line.substr(1, end - 1)};
+        }
+    }
+    return {line, ""};
+}
+
 PreviewsReader::PreviewsReader(char delimiter) :
     _delimiter(delimiter)
 {}
