@@ -42,9 +42,9 @@ src/treeprinter/  TreePrinter (lays out and prints the part of the tree that fit
 src/picker/       TreeSelector (the selection, and picked nodes: a dir is picked when all
                   under it is, partly picked when some is), TreeKeyboardSelector (keys,
                   modes, the screen's layout: header, tree, stats line, search line),
-                  KeyboardReactor (the key loop, which also reads --updates' fd),
+                  KeyboardReactor (the key loop, which also reads --updates' and --preview's fds),
                   UpdatesReader (--updates: changes to tags, and disabled nodes, while picking),
-                  read_previews (--preview: text shown beside the tree for the selected node),
+                  PreviewsReader (--preview: text shown beside the tree for the selected node),
                   Picker, cli (the programs' shared options
                   and output), keys_help (the key list, for --help and the ? key, made from
                   TreeKeyboardSelector's key table)

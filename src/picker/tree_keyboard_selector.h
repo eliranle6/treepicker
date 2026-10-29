@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 #include "tree/tree.h"
 #include "treeprinter/treeprinter.h"
@@ -12,6 +13,7 @@
 #include "tree/search.h"
 #include "picker/picker_options.h"
 #include "picker/updates.h"
+#include "picker/previews.h"
 
 namespace picker {
 
@@ -82,6 +84,10 @@ public:
     // Show the nodes with these ids by these tags, enabled or disabled, from now on. Ids that
     // aren't in the tree are skipped.
     void apply_updates(const std::vector<Update>& updates);
+
+    // Show these previews beside the tree from now on (each replacing the node's earlier one). Ones
+    // for paths that aren't in the tree are kept anyway: they cost little.
+    void apply_previews(const std::vector<Preview>& previews);
 
 private:
     // Number of nodes that page up/down move
@@ -165,6 +171,9 @@ private:
     bool _is_filtering;
     // Whether the preview column is shown (when there are previews, and it fits)
     bool _is_preview_shown;
+    // The previews' lines, by node id, and the lines of the nodes without one
+    std::unordered_map<std::string, std::vector<std::string>> _previews;
+    std::vector<std::string> _default_preview;
     treelib::TreePrinter _tree_printer;
     TreeSelector _tree_selector;
     mode _mode;

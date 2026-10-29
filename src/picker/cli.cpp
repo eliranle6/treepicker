@@ -31,10 +31,12 @@ const std::string CLI_OPTIONS_USAGE = std::string(
     "                 the key pressed (or an empty line for Enter), the selected node's path\n"
     "                 after it, then the picked ones (with -m). Not keys treepicker uses.\n"
     "  --select PATH  start with the node at PATH (as printed) selected, rather than the root\n"
-    "  --preview FILE show text beside the tree for the selected node, in a column on the right\n"
-    "                 (p hides or shows it): FILE has a node's path (as printed), a tab and the\n"
-    "                 text's lines, separated by tabs, ending like the paths do (see -0), for\n"
-    "                 each node with a text\n"
+    "  --preview FD   show text beside the tree for the selected node, in a column on the right\n"
+    "                 (p hides or shows it), read from file descriptor FD while picking (a\n"
+    "                 file's or a pipe's): each is the node's path (as printed), a tab and the\n"
+    "                 text's lines, separated by tabs, ending like the paths do (see -0). A\n"
+    "                 later one replaces the node's text. With an empty path, it's the text of\n"
+    "                 the nodes that have none (e.g. that it's still being worked out).\n"
     "  -0             paths end with '\\0' rather than a newline (read ones and printed ones)\n"
     "  -h, --help     show this help\n"
     "\n"
@@ -68,8 +70,7 @@ CliOptions parse_cli(int argc, char* argv[]) {
         } else if (arg == "-m" or arg == "--multi") {
             options.is_multi = true;
         } else if (arg == "--header" or arg == "--root" or arg == "--picked" or arg == "--label" or
-                   arg == "--label-color" or arg == "--expect" or arg == "--select" or
-                   arg == "--preview") {
+                   arg == "--label-color" or arg == "--expect" or arg == "--select") {
             if (i + 1 == argc) {
                 options.error = arg + " needs a value";
             } else if (arg == "--expect") {
@@ -81,8 +82,6 @@ CliOptions parse_cli(int argc, char* argv[]) {
                 }
             } else if (arg == "--select") {
                 options.selected_path = argv[++i];
-            } else if (arg == "--preview") {
-                options.preview_file = argv[++i];
             } else if (arg == "--header") {
                 options.header = argv[++i];
             } else if (arg == "--root") {
@@ -101,13 +100,15 @@ CliOptions parse_cli(int argc, char* argv[]) {
             } else {
                 options.picked_file = argv[++i];
             }
-        } else if (arg == "--max-depth" or arg == "--updates") {
+        } else if (arg == "--max-depth" or arg == "--updates" or arg == "--preview") {
             char* end = nullptr;
             const long value = i + 1 < argc ? std::strtol(argv[i + 1], &end, 10) : -1;
             if (i + 1 == argc or end == argv[i + 1] or *end != '\0' or value < 0) {
                 options.error = arg + " needs a number (0 or more)";
             } else if (arg == "--max-depth") {
                 options.max_depth = value;
+            } else if (arg == "--preview") {
+                options.preview_fd = value;
             } else {
                 options.updates_fd = value;
             }
@@ -161,20 +162,7 @@ int pick_and_print(treelib::Tree& tree, const CliOptions& options) {
                 path == "." ? tree.get_root()->identifier : path);
         }
     }
-    if (not options.preview_file.empty()) {
-        std::ifstream preview_file(options.preview_file);
-        if (not preview_file) {
-            throw std::runtime_error("Cannot read " + options.preview_file);
-        }
-        picker_options.previews = read_previews(preview_file, delimiter);
-        // As printed: the root is "."
-        const auto root = picker_options.previews.find(".");
-        if (root != picker_options.previews.end() and tree.get_root() != nullptr) {
-            auto lines = std::move(root->second);
-            picker_options.previews.erase(root);
-            picker_options.previews[tree.get_root()->identifier] = std::move(lines);
-        }
-    }
+    picker_options.preview_fd = options.preview_fd;
     Picker picker(tree, picker_options);
     const auto picked = picker.run();
     const auto path = [&](const std::shared_ptr<treelib::Node>& node) {

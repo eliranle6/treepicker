@@ -184,9 +184,10 @@ TEST(cli, expect_and_select_are_in_the_usage) {
 }
 
 TEST(cli, preview) {
-    ASSERT_EQ(parse({}).preview_file, "");
-    ASSERT_EQ(parse({"--preview", "previews.txt", "-"}).preview_file, "previews.txt");
-    ASSERT_EQ(parse({"--preview", "previews.txt", "-"}).args, std::vector<std::string>({"-"}));
+    ASSERT_EQ(parse({}).preview_fd, -1);
+    ASSERT_EQ(parse({"--preview", "5", "-"}).preview_fd, 5);
+    ASSERT_EQ(parse({"--preview", "5", "-"}).args, std::vector<std::string>({"-"}));
     ASSERT_FALSE(parse({"--preview"}).error.empty());
-    ASSERT_NE(picker::CLI_OPTIONS_USAGE.find("--preview FILE"), std::string::npos);
+    ASSERT_FALSE(parse({"--preview", "file.txt"}).error.empty());
+    ASSERT_NE(picker::CLI_OPTIONS_USAGE.find("--preview FD"), std::string::npos);
 }

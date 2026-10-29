@@ -430,9 +430,8 @@ void TreeKeyboardSelector::print_tree(void) {
 }
 
 void TreeKeyboardSelector::print_preview(const Layout& layout) {
-    static const std::vector<std::string> NO_LINES;
-    const auto preview = _options.previews.find(_tree_selector.get_selection()->identifier);
-    const auto& lines = preview == _options.previews.end() ? NO_LINES : preview->second;
+    const auto preview = _previews.find(_tree_selector.get_selection()->identifier);
+    const auto& lines = preview == _previews.end() ? _default_preview : preview->second;
     // After the line and a space, up to the screen's last column, which stays empty
     const int column = layout.preview_column + 2;
     const int width = std::max(0, getmaxx(stdscr) - 1 - column);
@@ -477,7 +476,7 @@ TreeKeyboardSelector::Layout TreeKeyboardSelector::get_layout(void) {
     // The preview column on the right, if there are previews, and room for it
     const int window_width = getmaxx(stdscr);
     layout.preview_column = -1;
-    if (not _options.previews.empty() and _is_preview_shown and
+    if (_options.preview_fd >= 0 and _is_preview_shown and
             window_width >= MIN_WIDTH_WITH_PREVIEW) {
         layout.preview_column = window_width - window_width * PREVIEW_FIFTHS / 5;
     }
@@ -574,6 +573,26 @@ void TreeKeyboardSelector::apply_updates(const std::vector<Update>& updates) {
         _tree_selector.select_visible_ancestor();
     }
     print_tree();
+}
+
+void TreeKeyboardSelector::apply_previews(const std::vector<Preview>& previews) {
+    if (previews.empty()) {
+        return;
+    }
+    for (const auto& preview : previews) {
+        if (preview.path.empty()) {
+            _default_preview = preview.lines;
+        } else if (preview.path == "." and _tree.get_root() != nullptr) {
+            // As printed: the root is "."
+            _previews[_tree.get_root()->identifier] = preview.lines;
+        } else {
+            _previews[preview.path] = preview.lines;
+        }
+    }
+    // Only the column changes, but drawing it alone isn't worth its own code
+    if (get_layout().preview_column >= 0 and _mode != mode::MODE_HELP) {
+        print_tree();
+    }
 }
 
 } // namespace picker

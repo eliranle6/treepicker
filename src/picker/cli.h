@@ -42,8 +42,9 @@ struct CliOptions {
     std::string expect_keys;
     // --select PATH: the node to start with selected ("." for the root)
     std::string selected_path;
-    // --preview FILE: lines to show beside the tree for nodes, by their paths (see read_previews())
-    std::string preview_file;
+    // --preview FD: read the lines to show beside the tree for nodes from FD while picking (see
+    // PreviewsReader); -1: none
+    int preview_fd = -1;
 
     bool is_help_requested = false;
     // Set if the command line isn't valid

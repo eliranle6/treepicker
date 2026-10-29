@@ -3,7 +3,6 @@
 
 #include <string>
 #include <vector>
-#include "picker/previews.h"
 
 namespace picker {
 
@@ -37,9 +36,10 @@ struct PickerOptions {
     // The id of the node to start with selected, rather than the root; "" (or one that isn't in
     // the tree): the root
     std::string selected_id;
-    // Lines to show in a column beside the tree when a node is selected, by its id; none: no
-    // column
-    Previews previews;
+    // A file descriptor to read previews from while picking (see PreviewsReader): the lines to
+    // show in a column beside the tree while a node is selected, each ending with
+    // updates_delimiter too; -1: none, and no column
+    int preview_fd = -1;
 };
 
 } // namespace picker

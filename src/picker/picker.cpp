@@ -7,12 +7,15 @@ Picker::Picker(treelib::Tree& tree, const PickerOptions& options) :
     _tree_keyboard_selector(tree, options),
     _tree(tree),
     _updates_reader(options.updates_delimiter),
+    _previews_reader(options.updates_delimiter),
     _keyboard_reactor([&](void) { _tree_keyboard_selector.initialize(); },
                       [&](int c) { return _tree_keyboard_selector.char_pressed(c); },
-                      options.updates_fd,
-                      [&](const std::string& data) {
+                      {{options.updates_fd, [&](const std::string& data) {
                           _tree_keyboard_selector.apply_updates(_updates_reader.feed(data));
-                      })
+                       }},
+                       {options.preview_fd, [&](const std::string& data) {
+                          _tree_keyboard_selector.apply_previews(_previews_reader.feed(data));
+                       }}})
 {}
 
 std::vector<std::shared_ptr<treelib::Node>> Picker::run(void) {
