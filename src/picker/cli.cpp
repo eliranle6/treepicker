@@ -31,6 +31,9 @@ const std::string CLI_OPTIONS_USAGE = std::string(
     "                 the key pressed (or an empty line for Enter), the selected node's path\n"
     "                 after it, then the picked ones (with -m). Not keys treepicker uses.\n"
     "  --select PATH  start with the node at PATH (as printed) selected, rather than the root\n"
+    "  --selection FD write the selected node's path (as printed) to file descriptor FD at the\n"
+    "                 start and whenever the selection moves, ending like the paths do (see -0),\n"
+    "                 e.g. for the caller to work out its --preview\n"
     "  --print-selection\n"
     "                 print the selected node's path first (after --expect's key), whatever\n"
     "                 finished picking, so the caller can --select it again\n"
@@ -103,7 +106,8 @@ CliOptions parse_cli(int argc, char* argv[]) {
             } else {
                 options.picked_file = argv[++i];
             }
-        } else if (arg == "--max-depth" or arg == "--updates" or arg == "--preview") {
+        } else if (arg == "--max-depth" or arg == "--updates" or arg == "--preview" or
+                   arg == "--selection") {
             char* end = nullptr;
             const long value = i + 1 < argc ? std::strtol(argv[i + 1], &end, 10) : -1;
             if (i + 1 == argc or end == argv[i + 1] or *end != '\0' or value < 0) {
@@ -112,6 +116,8 @@ CliOptions parse_cli(int argc, char* argv[]) {
                 options.max_depth = value;
             } else if (arg == "--preview") {
                 options.preview_fd = value;
+            } else if (arg == "--selection") {
+                options.selection_fd = value;
             } else {
                 options.updates_fd = value;
             }
@@ -168,6 +174,7 @@ int pick_and_print(treelib::Tree& tree, const CliOptions& options) {
         }
     }
     picker_options.preview_fd = options.preview_fd;
+    picker_options.selection_fd = options.selection_fd;
     Picker picker(tree, picker_options);
     const auto picked = picker.run();
     const auto path = [&](const std::shared_ptr<treelib::Node>& node) {

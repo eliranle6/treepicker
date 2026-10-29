@@ -27,10 +27,17 @@ public:
     std::shared_ptr<treelib::Node> get_selection(void) { return _tree_keyboard_selector.get_selection(); }
 
 private:
+    // Write the selection's path to options.selection_fd, if it moved since it was last written
+    void report_selection(void);
+
     TreeKeyboardSelector _tree_keyboard_selector;
     treelib::Tree& _tree;
     UpdatesReader _updates_reader;
     PreviewsReader _previews_reader;
+    int _selection_fd;
+    char _delimiter;
+    // The node last written to _selection_fd
+    std::shared_ptr<treelib::Node> _reported_selection;
     KeyboardReactor _keyboard_reactor;
 };
 

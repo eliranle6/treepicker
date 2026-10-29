@@ -40,6 +40,10 @@ struct PickerOptions {
     // show in a column beside the tree while a node is selected, each ending with
     // updates_delimiter too; -1: none, and no column
     int preview_fd = -1;
+    // A file descriptor to write the selected node's path to (as printed, ending with
+    // updates_delimiter), at the start and whenever the selection moves, so the caller can work
+    // something out about it (e.g. for its preview); -1: none
+    int selection_fd = -1;
 };
 
 } // namespace picker

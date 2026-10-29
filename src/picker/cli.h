@@ -48,6 +48,8 @@ struct CliOptions {
     // --preview FD: read the lines to show beside the tree for nodes from FD while picking (see
     // PreviewsReader); -1: none
     int preview_fd = -1;
+    // --selection FD: write the selected node's path to FD whenever the selection moves; -1: none
+    int selection_fd = -1;
 
     bool is_help_requested = false;
     // Set if the command line isn't valid

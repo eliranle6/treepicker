@@ -189,6 +189,13 @@ TEST(cli, print_selection) {
     ASSERT_NE(picker::CLI_OPTIONS_USAGE.find("--print-selection"), std::string::npos);
 }
 
+TEST(cli, selection) {
+    ASSERT_EQ(parse({}).selection_fd, -1);
+    ASSERT_EQ(parse({"--selection", "7", "-"}).selection_fd, 7);
+    ASSERT_FALSE(parse({"--selection"}).error.empty());
+    ASSERT_NE(picker::CLI_OPTIONS_USAGE.find("--selection FD"), std::string::npos);
+}
+
 TEST(cli, preview) {
     ASSERT_EQ(parse({}).preview_fd, -1);
     ASSERT_EQ(parse({"--preview", "5", "-"}).preview_fd, 5);
