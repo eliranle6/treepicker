@@ -25,7 +25,9 @@ const std::string CLI_OPTIONS_USAGE = std::string(
     "                 descriptor FD: each is the node's path (or option), a tab, and what\n"
     "                 to show, ending like the paths do (see -0). It's still printed by its\n"
     "                 path when picked. With a tab and 'disabled' after what to show, the node\n"
-    "                 is shown in grey and can't be picked, until an update without them.\n"
+    "                 is shown in grey and can't be picked, until an update without them. With\n"
+    "                 an empty path, what to show is the caller's status: a yellow label on the\n"
+    "                 bottom line (empty: none).\n"
     "  --expect KEYS  keys (letters, digits or punctuation) that finish picking too, so the\n"
     "                 caller can act on the selected node: then the first line printed is\n"
     "                 the key pressed (or an empty line for Enter), the selected node's path\n"
@@ -34,6 +36,11 @@ const std::string CLI_OPTIONS_USAGE = std::string(
     "  --selection FD write the selected node's path (as printed) to file descriptor FD at the\n"
     "                 start and whenever the selection moves, ending like the paths do (see -0),\n"
     "                 e.g. for the caller to work out its --preview\n"
+    "  --notify KEYS  keys (any, Tab (Ctrl-I) too, but treepicker's own) that tell the caller of the\n"
+    "                 selection and the picks, without finishing picking: each writes to --notify-fd's\n"
+    "                 file descriptor the key, the selected node's path, the picked ones' paths,\n"
+    "                 each ending like the paths do (see -0), and an empty one to end it\n"
+    "  --notify-fd FD the file descriptor --notify's keys write to\n"
     "  --print-selection\n"
     "                 print the selected node's path first (after --expect's key), whatever\n"
     "                 finished picking, so the caller can --select it again\n"
@@ -68,6 +75,20 @@ static std::string expect_key_error(char key) {
     return "";
 }
 
+// Why key can't be a --notify key, or "" if it can: any byte (a control key too, e.g. Tab, which is
+// Ctrl-I) but treepicker's own keys
+static std::string notify_key_error(char key) {
+    for (auto& command : TreeKeyboardSelector::get_key_commands()) {
+        for (auto& binding : command.bindings) {
+            if (binding.first == static_cast<unsigned char>(key)) {
+                return "--notify key " + std::to_string(static_cast<unsigned char>(key)) +
+                    " is one of treepicker's keys";
+            }
+        }
+    }
+    return "";
+}
+
 CliOptions parse_cli(int argc, char* argv[]) {
     CliOptions options;
     for (int i = 1; i < argc; ++i) {
@@ -77,7 +98,7 @@ CliOptions parse_cli(int argc, char* argv[]) {
         } else if (arg == "-m" or arg == "--multi") {
             options.is_multi = true;
         } else if (arg == "--header" or arg == "--root" or arg == "--picked" or arg == "--label" or
-                   arg == "--label-color" or arg == "--expect" or arg == "--select") {
+                   arg == "--label-color" or arg == "--expect" or arg == "--select" or arg == "--notify") {
             if (i + 1 == argc) {
                 options.error = arg + " needs a value";
             } else if (arg == "--expect") {
@@ -89,6 +110,13 @@ CliOptions parse_cli(int argc, char* argv[]) {
                 }
             } else if (arg == "--select") {
                 options.selected_path = argv[++i];
+            } else if (arg == "--notify") {
+                options.notify_keys += argv[++i];
+                for (char key : std::string(argv[i])) {
+                    if (options.error.empty()) {
+                        options.error = notify_key_error(key);
+                    }
+                }
             } else if (arg == "--header") {
                 options.header = argv[++i];
             } else if (arg == "--root") {
@@ -108,7 +136,7 @@ CliOptions parse_cli(int argc, char* argv[]) {
                 options.picked_file = argv[++i];
             }
         } else if (arg == "--max-depth" or arg == "--updates" or arg == "--preview" or
-                   arg == "--selection") {
+                   arg == "--selection" or arg == "--notify-fd") {
             char* end = nullptr;
             const long value = i + 1 < argc ? std::strtol(argv[i + 1], &end, 10) : -1;
             if (i + 1 == argc or end == argv[i + 1] or *end != '\0' or value < 0) {
@@ -119,6 +147,8 @@ CliOptions parse_cli(int argc, char* argv[]) {
                 options.preview_fd = value;
             } else if (arg == "--selection") {
                 options.selection_fd = value;
+            } else if (arg == "--notify-fd") {
+                options.notify_fd = value;
             } else {
                 options.updates_fd = value;
             }
@@ -176,6 +206,8 @@ int pick_and_print(treelib::Tree& tree, const CliOptions& options) {
     }
     picker_options.preview_fd = options.preview_fd;
     picker_options.selection_fd = options.selection_fd;
+    picker_options.notify_keys = options.notify_keys;
+    picker_options.notify_fd = options.notify_fd;
     Picker picker(tree, picker_options);
     const auto picked = picker.run();
     const auto path = [&](const std::shared_ptr<treelib::Node>& node) {

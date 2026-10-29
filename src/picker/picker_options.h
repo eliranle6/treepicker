@@ -44,6 +44,10 @@ struct PickerOptions {
     // updates_delimiter), at the start and whenever the selection moves, so the caller can work
     // something out about it (e.g. for its preview); -1: none
     int selection_fd = -1;
+    // Keys (bytes) that tell the caller of the selection and the picks, through notify_fd, without
+    // finishing picking (see Picker::notify()); -1: none
+    std::string notify_keys;
+    int notify_fd = -1;
 };
 
 } // namespace picker

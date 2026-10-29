@@ -25,6 +25,11 @@ TEST(updates, null_delimited) {
               Updates({{"a", "A\nmore", false}, {"b", "B", false}}));
 }
 
+TEST(updates, an_empty_id_is_the_status) {
+    picker::UpdatesReader reader('\n');
+    ASSERT_EQ(reader.feed("\tClaude: 3 files\n"), Updates({{"", "Claude: 3 files", false}}));
+}
+
 TEST(updates, the_tag_may_have_tabs_and_be_empty) {
     picker::UpdatesReader reader('\n');
     ASSERT_EQ(reader.feed("a\tA\tB\nb\t\n"), Updates({{"a", "A\tB", false}, {"b", "", false}}));

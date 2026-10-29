@@ -196,6 +196,16 @@ TEST(cli, selection) {
     ASSERT_NE(picker::CLI_OPTIONS_USAGE.find("--selection FD"), std::string::npos);
 }
 
+TEST(cli, notify) {
+    auto options = parse({"--notify", "\t", "--notify-fd", "8", "-"});
+    ASSERT_EQ(options.notify_keys, "\t");
+    ASSERT_EQ(options.notify_fd, 8);
+    ASSERT_TRUE(options.error.empty());
+    // Not one of treepicker's keys
+    ASSERT_FALSE(parse({"--notify", "j"}).error.empty());
+    ASSERT_NE(picker::CLI_OPTIONS_USAGE.find("--notify KEYS"), std::string::npos);
+}
+
 TEST(cli, preview) {
     ASSERT_EQ(parse({}).preview_fd, -1);
     ASSERT_EQ(parse({"--preview", "5", "-"}).preview_fd, 5);

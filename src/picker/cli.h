@@ -50,6 +50,10 @@ struct CliOptions {
     int preview_fd = -1;
     // --selection FD: write the selected node's path to FD whenever the selection moves; -1: none
     int selection_fd = -1;
+    // --notify KEYS, --notify-fd FD: keys that write the selection and the picks to FD, without
+    // finishing picking
+    std::string notify_keys;
+    int notify_fd = -1;
 
     bool is_help_requested = false;
     // Set if the command line isn't valid

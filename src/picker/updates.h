@@ -22,7 +22,8 @@ struct Update {
 // descriptor (--updates FD), e.g. a menu's options saying how something they're about is going.
 // Each is "ID\tTAG", or "ID\tTAG\tdisabled" for a node that can't be picked (until an update
 // without it), and ends with the delimiter; the node keeps its id, so it's printed as before when
-// picked.
+// picked. One with an empty ID is the caller's status (what it's doing, e.g. working something out
+// about the nodes), shown as a label on the stats line ("": none).
 class UpdatesReader {
 public:
     explicit UpdatesReader(char delimiter);

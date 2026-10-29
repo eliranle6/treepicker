@@ -13,6 +13,7 @@ Picker::Picker(treelib::Tree& tree, const PickerOptions& options) :
     _updates_reader(options.updates_delimiter),
     _previews_reader(options.updates_delimiter),
     _selection_fd(options.selection_fd),
+    _notify_fd(options.notify_fd),
     _delimiter(options.updates_delimiter),
     _keyboard_reactor([&](void) {
                           _tree_keyboard_selector.initialize();
@@ -32,7 +33,10 @@ Picker::Picker(treelib::Tree& tree, const PickerOptions& options) :
                           _tree_keyboard_selector.apply_previews(_previews_reader.feed(data));
                        }}})
 {
-    if (_selection_fd >= 0) {
+    if (_notify_fd >= 0) {
+        _tree_keyboard_selector.set_notify([&](int key) { notify(key); });
+    }
+    if (_selection_fd >= 0 or _notify_fd >= 0) {
         // A caller that stopped reading makes a write fail (then it's no longer written to),
         // rather than end treepicker
         signal(SIGPIPE, SIG_IGN);
@@ -50,20 +54,39 @@ void Picker::report_selection(void) {
         return;
     }
     _reported_selection = selection;
+    write_all(_selection_fd, path_of(selection) + _delimiter);
+}
+
+void Picker::notify(int key) {
+    std::string data = std::string(1, static_cast<char>(key)) + _delimiter;
+    auto selection = _tree_keyboard_selector.get_selection();
+    if (selection != nullptr) {
+        data += path_of(selection) + _delimiter;
+    }
+    for (auto& node : _tree_keyboard_selector.get_picked_so_far()) {
+        data += path_of(node) + _delimiter;
+    }
+    write_all(_notify_fd, data + _delimiter);
+}
+
+std::string Picker::path_of(const std::shared_ptr<treelib::Node>& node) {
     // As printed: the root is "."
-    const std::string data = (selection == _tree.get_root() ? std::string(".") : selection->identifier) +
-        _delimiter;
-    for (std::size_t written = 0; written < data.size();) {
-        const ssize_t size = write(_selection_fd, data.data() + written, data.size() - written);
+    return node == _tree.get_root() ? std::string(".") : node->identifier;
+}
+
+bool Picker::write_all(int& fd, const std::string& data) {
+    for (std::size_t written = 0; fd >= 0 and written < data.size();) {
+        const ssize_t size = write(fd, data.data() + written, data.size() - written);
         if (size < 0 and errno == EINTR) {
             continue;
         }
         if (size <= 0) {
-            _selection_fd = -1;
-            return;
+            fd = -1;
+            return false;
         }
         written += size;
     }
+    return fd >= 0;
 }
 
 }

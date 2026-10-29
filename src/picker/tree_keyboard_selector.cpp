@@ -80,6 +80,12 @@ bool TreeKeyboardSelector::char_pressed(int c)
                 std::vector<std::shared_ptr<treelib::Node>>();
             return true;
         }
+        if (c > 0 and c <= 0xff and _notify and
+                _options.notify_keys.find(static_cast<char>(c)) != std::string::npos) {
+            _notify(c);
+            print_tree();
+            return false;
+        }
         for (auto& command : get_key_commands()) {
             for (auto& binding : command.bindings) {
                 if (binding.first == c) {
@@ -399,9 +405,14 @@ void TreeKeyboardSelector::print_tree(void) {
                 std::to_string(place.second) + ")";
         }
         // Room for the labels, which are drawn over it, each followed by a space
+        // The caller's, then what it says it's doing
+        std::vector<Label> shown_labels = _options.labels;
+        if (not _status.empty()) {
+            shown_labels.push_back({_status, "yellow"});
+        }
         std::vector<std::string> labels;
         int labels_width = 0;
-        for (auto& label : _options.labels) {
+        for (auto& label : shown_labels) {
             labels.push_back(" " + guishell::printable(label.text) + " ");
             labels_width += guishell::display_width(labels.back()) + 1;
         }
@@ -421,7 +432,7 @@ void TreeKeyboardSelector::print_tree(void) {
         attroff(COLOR_PAIR(guishell::color_pair(guishell::BLACK_ON_WHITE)));
         int column = 0;
         for (std::size_t i = 0; i < labels.size(); ++i) {
-            const int pair = guishell::label_color_pair(_options.labels[i].color);
+            const int pair = guishell::label_color_pair(shown_labels[i].color);
             attron(COLOR_PAIR(pair));
             attron(A_BOLD);
             const int width = std::max(0, window_width - 1 - column);
@@ -593,6 +604,10 @@ void TreeKeyboardSelector::apply_updates(const std::vector<Update>& updates) {
         return;
     }
     for (const auto& update : updates) {
+        if (update.id.empty()) {
+            _status = update.tag;
+            continue;
+        }
         auto node = _tree.get_node(update.id);
         if (node != nullptr) {
             node->tag = update.tag;

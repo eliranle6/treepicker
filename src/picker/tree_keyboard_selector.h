@@ -2,6 +2,7 @@
 #ifndef TREE_KEYBOARD_SELECTOR_H__
 #define TREE_KEYBOARD_SELECTOR_H__
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -88,6 +89,12 @@ public:
     // Show these previews beside the tree from now on (each replacing the node's earlier one). Ones
     // for paths that aren't in the tree are kept anyway: they cost little.
     void apply_previews(const std::vector<Preview>& previews);
+
+    // Call notify(key) when a PickerOptions::notify_keys key is pressed (moving around)
+    void set_notify(std::function<void(int)> notify) { _notify = notify; }
+
+    // The picked nodes so far (with is_multi)
+    std::vector<std::shared_ptr<treelib::Node>> get_picked_so_far(void) { return _tree_selector.get_picked_nodes(); }
 
 private:
     // Number of nodes that page up/down move
@@ -176,6 +183,9 @@ private:
     // The previews' lines, by node id, and the lines of the nodes without one
     std::unordered_map<std::string, std::vector<std::string>> _previews;
     std::vector<std::string> _default_preview;
+    std::function<void(int)> _notify;
+    // What the caller says it's doing (an update with no id), shown as a label; "": nothing
+    std::string _status;
     treelib::TreePrinter _tree_printer;
     TreeSelector _tree_selector;
     mode _mode;

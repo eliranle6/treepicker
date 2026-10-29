@@ -30,11 +30,23 @@ private:
     // Write the selection's path to options.selection_fd, if it moved since it was last written
     void report_selection(void);
 
+    // Write to options.notify_fd that key was pressed: the key, the selected node's path, the
+    // picked ones' paths, each ending with the delimiter, and an empty one to end it (as printed:
+    // the root is ".", so no path is empty)
+    void notify(int key);
+
+    // Write data to fd, all of it; false if it can't (and fd is then not written to again)
+    static bool write_all(int& fd, const std::string& data);
+
+    // A node's path, as printed
+    std::string path_of(const std::shared_ptr<treelib::Node>& node);
+
     TreeKeyboardSelector _tree_keyboard_selector;
     treelib::Tree& _tree;
     UpdatesReader _updates_reader;
     PreviewsReader _previews_reader;
     int _selection_fd;
+    int _notify_fd;
     char _delimiter;
     // The node last written to _selection_fd
     std::shared_ptr<treelib::Node> _reported_selection;
