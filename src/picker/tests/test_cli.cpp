@@ -189,6 +189,12 @@ TEST(cli, print_selection) {
     ASSERT_NE(picker::CLI_OPTIONS_USAGE.find("--print-selection"), std::string::npos);
 }
 
+TEST(cli, enter_picks_selection) {
+    ASSERT_FALSE(parse({}).is_selection_picked_if_none);
+    ASSERT_TRUE(parse({"-m", "--enter-picks-selection", "-"}).is_selection_picked_if_none);
+    ASSERT_NE(picker::CLI_OPTIONS_USAGE.find("--enter-picks-selection"), std::string::npos);
+}
+
 TEST(cli, selection) {
     ASSERT_EQ(parse({}).selection_fd, -1);
     ASSERT_EQ(parse({"--selection", "7", "-"}).selection_fd, 7);

@@ -261,9 +261,17 @@ bool TreeKeyboardSelector::pick(void) {
             _picked = {_tree_selector.get_selection()};
             return true;
         }
-    } else if (_tree_selector.get_nr_picked() > 0) {
-        _picked = _tree_selector.get_picked_nodes();
-        return true;
+    } else {
+        auto selection = _tree_selector.get_selection();
+        if (_tree_selector.get_nr_picked() == 0 and _options.is_selection_picked_if_none and
+                not selection->is_disabled and (_options.is_root_pickable or selection != _tree.get_root())) {
+            // As Space would pick it
+            toggle_pick();
+        }
+        if (_tree_selector.get_nr_picked() > 0) {
+            _picked = _tree_selector.get_picked_nodes();
+            return true;
+        }
     }
     return false;
 }

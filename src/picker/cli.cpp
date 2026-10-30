@@ -13,6 +13,9 @@ namespace picker {
 const std::string CLI_OPTIONS_USAGE = std::string(
     "  -m, --multi    pick several nodes: Space picks the selected node and everything under\n"
     "                 it (or unpicks them), and Enter finishes\n"
+    "  --enter-picks-selection\n"
+    "                 with -m, Enter with nothing picked picks the selected node (and everything\n"
+    "                 under it, as Space does) and finishes, rather than doing nothing\n"
     "  --header TEXT  show TEXT (one or more lines) above the tree\n"
     "  --root NAME    show the tree's root as NAME\n"
     "  --label TEXT   show TEXT in bold at the start of the bottom line, e.g. a mode. Given\n"
@@ -157,6 +160,8 @@ CliOptions parse_cli(int argc, char* argv[]) {
             options.is_typed = true;
         } else if (arg == "--dirs-only") {
             options.is_dirs_only = true;
+        } else if (arg == "--enter-picks-selection") {
+            options.is_selection_picked_if_none = true;
         } else if (arg == "--print-selection") {
             options.is_selection_printed = true;
         } else if (arg == "--lazy") {
@@ -181,6 +186,7 @@ int pick_and_print(treelib::Tree& tree, const CliOptions& options) {
     }
     PickerOptions picker_options;
     picker_options.is_multi = options.is_multi;
+    picker_options.is_selection_picked_if_none = options.is_selection_picked_if_none;
     picker_options.header = options.header;
     picker_options.labels = options.labels;
     // A list's root is only its title

@@ -16,6 +16,8 @@ struct CliOptions {
     bool is_null_separated = false;
     // -m, --multi: pick several nodes
     bool is_multi = false;
+    // --enter-picks-selection: with -m, Enter with nothing picked picks the selected node
+    bool is_selection_picked_if_none = false;
     // --header TEXT: lines shown above the tree
     std::string header;
     // --root NAME: the name shown for the tree's root (e.g. a stdin tree's, which is ".")

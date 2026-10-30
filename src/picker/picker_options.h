@@ -16,6 +16,9 @@ struct Label {
 struct PickerOptions {
     // Pick several nodes: Space picks or unpicks, Enter finishes
     bool is_multi = false;
+    // With is_multi, Enter with nothing picked picks the selected node (and what's under it, as
+    // Space does), rather than doing nothing
+    bool is_selection_picked_if_none = false;
     // Lines shown above the tree
     std::string header;
     // The labels at the start of the stats line, side by side
