@@ -415,8 +415,8 @@ void TreeKeyboardSelector::print_tree(void) {
         // Room for the labels, which are drawn over it, each followed by a space
         // The caller's, then what it says it's doing
         std::vector<Label> shown_labels = _options.labels;
-        if (not _status.empty()) {
-            shown_labels.push_back({_status, "yellow"});
+        for (auto& label : parse_status(_status)) {
+            shown_labels.push_back(label);
         }
         std::vector<std::string> labels;
         int labels_width = 0;

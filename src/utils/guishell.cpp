@@ -76,6 +76,8 @@ const LabelColor LABEL_COLORS[] = {
     {"blue", COLOR_BLUE, COLOR_WHITE},
     {"magenta", COLOR_MAGENTA, COLOR_WHITE},
     {"cyan", COLOR_CYAN, COLOR_BLACK},
+    // Of 256 colors, 208; with fewer, yellow (see label_color_pair())
+    {"orange", 208, COLOR_BLACK},
 };
 
 struct StyleColors {
@@ -126,7 +128,9 @@ int label_color_pair(const std::string& color) {
     for (std::size_t i = 0; i < sizeof(LABEL_COLORS) / sizeof(LABEL_COLORS[0]); ++i) {
         if (color == LABEL_COLORS[i].name) {
             const short pair = FIRST_LABEL_COLOR_PAIR + i;
-            init_pair(pair, LABEL_COLORS[i].foreground, LABEL_COLORS[i].background);
+            const short background = LABEL_COLORS[i].background < COLORS ?
+                LABEL_COLORS[i].background : COLOR_YELLOW;
+            init_pair(pair, LABEL_COLORS[i].foreground, background);
             return pair;
         }
     }

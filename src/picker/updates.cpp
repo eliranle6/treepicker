@@ -1,5 +1,7 @@
 #include "picker/updates.h"
 
+#include "utils/guishell.h"
+
 namespace picker {
 
 UpdatesReader::UpdatesReader(char delimiter) :
@@ -28,6 +30,35 @@ std::vector<Update> UpdatesReader::feed(const std::string& data) {
     }
     _pending.erase(0, start);
     return updates;
+}
+
+std::vector<Label> parse_status(const std::string& status) {
+    static const std::string DEFAULT_COLOR = "yellow";
+    if (status.empty()) {
+        return {};
+    }
+    if (status[0] != STATUS_MARK) {
+        return {{status, DEFAULT_COLOR}};
+    }
+    std::vector<Label> labels;
+    // Each part: the mark, its color, the mark, its text (up to the next part's mark)
+    for (std::size_t start = 0; start < status.size();) {
+        const std::size_t color_end = status.find(STATUS_MARK, start + 1);
+        if (color_end == std::string::npos) {
+            break;
+        }
+        std::size_t text_end = status.find(STATUS_MARK, color_end + 1);
+        if (text_end == std::string::npos) {
+            text_end = status.size();
+        }
+        const std::string color = status.substr(start + 1, color_end - start - 1);
+        const std::string text = status.substr(color_end + 1, text_end - color_end - 1);
+        if (not text.empty()) {
+            labels.push_back({text, guishell::is_label_color(color) ? color : DEFAULT_COLOR});
+        }
+        start = text_end;
+    }
+    return labels;
 }
 
 } // namespace picker

@@ -45,3 +45,35 @@ TEST(updates, disabled) {
     ASSERT_EQ(reader.feed("a\tA (nothing to do)\tdisabled\nb\tB\tdisabled more\n"),
               Updates({{"a", "A (nothing to do)", true}, {"b", "B\tdisabled more", false}}));
 }
+
+using Labels = std::vector<picker::Label>;
+
+namespace picker {
+// For comparing vectors of them (found by argument-dependent lookup)
+bool operator==(const Label& a, const Label& b) {
+    return a.text == b.text and a.color == b.color;
+}
+}
+
+TEST(status, plain_text_is_one_yellow_label) {
+    ASSERT_EQ(picker::parse_status("Claude: 3 files"), Labels({{"Claude: 3 files", "yellow"}}));
+}
+
+TEST(status, empty_is_none) {
+    ASSERT_EQ(picker::parse_status(""), Labels());
+}
+
+// "\x01" apart from what follows it, which may be a hex digit (\x01a is one character)
+TEST(status, marked_parts_are_labels_of_their_colors) {
+    ASSERT_EQ(picker::parse_status("\x01" "green\x01" "a hashed\x01" "orange\x01" "b 40% hashed"),
+              Labels({{"a hashed", "green"}, {"b 40% hashed", "orange"}}));
+}
+
+TEST(status, an_unknown_color_is_yellow_and_empty_parts_are_dropped) {
+    ASSERT_EQ(picker::parse_status("\x01" "pink\x01" "a\x01" "red\x01\x01" "green\x01"),
+              Labels({{"a", "yellow"}}));
+}
+
+TEST(status, a_part_without_its_closing_mark_is_dropped) {
+    ASSERT_EQ(picker::parse_status("\x01" "green\x01" "a\x01" "red"), Labels({{"a", "green"}}));
+}
