@@ -39,8 +39,9 @@ FdInputStream::~FdInputStream(void) {
     ::close(_buffer.fd());
 }
 
-fds_istreamp subprocess_read_output(const char *filename, char const *argv[], int stderr_fd) {
-    int proc_output_fd = utils::subprocess_get_fd(filename, argv, stderr_fd);
+fds_istreamp subprocess_read_output(const char *filename, char const *argv[], int stderr_fd,
+                                    pid_t* child_pid) {
+    int proc_output_fd = utils::subprocess_get_fd(filename, argv, stderr_fd, child_pid);
     return std::make_unique<fds_istream>(proc_output_fd);
 }
 
@@ -54,7 +55,7 @@ static void redirect_pipe_to_stdout(int fd) {
     }
 }
 
-int subprocess_get_fd(char const * path, char const * argv[], int stderr_fd) {
+int subprocess_get_fd(char const * path, char const * argv[], int stderr_fd, pid_t* child_pid) {
     /* Prepare file descriptors for shared pipe with subprocess */
     pipe_fds_t pipe_fds;
     /* A blocking pipe: with O_NONBLOCK, the child's writes fail with EAGAIN once the pipe
@@ -75,7 +76,7 @@ int subprocess_get_fd(char const * path, char const * argv[], int stderr_fd) {
         if (stderr_fd >= 0) {
             dup2(stderr_fd, STDERR_FILENO);
         }
-        execv(path, (char * const *)argv);
+        execvp(path, (char * const *)argv);
         /* Exit since if we're here then the above execve failed. */
         std::cout << "Failed running child process '" << path << "' with args"
             << argv << std::endl;
@@ -87,6 +88,9 @@ int subprocess_get_fd(char const * path, char const * argv[], int stderr_fd) {
      * Close the write end so that reading gets EOF when the child exits. The caller reaps the
      * child (wait()) after reading its output. */
     close(pipe_fds.write_fd);
+    if (child_pid != nullptr) {
+        *child_pid = pid;
+    }
     return pipe_fds.read_fd;
 }
 

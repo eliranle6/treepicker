@@ -40,7 +40,8 @@ void PathTree::update_from_filesystem(int max_depth, bool is_dirs_only) {
     // A named string, since path.string() returns a temporary, which the pointers would outlive
     const std::string path_string = path.string();
     const std::string max_depth_string = std::to_string(max_depth);
-    std::vector<char const*> argv = {"/usr/bin/find", path_string.c_str()};
+    // find on PATH, as the Python side runs it
+    std::vector<char const*> argv = {"find", path_string.c_str()};
     if (max_depth >= 0) {
         argv.insert(argv.end(), {"-maxdepth", max_depth_string.c_str()});
     }
@@ -48,8 +49,9 @@ void PathTree::update_from_filesystem(int max_depth, bool is_dirs_only) {
     // find's errors go to a temporary file rather than a pipe: reading two pipes one after the
     // other could block find on a full one
     FILE* errors_file = std::tmpfile();
+    pid_t find_pid = -1;
     auto entries_stream = utils::subprocess_read_output(
-        "/usr/bin/find", argv.data(), errors_file == nullptr ? -1 : fileno(errors_file));
+        "find", argv.data(), errors_file == nullptr ? -1 : fileno(errors_file), &find_pid);
 
     // Read the dirs and files (skipping other types, e.g. symlinks)
     // Each its path and kind
@@ -63,8 +65,10 @@ void PathTree::update_from_filesystem(int max_depth, bool is_dirs_only) {
         }
     }
 
-    // Reap the find process
-    wait(nullptr);
+    // Reap the find process: its own, not any child (e.g. one the caller ran)
+    if (find_pid > 0) {
+        waitpid(find_pid, nullptr, 0);
+    }
 
     scan_errors.clear();
     if (errors_file != nullptr) {
