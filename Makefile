@@ -17,6 +17,8 @@ LIB = $(BUILD)/libtreepicker.a
 
 # Each program: build/<name> from its dir's sources
 PROGRAMS = $(BUILD)/treepicker $(BUILD)/dirdiff $(BUILD)/picker
+# The ones installed: not the demo picker (a hard-coded tree)
+INSTALLED = $(BUILD)/treepicker $(BUILD)/dirdiff
 TREEPICKER_SOURCES = $(wildcard src/treepicker/*.cpp)
 PICKER_SOURCES = src/picker/main.cpp
 
@@ -70,9 +72,9 @@ test: all $(TESTS)
 	done; \
 	test -z "$$failed"
 
-install: $(PROGRAMS)
+install: $(INSTALLED)
 	install -d $(DESTDIR)$(PREFIX)/bin
-	install $(PROGRAMS) $(DESTDIR)$(PREFIX)/bin
+	install $(INSTALLED) $(DESTDIR)$(PREFIX)/bin
 
 clean:
 	rm -rf $(BUILD)
