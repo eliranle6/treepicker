@@ -46,6 +46,12 @@ TEST(updates, disabled) {
               Updates({{"a", "A (nothing to do)", true}, {"b", "B\tdisabled more", false}}));
 }
 
+TEST(updates, a_color_before_disabled) {
+    picker::UpdatesReader reader('\n');
+    ASSERT_EQ(reader.feed("a\tMove\tcolor=blue\nb\tRemove\tcolor=red\tdisabled\nc\tA\tB\n"),
+              Updates({{"a", "Move", false, "blue"}, {"b", "Remove", true, "red"}, {"c", "A\tB", false, ""}}));
+}
+
 using Labels = std::vector<picker::Label>;
 
 namespace picker {

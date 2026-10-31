@@ -54,6 +54,8 @@ struct CliOptions {
     // --preview FD: read the lines to show beside the tree for nodes from FD while picking (see
     // PreviewsReader); -1: none
     int preview_fd = -1;
+    // --preview-below: show it below the tree, rather than in a column on the right
+    bool is_preview_below = false;
     // --selection FD: write the selected node's path to FD whenever the selection moves; -1: none
     int selection_fd = -1;
     // --notify KEYS, --notify-fd FD: keys that write the selection and the picks to FD, without

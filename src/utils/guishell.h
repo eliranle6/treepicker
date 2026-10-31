@@ -26,8 +26,14 @@ enum Style {
     RED_ON_BLUE,
     MAGENTA_ON_BLUE,
     GREY,
+    GREEN,
+    CYAN,
     NR_STYLES
 };
+
+// The style of text in the named color (red, green, yellow, blue, magenta, cyan), or DEFAULT for
+// another name
+Style text_style(const std::string& color);
 
 // The curses color pair of a style, for attron()
 int color_pair(Style style);

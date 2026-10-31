@@ -34,7 +34,9 @@ const std::string CLI_OPTIONS_USAGE = std::string(
     "                 descriptor FD: each is the node's path (or option), a tab, and what\n"
     "                 to show, ending like the paths do (see -0). It's still printed by its\n"
     "                 path when picked. With a tab and 'disabled' after what to show, the node\n"
-    "                 is shown in grey and can't be picked, until an update without them. With\n"
+    "                 is shown in grey and can't be picked, until an update without them; with\n"
+    "                 a tab and color=NAME before them (red, green, yellow, blue, magenta, cyan),\n"
+    "                 its text is in that color, unless it's selected or picked. With\n"
     "                 an empty path, what to show is the caller's status: a yellow label on the\n"
     "                 bottom line (empty: none); or labels of other colors, each part starting\n"
     "                 with \\x01, a --label-color and \\x01 a label of that color.\n"
@@ -61,6 +63,10 @@ const std::string CLI_OPTIONS_USAGE = std::string(
     "                 later one replaces the node's text. With an empty path, it's the text of\n"
     "                 the nodes that have none (e.g. that it's still being worked out). A line\n"
     "                 starting with \\x01, a --label-color and \\x01 is shown bold on that color.\n"
+    "  --preview-below\n"
+    "                 show --preview's text below the tree, above the bottom lines, rather than\n"
+    "                 in a column (at most 4 lines), each line in parts: plain, then after \\x01,\n"
+    "                 a --label-color and \\x01, on that color (an empty color: plain again)\n"
     "  -0             paths end with '\\0' rather than a newline (read ones and printed ones)\n"
     "  -h, --help     show this help\n"
     "\n"
@@ -182,6 +188,8 @@ CliOptions parse_cli(int argc, char* argv[]) {
             options.is_dirs_only = true;
         } else if (arg == "--enter-picks-selection") {
             options.is_selection_picked_if_none = true;
+        } else if (arg == "--preview-below") {
+            options.is_preview_below = true;
         } else if (arg == "--print-selection") {
             options.is_selection_printed = true;
         } else if (arg == "--lazy") {
@@ -233,6 +241,7 @@ int pick_and_print(treelib::Tree& tree, const CliOptions& options) {
         }
     }
     picker_options.preview_fd = options.preview_fd;
+    picker_options.is_preview_below = options.is_preview_below;
     picker_options.selection_fd = options.selection_fd;
     picker_options.notify_keys = options.notify_keys;
     picker_options.notify_fd = options.notify_fd;

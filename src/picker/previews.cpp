@@ -12,6 +12,30 @@ PreviewLine parse_preview_line(const std::string& line) {
     return {line, ""};
 }
 
+std::vector<PreviewLine> parse_preview_segments(const std::string& line) {
+    std::vector<PreviewLine> segments;
+    std::string color;
+    for (std::size_t start = 0; start < line.size();) {
+        const std::size_t mark = line.find(HIGHLIGHT_MARK, start);
+        const std::size_t end = mark == std::string::npos ? line.size() : mark;
+        if (end > start) {
+            segments.push_back({line.substr(start, end - start), color});
+        }
+        if (mark == std::string::npos) {
+            break;
+        }
+        const std::size_t color_end = line.find(HIGHLIGHT_MARK, mark + 1);
+        if (color_end == std::string::npos) {
+            // A mark without its color's end: the rest is text
+            segments.push_back({line.substr(mark + 1), color});
+            break;
+        }
+        color = line.substr(mark + 1, color_end - mark - 1);
+        start = color_end + 1;
+    }
+    return segments;
+}
+
 PreviewsReader::PreviewsReader(char delimiter) :
     _delimiter(delimiter)
 {}

@@ -387,7 +387,10 @@ void TreeKeyboardSelector::print_tree(void) {
 
     // Print tree, below it: up to the screen's last column, which stays empty (see
     // NCursesSink::write), or with a preview, up to a space before its column
-    move(layout.nr_header_rows, 0);
+    if (layout.tree_row > layout.nr_header_rows) {
+        print_line(layout.nr_header_rows, "", window_width, false);
+    }
+    move(layout.tree_row, 0);
     const int tree_width = layout.preview_column >= 0 ? layout.preview_column - 1 :
         window_width - 1;
     if (layout.tree_height > 0) {
@@ -397,6 +400,9 @@ void TreeKeyboardSelector::print_tree(void) {
         _out.set_line_width(0);
     }
     _out.flush();
+    if (layout.nr_preview_rows > 0) {
+        print_preview_below(layout, window_width);
+    }
     if (layout.preview_column >= 0) {
         print_preview(layout);
     }
@@ -495,14 +501,47 @@ void TreeKeyboardSelector::print_key_hints(int row, int window_width) {
     }
 }
 
-void TreeKeyboardSelector::print_preview(const Layout& layout) {
+const std::vector<std::string>& TreeKeyboardSelector::selected_preview(void) {
     const auto preview = _previews.find(_tree_selector.get_selection()->identifier);
-    const auto& lines = preview == _previews.end() ? _default_preview : preview->second;
+    return preview == _previews.end() ? _default_preview : preview->second;
+}
+
+void TreeKeyboardSelector::print_preview_below(const Layout& layout, int window_width) {
+    const auto& lines = selected_preview();
+    const int width = std::max(0, window_width - 1);
+    for (int i = 0; i < layout.nr_preview_rows; ++i) {
+        const int row = layout.preview_row + i;
+        move(row, 0);
+        clrtoeol();
+        if (i >= static_cast<int>(lines.size())) {
+            continue;
+        }
+        int column = 0;
+        for (auto& segment : parse_preview_segments(lines[i])) {
+            std::string text = guishell::printable(segment.text);
+            text.resize(guishell::nr_bytes_that_fit(text.data(), text.size(), std::max(0, width - column)));
+            const int pair = segment.highlight.empty() ? -1 : guishell::label_color_pair(segment.highlight);
+            if (pair >= 0) {
+                attron(COLOR_PAIR(pair));
+                attron(A_BOLD);
+            }
+            mvaddstr(row, column, text.c_str());
+            if (pair >= 0) {
+                attroff(A_BOLD);
+                attroff(COLOR_PAIR(pair));
+            }
+            column += guishell::display_width(text);
+        }
+    }
+}
+
+void TreeKeyboardSelector::print_preview(const Layout& layout) {
+    const auto& lines = selected_preview();
     // After the line and a space, up to the screen's last column, which stays empty
     const int column = layout.preview_column + 2;
     const int width = std::max(0, getmaxx(stdscr) - 1 - column);
     for (int i = 0; i < layout.tree_height; ++i) {
-        const int row = layout.nr_header_rows + i;
+        const int row = layout.tree_row + i;
         mvaddstr(row, layout.preview_column, "│");
         if (i < static_cast<int>(lines.size())) {
             const PreviewLine line = parse_preview_line(lines[i]);
@@ -544,17 +583,37 @@ TreeKeyboardSelector::Layout TreeKeyboardSelector::get_layout(void) {
         layout.stats_row = --nr_rows_left;
     }
 
-    // The header on top, as much of it as leaves the tree enough room
+    // The preview below the tree (with --preview-below), as many rows as its longest, if the tree
+    // keeps enough room
+    layout.preview_row = -1;
+    layout.nr_preview_rows = 0;
+    if (_options.preview_fd >= 0 and _options.is_preview_below) {
+        std::size_t longest = _default_preview.size();
+        for (auto& preview : _previews) {
+            longest = std::max(longest, preview.second.size());
+        }
+        layout.nr_preview_rows = std::min({static_cast<int>(longest), MAX_PREVIEW_BELOW_ROWS,
+                                           std::max(0, nr_rows_left - MIN_TREE_HEIGHT)});
+        nr_rows_left -= layout.nr_preview_rows;
+        layout.preview_row = nr_rows_left;
+    }
+
+    // The header on top, as much of it as leaves the tree enough room, and a blank row after it
     layout.nr_header_rows = std::min(static_cast<int>(_header_lines.size()),
                                      std::max(0, nr_rows_left - MIN_TREE_HEIGHT));
     nr_rows_left -= layout.nr_header_rows;
+    layout.tree_row = layout.nr_header_rows;
+    if (layout.nr_header_rows > 0 and nr_rows_left - 1 >= MIN_TREE_HEIGHT) {
+        ++layout.tree_row;
+        --nr_rows_left;
+    }
 
     layout.tree_height = nr_rows_left;
 
     // The preview column on the right, if there are previews, and room for it
     const int window_width = getmaxx(stdscr);
     layout.preview_column = -1;
-    if (_options.preview_fd >= 0 and _is_preview_shown and
+    if (_options.preview_fd >= 0 and not _options.is_preview_below and _is_preview_shown and
             window_width >= MIN_WIDTH_WITH_PREVIEW) {
         layout.preview_column = window_width - window_width * PREVIEW_FIFTHS / 5;
     }
@@ -647,6 +706,7 @@ void TreeKeyboardSelector::apply_updates(const std::vector<Update>& updates) {
         if (node != nullptr) {
             node->tag = update.tag;
             node->is_disabled = update.is_disabled;
+            node->color = update.color;
         }
     }
     // Searches match tags

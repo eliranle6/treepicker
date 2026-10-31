@@ -102,6 +102,8 @@ const StyleColors STYLES[] = {
     {MAGENTA_ON_BLUE, COLOR_MAGENTA, COLOR_BLUE, "35;44"},
     // Color 8 is bright black, which is ANSI's 90
     {GREY, 8, -1, "90"},
+    {GREEN, COLOR_GREEN, -1, "32"},
+    {CYAN, COLOR_CYAN, -1, "36"},
 };
 static_assert(sizeof(STYLES) / sizeof(STYLES[0]) == NR_STYLES, "a style without colors");
 
@@ -109,6 +111,18 @@ static_assert(sizeof(STYLES) / sizeof(STYLES[0]) == NR_STYLES, "a style without 
 const short FIRST_STYLE_COLOR_PAIR = 1;
 // Past the styles' pairs
 const short FIRST_LABEL_COLOR_PAIR = FIRST_STYLE_COLOR_PAIR + NR_STYLES;
+}
+
+Style text_style(const std::string& color) {
+    static const std::pair<const char*, Style> STYLES_BY_NAME[] = {
+        {"red", RED}, {"green", GREEN}, {"yellow", YELLOW}, {"blue", BLUE}, {"magenta", MAGENTA},
+        {"cyan", CYAN}};
+    for (auto& style : STYLES_BY_NAME) {
+        if (color == style.first) {
+            return style.second;
+        }
+    }
+    return DEFAULT;
 }
 
 int color_pair(Style style) {

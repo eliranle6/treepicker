@@ -134,6 +134,8 @@ private:
     // line on each side of it
     static constexpr int MIN_TREE_HEIGHT = 4;
 
+    // The most rows the preview below the tree takes (--preview-below)
+    static constexpr int MAX_PREVIEW_BELOW_ROWS = 4;
     // The narrowest screen that the preview column is shown on, and the part of the screen's
     // width it takes, in fifths
     static constexpr int MIN_WIDTH_WITH_PREVIEW = 60;
@@ -149,6 +151,11 @@ private:
         int search_row;
         // The column of the line between the tree and the preview column
         int preview_column;
+        // The row the tree starts at (below the header, and a blank row after it), and the
+        // preview's rows below the tree (--preview-below): the first, and how many (0: none)
+        int tree_row;
+        int preview_row;
+        int nr_preview_rows;
     };
     Layout get_layout(void);
 
@@ -162,6 +169,12 @@ private:
 
     // Draw the selected node's preview in its column, right of the tree's rows
     void print_preview(const Layout& layout);
+
+    // Draw it below the tree instead (--preview-below), in its colored parts
+    void print_preview_below(const Layout& layout, int window_width);
+
+    // The selected node's preview's lines
+    const std::vector<std::string>& selected_preview(void);
 
     // Lay the tree out without drawing it, so the selection can move relative to what would
     // be printed

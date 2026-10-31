@@ -34,6 +34,10 @@ public:
     // Whether the node can't be picked (e.g. an option with nothing to do), shown greyed
     bool is_disabled;
 
+    // The color of its text (a guishell::text_style() name, e.g. "blue"), when it isn't selected,
+    // picked or greyed; "": the default
+    std::string color;
+
     // Whether children holds all of the node's children. A tree that loads nodes lazily (see
     // Tree::load_children()) adds a node's children only when they're needed.
     bool are_children_loaded;

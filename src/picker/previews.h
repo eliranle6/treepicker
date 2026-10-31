@@ -32,6 +32,11 @@ struct PreviewLine {
 constexpr char HIGHLIGHT_MARK = '\x01';
 PreviewLine parse_preview_line(const std::string& line);
 
+// A preview's line shown below the tree (--preview-below), in parts: plain text, until
+// HIGHLIGHT_MARK, a label color's name and HIGHLIGHT_MARK again, after which it's shown on that
+// color (bold), until the next such mark (an empty color's: plain again). Empty parts are dropped.
+std::vector<PreviewLine> parse_preview_segments(const std::string& line);
+
 // Previews read from a file descriptor while picking. Each is the node's path, a tab, and its
 // lines, separated by tabs, and ends with the delimiter (so it's one line without -0); a later
 // one for a path replaces the earlier.

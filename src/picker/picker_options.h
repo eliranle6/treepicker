@@ -58,6 +58,10 @@ struct PickerOptions {
     // show in a column beside the tree while a node is selected, each ending with
     // updates_delimiter too; -1: none, and no column
     int preview_fd = -1;
+    // Show the selected node's preview below the tree, above the stats line (in colored parts:
+    // see parse_preview_segments()), rather than in a column on the right, e.g. a menu's, saying
+    // what its selected option would do
+    bool is_preview_below = false;
     // A file descriptor to write the selected node's path to (as printed, ending with
     // updates_delimiter), at the start and whenever the selection moves, so the caller can work
     // something out about it (e.g. for its preview); -1: none

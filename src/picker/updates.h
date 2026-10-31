@@ -14,16 +14,19 @@ struct Update {
     std::string id;
     std::string tag;
     bool is_disabled;
+    // Its text's color (see Node::color), "" for the default
+    std::string color;
 
     bool operator==(const Update& other) const {
-        return id == other.id and tag == other.tag and is_disabled == other.is_disabled;
+        return id == other.id and tag == other.tag and is_disabled == other.is_disabled and
+            color == other.color;
     }
 };
 
 // Changes to the shown names (tags) of the tree's nodes while it's shown, read from a file
 // descriptor (--updates FD), e.g. a menu's options saying how something they're about is going.
-// Each is "ID\tTAG", or "ID\tTAG\tdisabled" for a node that can't be picked (until an update
-// without it), and ends with the delimiter; the node keeps its id, so it's printed as before when
+// Each is "ID\tTAG", then optionally "\tcolor=NAME" for its text's color, and "\tdisabled" for a
+// node that can't be picked (until an update without it), and ends with the delimiter; the node keeps its id, so it's printed as before when
 // picked. One with an empty ID is the caller's status (what it's doing, e.g. working something out
 // about the nodes), shown as labels on the stats line ("": none; see parse_status()).
 class UpdatesReader {

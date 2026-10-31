@@ -10,6 +10,7 @@ UpdatesReader::UpdatesReader(char delimiter) :
 
 std::vector<Update> UpdatesReader::feed(const std::string& data) {
     static const std::string DISABLED = "\tdisabled";
+    static const std::string COLOR = "\tcolor=";
     std::vector<Update> updates;
     _pending += data;
     std::size_t start = 0;
@@ -25,7 +26,14 @@ std::vector<Update> UpdatesReader::feed(const std::string& data) {
             if (is_disabled) {
                 tag.resize(tag.size() - DISABLED.size());
             }
-            updates.push_back({update.substr(0, tab), tag, is_disabled});
+            std::string color;
+            const std::size_t color_start = tag.rfind(COLOR);
+            if (color_start != std::string::npos and
+                    tag.find('\t', color_start + COLOR.size()) == std::string::npos) {
+                color = tag.substr(color_start + COLOR.size());
+                tag.resize(color_start);
+            }
+            updates.push_back({update.substr(0, tab), tag, is_disabled, color});
         }
     }
     _pending.erase(0, start);

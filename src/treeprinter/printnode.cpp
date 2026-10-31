@@ -123,6 +123,8 @@ void print_node(
         } else {
             const bool is_highlighted = pn.node->is_search_match and not is_selection;
             const bool is_greyed = pn.node->is_disabled and not is_picked;
+            const bool is_colored = not pn.node->color.empty() and not is_picked and not is_greyed and
+                not is_selection and not is_highlighted;
             if (is_picked) {
                 out << guishell::Color(is_selection ? guishell::RED_ON_BLUE : guishell::RED);
             } else if (is_greyed) {
@@ -131,9 +133,11 @@ void print_node(
                 out << guishell::Color(guishell::WHITE_ON_BLUE);
             } else if (is_highlighted) {
                 out << guishell::Color(guishell::YELLOW);
+            } else if (is_colored) {
+                out << guishell::Color(guishell::text_style(pn.node->color));
             }
             out << tag;
-            if ((is_picked or is_highlighted or is_greyed) and not is_selection) {
+            if ((is_picked or is_highlighted or is_greyed or is_colored) and not is_selection) {
                 out << guishell::Color(guishell::DEFAULT);
             }
         }
