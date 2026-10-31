@@ -33,6 +33,8 @@ public:
 
     // Whether the node can't be picked (e.g. an option with nothing to do), shown greyed
     bool is_disabled;
+    // Whether moving through the tree skips it too (e.g. a menu's heading or blank line)
+    bool is_skipped = false;
 
     // The color of its text (a guishell::text_style() name, e.g. "blue"), when it isn't selected,
     // picked or greyed; "": the default

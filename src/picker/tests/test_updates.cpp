@@ -83,3 +83,9 @@ TEST(status, an_unknown_color_is_yellow_and_empty_parts_are_dropped) {
 TEST(status, a_part_without_its_closing_mark_is_dropped) {
     ASSERT_EQ(picker::parse_status("\x01" "green\x01" "a\x01" "red"), Labels({{"a", "green"}}));
 }
+
+TEST(updates, a_skipped_node_is_disabled_too) {
+    picker::UpdatesReader reader('\n');
+    picker::Update skipped{"a", "-- A --", true, "", true};
+    ASSERT_EQ(reader.feed("a\t-- A --\tskipped\n"), Updates({skipped}));
+}

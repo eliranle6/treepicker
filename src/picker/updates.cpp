@@ -11,6 +11,7 @@ UpdatesReader::UpdatesReader(char delimiter) :
 std::vector<Update> UpdatesReader::feed(const std::string& data) {
     static const std::string DISABLED = "\tdisabled";
     static const std::string COLOR = "\tcolor=";
+    static const std::string SKIPPED = "\tskipped";
     std::vector<Update> updates;
     _pending += data;
     std::size_t start = 0;
@@ -21,10 +22,13 @@ std::vector<Update> UpdatesReader::feed(const std::string& data) {
         if (tab != std::string::npos) {
             std::string tag = update.substr(tab + 1);
             // A tag can't end with it: tabs are shown as '?' anyway
-            const bool is_disabled = tag.size() >= DISABLED.size() and
-                tag.compare(tag.size() - DISABLED.size(), DISABLED.size(), DISABLED) == 0;
+            auto ends_with = [&tag](const std::string& end) {
+                return tag.size() >= end.size() and tag.compare(tag.size() - end.size(), end.size(), end) == 0;
+            };
+            const bool is_skipped = ends_with(SKIPPED);
+            const bool is_disabled = is_skipped or ends_with(DISABLED);
             if (is_disabled) {
-                tag.resize(tag.size() - DISABLED.size());
+                tag.resize(tag.size() - (is_skipped ? SKIPPED : DISABLED).size());
             }
             std::string color;
             const std::size_t color_start = tag.rfind(COLOR);
@@ -33,7 +37,7 @@ std::vector<Update> UpdatesReader::feed(const std::string& data) {
                 color = tag.substr(color_start + COLOR.size());
                 tag.resize(color_start);
             }
-            updates.push_back({update.substr(0, tab), tag, is_disabled, color});
+            updates.push_back({update.substr(0, tab), tag, is_disabled, color, is_skipped});
         }
     }
     _pending.erase(0, start);

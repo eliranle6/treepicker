@@ -188,13 +188,29 @@ const std::vector<TreeKeyboardSelector::KeyCommand>& TreeKeyboardSelector::get_k
     return commands;
 }
 
+void TreeKeyboardSelector::move_skipping(void (TreeSelector::*first)(void), void (TreeSelector::*then)(void)) {
+    const auto start = _tree_selector.get_selection();
+    (_tree_selector.*first)();
+    for (auto last = start; _tree_selector.get_selection() != nullptr and _tree_selector.get_selection()->is_skipped;) {
+        if (_tree_selector.get_selection() == last) {
+            // Nowhere else to go: back where it was
+            _tree_selector.select(start);
+            return;
+        }
+        last = _tree_selector.get_selection();
+        // Moving by what's printed needs the layout around the new selection
+        layout_tree();
+        (_tree_selector.*then)();
+    }
+}
+
 bool TreeKeyboardSelector::move_to_prev(void) {
-    _tree_selector.move_to_prev();
+    move_skipping(&TreeSelector::move_to_prev, &TreeSelector::move_to_prev);
     return false;
 }
 
 bool TreeKeyboardSelector::move_to_next(void) {
-    _tree_selector.move_to_next();
+    move_skipping(&TreeSelector::move_to_next, &TreeSelector::move_to_next);
     return false;
 }
 
@@ -218,22 +234,22 @@ bool TreeKeyboardSelector::page_up(void) {
 }
 
 bool TreeKeyboardSelector::move_to_first_sibling(void) {
-    _tree_selector.move_to_first_sibling();
+    move_skipping(&TreeSelector::move_to_first_sibling, &TreeSelector::move_to_next_sibling);
     return false;
 }
 
 bool TreeKeyboardSelector::move_to_last_sibling(void) {
-    _tree_selector.move_to_last_sibling();
+    move_skipping(&TreeSelector::move_to_last_sibling, &TreeSelector::move_to_prev_sibling);
     return false;
 }
 
 bool TreeKeyboardSelector::move_to_next_sibling(void) {
-    _tree_selector.move_to_next_sibling();
+    move_skipping(&TreeSelector::move_to_next_sibling, &TreeSelector::move_to_next_sibling);
     return false;
 }
 
 bool TreeKeyboardSelector::move_to_prev_sibling(void) {
-    _tree_selector.move_to_prev_sibling();
+    move_skipping(&TreeSelector::move_to_prev_sibling, &TreeSelector::move_to_prev_sibling);
     return false;
 }
 
@@ -741,6 +757,7 @@ void TreeKeyboardSelector::apply_updates(const std::vector<Update>& updates) {
             node->tag = is_styled ? guishell::unstyled(update.tag) : update.tag;
             node->styled_tag = is_styled ? update.tag : "";
             node->is_disabled = update.is_disabled;
+            node->is_skipped = update.is_skipped;
             node->color = update.color;
         }
     }

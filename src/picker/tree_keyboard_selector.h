@@ -112,6 +112,9 @@ private:
     bool move_to_first_sibling(void);
     bool move_to_last_sibling(void);
     bool move_to_next_sibling(void);
+    // Move with first, then again with then while the selection is a skipped node (see
+    // Node::is_skipped); back where it was if that gets to no other node
+    void move_skipping(void (TreeSelector::*first)(void), void (TreeSelector::*then)(void));
     bool move_to_prev_sibling(void);
     bool move_to_first_shown(void);
     bool move_to_last_shown(void);
