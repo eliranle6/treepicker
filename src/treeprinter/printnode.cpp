@@ -137,13 +137,16 @@ void print_node(
             } else if (is_colored) {
                 out << guishell::Color(guishell::text_style(pn.node->color));
             }
-            const bool is_styled = not pn.node->styled_tag.empty() and not is_greyed and
+            // A skipped node (a heading, a line of information) keeps its styles, its plain parts
+            // grey; one only disabled is all grey
+            const bool is_styled = not pn.node->styled_tag.empty() and (not is_greyed or pn.node->is_skipped) and
                 not is_selection and not is_highlighted;
             if (is_styled) {
                 // Each part in its style, then what's after the node's own text (e.g. " (...)").
                 // Picked, its plain parts (e.g. its name) are red, and the others keep their styles.
                 for (auto& part : guishell::parse_styled(pn.node->styled_tag)) {
-                    out << guishell::Color(is_picked and part.style == guishell::DEFAULT ? guishell::RED : part.style);
+                    const auto plain = is_picked ? guishell::RED : is_greyed ? guishell::GREY : guishell::DEFAULT;
+                    out << guishell::Color(part.style == guishell::DEFAULT ? plain : part.style);
                     if (part.is_bold) {
                         out << guishell::Bold();
                     }

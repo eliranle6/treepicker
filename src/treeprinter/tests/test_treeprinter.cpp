@@ -429,3 +429,18 @@ TEST(treeprinter, a_picked_styled_tag_is_red_but_its_styled_parts) {
     auto lines = split_string_by_newline(out.str());
     ASSERT_TRUE(does_string_contain_substring(lines[1], "\x1B[31ma.jpg  \x1B[39;49m\x1B[35m[x]"));
 }
+
+TEST(treeprinter, a_skipped_styled_tag_keeps_its_styles_its_plain_parts_grey) {
+    treelib::Tree tree;
+    tree.create_node("root", "root", "");
+    auto line = tree.create_node("Synced today", "a", "root");
+    line->styled_tag = "\x02green\x02Synced\x02\x02 today";
+    line->is_disabled = line->is_skipped = true;
+    tree.create_node("b", "b", "root");
+    treelib::TreePrinter tree_printer(tree);
+    std::ostringstream out;
+    tree_printer.print(out, false, tree.get_node("b"), 10);
+    auto lines = split_string_by_newline(out.str());
+    ASSERT_TRUE(does_string_contain_substring(lines[1], "\x1B[32mSynced"));
+    ASSERT_TRUE(does_string_contain_substring(lines[1], "\x1B[90m today"));
+}
