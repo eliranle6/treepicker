@@ -465,11 +465,35 @@ TEST(tree_selector, move_to_first_and_last_sibling_skips_hidden_ones) {
     ASSERT_EQ(tree_selector.get_selection()->tag, "child000001");
 }
 
+TEST(tree_selector, move_to_next_and_prev_sibling_skips_hidden_ones_and_stays_at_the_ends) {
+    auto tree = get_flat_tree(4);
+    tree.get_node("child000001")->is_search_visible = false;
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    tree_selector.explore_children_of_selection();
+
+    tree_selector.move_to_next_sibling();
+    ASSERT_EQ(tree_selector.get_selection()->tag, "child000002");
+    tree_selector.move_to_next_sibling();
+    ASSERT_EQ(tree_selector.get_selection()->tag, "child000003");
+    tree_selector.move_to_next_sibling();
+    ASSERT_EQ(tree_selector.get_selection()->tag, "child000003");
+    tree_selector.move_to_prev_sibling();
+    ASSERT_EQ(tree_selector.get_selection()->tag, "child000002");
+    tree_selector.move_to_prev_sibling();
+    ASSERT_EQ(tree_selector.get_selection()->tag, "child000000");
+    tree_selector.move_to_prev_sibling();
+    ASSERT_EQ(tree_selector.get_selection()->tag, "child000000");
+}
+
 TEST(tree_selector, move_to_sibling_of_the_root_stays) {
     auto tree = get_simple_tree();
     treelib::TreePrinter tree_printer(tree);
     picker::TreeSelector tree_selector(tree, tree_printer);
     tree_selector.move_to_last_sibling();
+    ASSERT_EQ(tree_selector.get_selection(), tree.get_root());
+    tree_selector.move_to_next_sibling();
+    tree_selector.move_to_prev_sibling();
     ASSERT_EQ(tree_selector.get_selection(), tree.get_root());
 }
 

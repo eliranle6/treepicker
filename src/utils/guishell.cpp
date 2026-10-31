@@ -104,6 +104,7 @@ const StyleColors STYLES[] = {
     {GREY, 8, -1, "90"},
     {GREEN, COLOR_GREEN, -1, "32"},
     {CYAN, COLOR_CYAN, -1, "36"},
+    {ORANGE, 208, -1, "38;5;208"},
 };
 static_assert(sizeof(STYLES) / sizeof(STYLES[0]) == NR_STYLES, "a style without colors");
 
@@ -116,13 +117,59 @@ const short FIRST_LABEL_COLOR_PAIR = FIRST_STYLE_COLOR_PAIR + NR_STYLES;
 Style text_style(const std::string& color) {
     static const std::pair<const char*, Style> STYLES_BY_NAME[] = {
         {"red", RED}, {"green", GREEN}, {"yellow", YELLOW}, {"blue", BLUE}, {"magenta", MAGENTA},
-        {"cyan", CYAN}};
+        {"cyan", CYAN}, {"grey", GREY}, {"orange", ORANGE}};
     for (auto& style : STYLES_BY_NAME) {
         if (color == style.first) {
             return style.second;
         }
     }
     return DEFAULT;
+}
+
+std::vector<StyledPart> parse_styled(const std::string& s) {
+    std::vector<StyledPart> parts;
+    Style style = DEFAULT;
+    bool is_bold = false;
+    for (std::size_t start = 0; start < s.size();) {
+        const std::size_t mark = s.find(STYLE_MARK, start);
+        const std::size_t end = mark == std::string::npos ? s.size() : mark;
+        if (end > start) {
+            parts.push_back({s.substr(start, end - start), style, is_bold});
+        }
+        if (mark == std::string::npos) {
+            break;
+        }
+        const std::size_t style_end = s.find(STYLE_MARK, mark + 1);
+        if (style_end == std::string::npos) {
+            break;
+        }
+        style = DEFAULT;
+        is_bold = false;
+        std::string word;
+        // Each word, ended by a comma, a space or the style's end
+        for (std::size_t i = mark + 1; i <= style_end; ++i) {
+            if (i == style_end or s[i] == ',' or s[i] == ' ') {
+                if (word == "bold") {
+                    is_bold = true;
+                } else if (not word.empty()) {
+                    style = text_style(word);
+                }
+                word.clear();
+            } else {
+                word += s[i];
+            }
+        }
+        start = style_end + 1;
+    }
+    return parts;
+}
+
+std::string unstyled(const std::string& s) {
+    std::string text;
+    for (auto& part : parse_styled(s)) {
+        text += part.text;
+    }
+    return text;
 }
 
 int color_pair(Style style) {
@@ -225,6 +272,9 @@ GuiShell::GuiShell(NCursesSink &buff) :
     // echoing it onto the screen
     raw();
     noecho();
+    // Keep Enter's carriage return as it is, rather than as a newline, so Enter is told from
+    // Ctrl-J (a newline)
+    nonl();
     // Get arrow keys and the like as single key codes (KEY_UP...), rather than as escape
     // sequences, which would otherwise end up typed into the search keyword
     keypad(stdscr, TRUE);
@@ -235,7 +285,9 @@ GuiShell::GuiShell(NCursesSink &buff) :
     use_default_colors();
     is_initialized = true;
     for (auto& style : STYLES) {
-        init_pair(color_pair(style.style), style.foreground, style.background);
+        // Orange is of 256 colors: with fewer, yellow
+        init_pair(color_pair(style.style), style.foreground >= COLORS and style.style == ORANGE ?
+                  COLOR_YELLOW : style.foreground, style.background);
     }
 }
 

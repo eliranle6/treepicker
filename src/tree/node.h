@@ -37,6 +37,9 @@ public:
     // The color of its text (a guishell::text_style() name, e.g. "blue"), when it isn't selected,
     // picked or greyed; "": the default
     std::string color;
+    // Its tag in styled parts (see guishell::parse_styled(); tag is their text), shown that way
+    // when it isn't selected, picked, greyed or a search's match; "": none
+    std::string styled_tag;
 
     // Whether children holds all of the node's children. A tree that loads nodes lazily (see
     // Tree::load_children()) adds a node's children only when they're needed.

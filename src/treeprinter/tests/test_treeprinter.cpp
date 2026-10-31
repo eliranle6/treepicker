@@ -392,3 +392,25 @@ TEST(treeprinter, dirs_end_with_a_slash) {
     // Neither known as a dir nor with children: a file
     ASSERT_FALSE(does_string_contain_substring(lines[4], "/"));
 }
+
+TEST(treeprinter, a_styled_tag_is_printed_in_its_parts_styles) {
+    treelib::Tree tree;
+    tree.create_node("root", "root", "");
+    auto file = tree.create_node("a.jpg  [x]", "a.jpg", "root");
+    file->kind = 'f';
+    file->styled_tag = "a.jpg  \x02" "bold,magenta\x02[x]";
+    tree.create_node("b.jpg", "b.jpg", "root")->kind = 'f';
+    treelib::TreePrinter tree_printer(tree);
+    std::ostringstream out;
+    // b.jpg selected: a.jpg isn't
+    tree_printer.print(out, false, tree.get_node("b.jpg"), 10);
+
+    auto lines = split_string_by_newline(out.str());
+    ASSERT_TRUE(does_string_contain_substring(lines[1], "a.jpg  \x1B[39;49m\x1B[35m\x1B[1m[x]\x1B[0m"));
+    ASSERT_EQ(split_string_by_newline(strip_escape_codes(out.str()))[1], "  ├── a.jpg  [x]");
+
+    // Selected, it's as any selected node
+    std::ostringstream selected_out;
+    tree_printer.print(selected_out, false, file, 10);
+    ASSERT_FALSE(does_string_contain_substring(split_string_by_newline(selected_out.str())[1], "\x1B[35m"));
+}

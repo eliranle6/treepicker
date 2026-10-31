@@ -3,6 +3,7 @@
 
 #include <streambuf>
 #include <string>
+#include <vector>
 #include <iostream>
 #include <curses.h>
 #include <unistd.h>
@@ -28,12 +29,34 @@ enum Style {
     GREY,
     GREEN,
     CYAN,
+    // Of 256 colors, 208; with fewer, yellow
+    ORANGE,
     NR_STYLES
 };
 
-// The style of text in the named color (red, green, yellow, blue, magenta, cyan), or DEFAULT for
-// another name
+// The style of text in the named color (red, green, yellow, blue, magenta, cyan, grey, orange), or
+// DEFAULT for another name
 Style text_style(const std::string& color);
+
+// A part of a text in styles (see parse_styled())
+struct StyledPart {
+    std::string text;
+    Style style;
+    bool is_bold;
+
+    bool operator==(const StyledPart& other) const {
+        return text == other.text and style == other.style and is_bold == other.is_bold;
+    }
+};
+
+// A text in styled parts: plain, until STYLE_MARK, a style and STYLE_MARK again, after which it's
+// in that style, until the next such mark. A style is words, separated by commas or spaces: a
+// color's name (see text_style()) and "bold"; an empty one is plain again. Empty parts are dropped,
+// and a mark without its style's end is dropped with the rest of the text.
+constexpr char STYLE_MARK = '\x02';
+std::vector<StyledPart> parse_styled(const std::string& s);
+// The text of s without its styles' marks
+std::string unstyled(const std::string& s);
 
 // The curses color pair of a style, for attron()
 int color_pair(Style style);

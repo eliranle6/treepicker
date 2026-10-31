@@ -88,6 +88,35 @@ void TreeSelector::move_to_last_sibling(void) {
     }
 }
 
+void TreeSelector::move_to_next_sibling(void) {
+    if (_selection == nullptr or _selection == _tree.get_root()) {
+        return;
+    }
+    auto& siblings = _tree.get_node(_selection->parent)->children;
+    auto position = std::find(siblings.begin(), siblings.end(), _selection);
+    for (auto sibling = position + 1; sibling < siblings.end(); ++sibling) {
+        if ((*sibling)->is_search_visible) {
+            _selection = *sibling;
+            return;
+        }
+    }
+}
+
+void TreeSelector::move_to_prev_sibling(void) {
+    if (_selection == nullptr or _selection == _tree.get_root()) {
+        return;
+    }
+    auto& siblings = _tree.get_node(_selection->parent)->children;
+    auto position = std::find(siblings.begin(), siblings.end(), _selection);
+    while (position != siblings.begin()) {
+        --position;
+        if ((*position)->is_search_visible) {
+            _selection = *position;
+            return;
+        }
+    }
+}
+
 // Moving goes through what's printed, line by line, so the screen stays put rather than being
 // redrawn around each new selection. At the screen's edges it goes on, like scrolling a list: to the
 // node that a bigger screen would show next (or before), and the printer shows it, moving its view

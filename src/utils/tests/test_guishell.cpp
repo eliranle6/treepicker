@@ -93,3 +93,17 @@ TEST_F(TextWidthTest, display_width) {
     ASSERT_EQ(guishell::display_width("\xd7\xa9\xd7\x9c\xd7\x95\xd7\x9d"), 4);
     ASSERT_EQ(guishell::display_width("\xe4\xb8\xad\xe6\x96\x87"), 4);
 }
+
+TEST(guishell, parse_styled) {
+    using guishell::StyledPart;
+    ASSERT_EQ(guishell::parse_styled("plain"), std::vector<StyledPart>({{"plain", guishell::DEFAULT, false}}));
+    ASSERT_EQ(guishell::parse_styled("a\x02" "bold,magenta\x02" "b\x02" "grey\x02" "c\x02\x02" "d"),
+              std::vector<StyledPart>({{"a", guishell::DEFAULT, false}, {"b", guishell::MAGENTA, true},
+                                       {"c", guishell::GREY, false}, {"d", guishell::DEFAULT, false}}));
+    // Spaces between the words too; an unknown color is the default's; empty parts are dropped
+    ASSERT_EQ(guishell::parse_styled("\x02" "bold nocolor\x02" "x\x02" "red\x02"),
+              std::vector<StyledPart>({{"x", guishell::DEFAULT, true}}));
+    // A mark without its end: the rest is dropped
+    ASSERT_EQ(guishell::parse_styled("a\x02" "red"), std::vector<StyledPart>({{"a", guishell::DEFAULT, false}}));
+    ASSERT_EQ(guishell::unstyled("a\x02" "bold,magenta\x02" "b\x02\x02" "c"), "abc");
+}

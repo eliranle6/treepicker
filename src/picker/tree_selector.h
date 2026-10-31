@@ -30,6 +30,10 @@ public:
     // Counts only the siblings a search shows when filter is set. {0, 0} for the root.
     std::pair<std::size_t, std::size_t> get_place_among_siblings(bool filter);
     void move_to_last_sibling(void);
+    // Select the next/previous of the selection's siblings (that an ongoing search doesn't hide);
+    // on the last/first one, it stays
+    void move_to_next_sibling(void);
+    void move_to_prev_sibling(void);
 
     // If an ongoing search hides the selection, select its closest visible ancestor
     void select_visible_ancestor(void);

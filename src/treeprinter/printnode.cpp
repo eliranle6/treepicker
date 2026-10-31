@@ -136,7 +136,25 @@ void print_node(
             } else if (is_colored) {
                 out << guishell::Color(guishell::text_style(pn.node->color));
             }
-            out << tag;
+            const bool is_styled = not pn.node->styled_tag.empty() and not is_picked and
+                not is_greyed and not is_selection and not is_highlighted;
+            if (is_styled) {
+                // Each part in its style, then what's after the node's own text (e.g. " (...)")
+                for (auto& part : guishell::parse_styled(pn.node->styled_tag)) {
+                    out << guishell::Color(part.style);
+                    if (part.is_bold) {
+                        out << guishell::Bold();
+                    }
+                    out << guishell::printable(part.text);
+                    if (part.is_bold) {
+                        out << guishell::Unbold();
+                    }
+                    out << guishell::Color(guishell::DEFAULT);
+                }
+                out << tag.substr(std::min(tag.size(), guishell::printable(pn.node->tag).size()));
+            } else {
+                out << tag;
+            }
             if ((is_picked or is_highlighted or is_greyed or is_colored) and not is_selection) {
                 out << guishell::Color(guishell::DEFAULT);
             }

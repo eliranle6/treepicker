@@ -160,6 +160,8 @@ const std::vector<TreeKeyboardSelector::KeyCommand>& TreeKeyboardSelector::get_k
             {KEYCODE_LOWER_G, &T::move_to_first_shown}, {KEYCODE_UPPER_G, &T::move_to_last_shown}}},
         {"Home/End", "first/last sibling", {
             {KEY_HOME, &T::move_to_first_sibling}, {KEY_END, &T::move_to_last_sibling}}},
+        {"Ctrl-J/Ctrl-K", "next/previous sibling", {
+            {KEYCODE_CTRL_J, &T::move_to_next_sibling}, {KEYCODE_CTRL_K, &T::move_to_prev_sibling}}},
         {"Ctrl-D/Ctrl-U", "page down/up", {
             {KEYCODE_CTRL_D, &T::page_down}, {KEY_NPAGE, &T::page_down},
             {KEYCODE_CTRL_U, &T::page_up}, {KEY_PPAGE, &T::page_up}}},
@@ -222,6 +224,16 @@ bool TreeKeyboardSelector::move_to_first_sibling(void) {
 
 bool TreeKeyboardSelector::move_to_last_sibling(void) {
     _tree_selector.move_to_last_sibling();
+    return false;
+}
+
+bool TreeKeyboardSelector::move_to_next_sibling(void) {
+    _tree_selector.move_to_next_sibling();
+    return false;
+}
+
+bool TreeKeyboardSelector::move_to_prev_sibling(void) {
+    _tree_selector.move_to_prev_sibling();
     return false;
 }
 
@@ -535,6 +547,22 @@ void TreeKeyboardSelector::print_preview_below(const Layout& layout, int window_
     }
 }
 
+void TreeKeyboardSelector::print_styled(int row, int column, const std::string& line, int width) {
+    move(row, column);
+    for (auto& part : guishell::parse_styled(line)) {
+        std::string text = guishell::printable(part.text);
+        text.resize(guishell::nr_bytes_that_fit(text.data(), text.size(), std::max(0, width)));
+        attron(COLOR_PAIR(guishell::color_pair(part.style)));
+        if (part.is_bold) {
+            attron(A_BOLD);
+        }
+        addstr(text.c_str());
+        attroff(A_BOLD);
+        attroff(COLOR_PAIR(guishell::color_pair(part.style)));
+        width -= guishell::display_width(text);
+    }
+}
+
 void TreeKeyboardSelector::print_preview(const Layout& layout) {
     const auto& lines = selected_preview();
     // After the line and a space, up to the screen's last column, which stays empty
@@ -548,6 +576,10 @@ void TreeKeyboardSelector::print_preview(const Layout& layout) {
             std::string text = guishell::printable(line.text);
             text.resize(guishell::nr_bytes_that_fit(text.data(), text.size(), width));
             const int pair = line.highlight.empty() ? -1 : guishell::label_color_pair(line.highlight);
+            if (pair < 0 and line.text.find(guishell::STYLE_MARK) != std::string::npos) {
+                print_styled(row, column, line.text, width);
+                continue;
+            }
             if (pair < 0) {
                 mvaddstr(row, column, text.c_str());
                 continue;
@@ -704,7 +736,10 @@ void TreeKeyboardSelector::apply_updates(const std::vector<Update>& updates) {
         }
         auto node = _tree.get_node(update.id);
         if (node != nullptr) {
-            node->tag = update.tag;
+            // Searches match the text, not its styles' marks
+            const bool is_styled = update.tag.find(guishell::STYLE_MARK) != std::string::npos;
+            node->tag = is_styled ? guishell::unstyled(update.tag) : update.tag;
+            node->styled_tag = is_styled ? update.tag : "";
             node->is_disabled = update.is_disabled;
             node->color = update.color;
         }

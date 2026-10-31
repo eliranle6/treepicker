@@ -27,7 +27,11 @@ enum {
     KEYCODE_BACKSPACE = 127,
     KEYCODE_SLASH = 47,
     KEYCODE_SPACE = 32,
-    KEYCODE_ENTER = 10,
+    // Enter sends a carriage return; Ctrl-J, a newline (told apart since curses doesn't turn
+    // carriage returns into newlines: see guishell's nonl())
+    KEYCODE_ENTER = 13,
+    KEYCODE_CTRL_J = 10,
+    KEYCODE_CTRL_K = 11,
     KEYCODE_H = 104,
     KEYCODE_J = 106,
     KEYCODE_K = 107,
@@ -107,6 +111,8 @@ private:
     bool page_up(void);
     bool move_to_first_sibling(void);
     bool move_to_last_sibling(void);
+    bool move_to_next_sibling(void);
+    bool move_to_prev_sibling(void);
     bool move_to_first_shown(void);
     bool move_to_last_shown(void);
     bool explore_children(void);
@@ -168,6 +174,8 @@ private:
     void print_key_hints(int row, int window_width);
 
     // Draw the selected node's preview in its column, right of the tree's rows
+    // A line in styled parts (see guishell::parse_styled()) at row and column, cut at width
+    void print_styled(int row, int column, const std::string& line, int width);
     void print_preview(const Layout& layout);
 
     // Draw it below the tree instead (--preview-below), in its colored parts
