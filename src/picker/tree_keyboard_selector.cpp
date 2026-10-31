@@ -45,6 +45,10 @@ TreeKeyboardSelector::TreeKeyboardSelector(treelib::Tree& tree, const PickerOpti
             _tree_selector.update_picked_dirs();
         }
     }
+    if (options.side_tree != nullptr and options.side_tree->get_root() != nullptr) {
+        _side_printer.reset(new treelib::TreePrinter(*options.side_tree));
+        _side_selector.reset(new TreeSelector(*options.side_tree, *_side_printer));
+    }
     if (options.is_first_child_selected_first) {
         _tree_selector.explore_children_of_selection();
     }
@@ -73,6 +77,9 @@ bool TreeKeyboardSelector::char_pressed(int c)
         return false;
     }
 
+    if (_mode == mode::MODE_NAVIGATION and _is_side_focused) {
+        return side_char_pressed(c);
+    }
     if (_mode == mode::MODE_NAVIGATION) {
         load_around_selection();
         if (c > 0 and c <= 0xff and _options.expect_keys.find(static_cast<char>(c)) != std::string::npos) {
@@ -208,6 +215,8 @@ const std::vector<TreeKeyboardSelector::KeyCommand>& TreeKeyboardSelector::get_k
             {KEYCODE_F, &T::toggle_filter}}},
         {"p", "show or hide the preview column (with --preview)", {
             {KEYCODE_P, &T::toggle_preview}}},
+        {"Ctrl-L/Ctrl-H", "move in the side tree (with --side), and back", {
+            {KEYCODE_CTRL_L, &T::focus_side}}},
         {"V", "pick a range (with -m): moving picks the lines from here\n"
               "to the selection (V, Space or Enter: done; Esc: unpick them)", {
             {KEYCODE_UPPER_V, &T::toggle_range}}},
@@ -345,6 +354,102 @@ bool TreeKeyboardSelector::toggle_pick(void) {
         _tree_selector.toggle_pick_of_selection(not _applied_keyword.empty() and _is_filtering);
     }
     return false;
+}
+
+bool TreeKeyboardSelector::focus_side(void) {
+    if (get_layout().side_height > 0) {
+        end_range(true);
+        _is_side_focused = true;
+    }
+    return false;
+}
+
+bool TreeKeyboardSelector::side_char_pressed(int c) {
+    const int height = get_layout().side_height;
+    if (height <= 0) {
+        // No room for it anymore (e.g. a resize): back to the tree
+        _is_side_focused = false;
+        print_tree();
+        return false;
+    }
+    // Moving relies on what's printed (as in the tree), so it's laid out first
+    _side_printer->layout(false, _side_selector->get_selection(), height);
+    switch (c) {
+        case KEYCODE_CTRL_H:
+        case KEY_BACKSPACE:
+        case KEYCODE_BACKSPACE:
+        case KEYCODE_ESCAPE:
+            _is_side_focused = false;
+            break;
+        case KEYCODE_J: case KEY_DOWN: _side_selector->move_to_next(); break;
+        case KEYCODE_K: case KEY_UP: _side_selector->move_to_prev(); break;
+        case KEYCODE_H: case KEY_LEFT: _side_selector->move_one_up(); break;
+        case KEYCODE_L: case KEY_RIGHT: _side_selector->explore_children_of_selection(); break;
+        case KEYCODE_CTRL_J: _side_selector->move_to_next_sibling(); break;
+        case KEYCODE_CTRL_K: _side_selector->move_to_prev_sibling(); break;
+        case KEY_HOME: _side_selector->move_to_first_sibling(); break;
+        case KEY_END: _side_selector->move_to_last_sibling(); break;
+        case KEYCODE_ENTER:
+        case KEY_ENTER:
+            if (_options.side_key != 0) {
+                _expected_key = _options.side_key;
+                _picked = _options.is_multi ? _tree_selector.get_picked_nodes() :
+                    std::vector<std::shared_ptr<treelib::Node>>();
+                return true;
+            }
+            break;
+        case KEYCODE_Q:
+        case KEYCODE_CTRL_C:
+            return quit();
+        default:
+            break;
+    }
+    print_tree();
+    return false;
+}
+
+void TreeKeyboardSelector::apply_side_selection(const std::string& path) {
+    if (_side_selector == nullptr or _is_side_focused) {
+        return;
+    }
+    auto& side_tree = *_options.side_tree;
+    // The closest of it the side tree has
+    std::string id = path == "." ? "" : path;
+    auto node = id.empty() ? side_tree.get_root() : side_tree.get_node(id);
+    while (node == nullptr and not id.empty()) {
+        const auto slash = id.rfind('/');
+        id = slash == std::string::npos ? "" : id.substr(0, slash);
+        node = id.empty() ? side_tree.get_root() : side_tree.get_node(id);
+    }
+    if (node == nullptr or node == _side_selector->get_selection()) {
+        return;
+    }
+    _side_selector->select(node);
+    if (_mode != mode::MODE_HELP) {
+        print_tree();
+    }
+}
+
+void TreeKeyboardSelector::print_side(const Layout& layout) {
+    const int column = layout.preview_column + 2;
+    const int width = std::max(0, getmaxx(stdscr) - 1 - column);
+    // Its title: its root's name, and whether the user is moving in it (and how to, if not)
+    std::string title = (_is_side_focused ? "\u25b6 " : "") + guishell::printable(_options.side_tree->get_root()->tag) +
+        (_is_side_focused ? "  (Ctrl-H: back)" : "  (Ctrl-L: look through it)");
+    title.resize(guishell::nr_bytes_that_fit(title.data(), title.size(), width));
+    attron(A_BOLD);
+    if (_is_side_focused) {
+        attron(A_REVERSE);
+    }
+    mvaddstr(layout.side_title_row, column, title.c_str());
+    attroff(A_REVERSE);
+    attroff(A_BOLD);
+    move(layout.side_row, column);
+    _out.set_line_origin(column);
+    _side_printer->set_selection_highlighted(_is_side_focused);
+    _side_printer->print(_out, false, _side_selector->get_selection(), layout.side_height, width);
+    _out.flush();
+    _out.set_line_origin(0);
 }
 
 bool TreeKeyboardSelector::toggle_range(void) {
@@ -535,6 +640,7 @@ void TreeKeyboardSelector::print_tree(void) {
     const int tree_width = layout.preview_column >= 0 ? layout.preview_column - 1 :
         window_width - 1;
     if (layout.tree_height > 0) {
+        _tree_printer.set_selection_highlighted(not _is_side_focused);
         _out.set_line_width(tree_width);
         _tree_printer.print(_out, not _applied_keyword.empty(), _tree_selector.get_selection(),
                             layout.tree_height, tree_width);
@@ -546,6 +652,9 @@ void TreeKeyboardSelector::print_tree(void) {
     }
     if (layout.preview_column >= 0) {
         print_preview(layout);
+    }
+    if (layout.side_height > 0) {
+        print_side(layout);
     }
 
     // Print stats line
@@ -703,7 +812,8 @@ void TreeKeyboardSelector::print_preview(const Layout& layout) {
     for (int i = 0; i < layout.tree_height; ++i) {
         const int row = layout.tree_row + i;
         mvaddstr(row, layout.preview_column, "│");
-        if (i < static_cast<int>(lines.size())) {
+        // Above the side tree, if there's one
+        if (i < layout.nr_column_preview_rows and i < static_cast<int>(lines.size())) {
             const PreviewLine line = parse_preview_line(lines[i]);
             std::string text = guishell::printable(line.text);
             text.resize(guishell::nr_bytes_that_fit(text.data(), text.size(), width));
@@ -777,9 +887,22 @@ TreeKeyboardSelector::Layout TreeKeyboardSelector::get_layout(void) {
     // The preview column on the right, if there are previews, and room for it
     const int window_width = getmaxx(stdscr);
     layout.preview_column = -1;
-    if (_options.preview_fd >= 0 and not _options.is_preview_below and _is_preview_shown and
+    const bool has_column_preview = _options.preview_fd >= 0 and not _options.is_preview_below;
+    if ((has_column_preview or _side_selector != nullptr) and _is_preview_shown and
             window_width >= MIN_WIDTH_WITH_PREVIEW) {
         layout.preview_column = window_width - window_width * PREVIEW_FIFTHS / 5;
+    }
+    layout.nr_column_preview_rows = has_column_preview ? layout.tree_height : 0;
+    if (layout.preview_column >= 0 and _side_selector != nullptr) {
+        // The side tree below the preview (half of the column each), after its title
+        const int nr_preview_rows = has_column_preview ? layout.tree_height / 2 : 0;
+        const int side_height = layout.tree_height - nr_preview_rows - 1;
+        if (side_height >= MIN_SIDE_HEIGHT) {
+            layout.nr_column_preview_rows = nr_preview_rows;
+            layout.side_title_row = layout.tree_row + nr_preview_rows;
+            layout.side_row = layout.side_title_row + 1;
+            layout.side_height = side_height;
+        }
     }
     return layout;
 }

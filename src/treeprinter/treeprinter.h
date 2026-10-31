@@ -28,6 +28,9 @@ public:
               int window_width = 0);
     // Lay out without drawing. filter_search_nodes hides what a search doesn't show.
     void layout(bool filter_search_nodes, node_t selection, int window_height);
+    // Whether print() highlights the selection (the default), or only marks it, e.g. while the
+    // user moves in another tree
+    void set_selection_highlighted(bool is_highlighted) { _is_selection_highlighted = is_highlighted; }
 
     // What the last layout showed
     std::shared_ptr<treelib::Node> get_next_printed_node_after_selected(void);
@@ -59,6 +62,7 @@ private:
     std::shared_ptr< Node > _printed_node_before_selected;
     std::shared_ptr< Node > _next_printed_node_after_selected;
     bool _was_selection_printed;
+    bool _is_selection_highlighted = true;
 };
 } // namespace treelib
 

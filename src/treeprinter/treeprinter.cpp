@@ -47,8 +47,9 @@ int TreePrinter::print(std::ostream &out,
             print_scroll_indicator(out, line.nr_hidden, line.depth, has_next_sibling,
                                    line.is_last_sibling);
         } else {
-            print_node(out, line, selection, _printed_subtree_root, _tree, has_next_sibling,
-                       window_width);
+            print_node(out, line, _is_selection_highlighted ? selection : nullptr, _printed_subtree_root,
+                       _tree, has_next_sibling, window_width,
+                       _is_selection_highlighted ? nullptr : selection);
         }
     }
     return _lines.size();

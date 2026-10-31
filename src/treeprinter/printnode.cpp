@@ -46,7 +46,8 @@ void print_node(
         std::shared_ptr<Node> printed_subtree_root,
         Tree& tree,
         const std::vector<bool>& has_next_sibling,
-        int window_width
+        int window_width,
+        const std::shared_ptr<Node> dimmed_selection
         ) {
     const PrintedLine& pn = line;
 
@@ -59,7 +60,7 @@ void print_node(
         out << ">";
         out << guishell::Color(guishell::BLACK_ON_BLUE);
     } else {
-        out << " ";
+        out << (dimmed_selection != nullptr and pn.node == dimmed_selection ? ">" : " ");
     }
     // Then a column marking picked nodes (the root's line has none: it shows the root in red)
     if (pn.node->identifier != printed_subtree_root->identifier) {

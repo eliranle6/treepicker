@@ -26,6 +26,9 @@ public:
     // The selected node, e.g. when an expect key finished it
     std::shared_ptr<treelib::Node> get_selection(void) { return _tree_keyboard_selector.get_selection(); }
 
+    // The side tree's selected node (see PickerOptions::side_tree), e.g. when Enter in it finished it
+    std::shared_ptr<treelib::Node> get_side_selection(void) { return _tree_keyboard_selector.get_side_selection(); }
+
 private:
     // Write the selection's path to options.selection_fd, if it moved since it was last written
     void report_selection(void);
@@ -50,6 +53,8 @@ private:
     char _delimiter;
     // The node last written to _selection_fd
     std::shared_ptr<treelib::Node> _reported_selection;
+    // The start of a path read from options.side_select_fd whose end hasn't come yet
+    std::string _side_select_pending;
     KeyboardReactor _keyboard_reactor;
 };
 

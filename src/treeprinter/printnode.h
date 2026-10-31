@@ -32,7 +32,9 @@ void print_node(
         const std::shared_ptr<Node> printed_subtree_root,
         Tree& tree,
         const std::vector<bool>& has_next_sibling,
-        int window_width = 0
+        int window_width = 0,
+        // The selection of a tree that isn't the one being moved in: marked, but not highlighted
+        const std::shared_ptr<Node> dimmed_selection = nullptr
         );
 
 // The path from the root down to printed_subtree_root, like "root > dir > ". If it's wider than

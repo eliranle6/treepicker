@@ -4,6 +4,7 @@
 #include <stdexcept>
 
 #include "picker/cli.h"
+#include "pathtree/pathtree.h"
 #include "picker/keys_help.h"
 #include "utils/guishell.h"
 #include "picker/picker.h"
@@ -76,6 +77,18 @@ const std::string CLI_OPTIONS_USAGE = std::string(
     "                 show --preview's text below the tree, above the bottom lines, rather than\n"
     "                 in a column (at most 4 lines), each line in parts: plain, then after \\x01,\n"
     "                 a --label-color and \\x01, on that color (an empty color: plain again)\n"
+    "  --side FILE    another tree to look through beside it, in the lower part of the right\n"
+    "                 column (below --preview's text): its paths, as -'s with --typed, ending like\n"
+    "                 the paths do (see -0). Ctrl-L moves in it, Ctrl-H (or Esc) back.\n"
+    "  --side-root NAME\n"
+    "                 the name shown for the side tree's root\n"
+    "  --side-select FD\n"
+    "                 read paths of the side tree's nodes to select from file descriptor FD while\n"
+    "                 picking (e.g. where the selected node would go), ending like the paths do,\n"
+    "                 unless the user is moving in the side tree\n"
+    "  --side-key KEY Enter on a side tree's node finishes picking, printing KEY (as an --expect\n"
+    "                 key), the selected node's path, the side tree's selected node's, then the\n"
+    "                 picked ones\n"
     "  -0             paths end with '\\0' rather than a newline (read ones and printed ones)\n"
     "  -h, --help     show this help\n"
     "\n"
@@ -176,8 +189,22 @@ CliOptions parse_cli(int argc, char* argv[]) {
             } else {
                 options.picked_file = argv[++i];
             }
+        } else if (arg == "--side" or arg == "--side-root" or arg == "--side-key") {
+            if (i + 1 == argc) {
+                options.error = arg + " needs a value";
+            } else if (arg == "--side") {
+                options.side_file = argv[++i];
+            } else if (arg == "--side-root") {
+                options.side_root_name = argv[++i];
+            } else {
+                const std::string key = argv[++i];
+                options.side_key = key.size() == 1 ? static_cast<unsigned char>(key[0]) : 0;
+                if (options.side_key == 0) {
+                    options.error = "--side-key needs one key";
+                }
+            }
         } else if (arg == "--max-depth" or arg == "--updates" or arg == "--preview" or
-                   arg == "--selection" or arg == "--notify-fd") {
+                   arg == "--selection" or arg == "--notify-fd" or arg == "--side-select") {
             char* end = nullptr;
             const long value = i + 1 < argc ? std::strtol(argv[i + 1], &end, 10) : -1;
             if (i + 1 == argc or end == argv[i + 1] or *end != '\0' or value < 0) {
@@ -190,6 +217,8 @@ CliOptions parse_cli(int argc, char* argv[]) {
                 options.selection_fd = value;
             } else if (arg == "--notify-fd") {
                 options.notify_fd = value;
+            } else if (arg == "--side-select") {
+                options.side_select_fd = value;
             } else {
                 options.updates_fd = value;
             }
@@ -258,6 +287,21 @@ int pick_and_print(treelib::Tree& tree, const CliOptions& options) {
     picker_options.selection_fd = options.selection_fd;
     picker_options.notify_keys = options.notify_keys;
     picker_options.notify_fd = options.notify_fd;
+    // The side tree, from its file (as stdin's tree is read, typed)
+    pathtree::PathTree side_tree("-");
+    if (not options.side_file.empty()) {
+        std::ifstream side_file(options.side_file);
+        if (not side_file) {
+            throw std::runtime_error("Cannot read " + options.side_file);
+        }
+        side_tree.update_from_stream(side_file, delimiter, true);
+        if (side_tree.get_root() != nullptr) {
+            side_tree.get_root()->tag = options.side_root_name.empty() ? "." : options.side_root_name;
+        }
+        picker_options.side_tree = &side_tree;
+        picker_options.side_select_fd = options.side_select_fd;
+        picker_options.side_key = options.side_key;
+    }
     Picker picker(tree, picker_options);
     const auto picked = picker.run();
     const auto path = [&](const std::shared_ptr<treelib::Node>& node) {
@@ -267,11 +311,17 @@ int pick_and_print(treelib::Tree& tree, const CliOptions& options) {
     // key first)
     const int key = picker.get_expected_key();
     if (key != 0 or not picked.empty()) {
-        if (not options.expect_keys.empty() or not options.expect_twice_keys.empty()) {
+        if (not options.expect_keys.empty() or not options.expect_twice_keys.empty() or options.side_key != 0) {
             std::cout << (key != 0 ? std::string(1, static_cast<char>(key)) : "") << delimiter;
         }
         if (key != 0 or options.is_selection_printed) {
             std::cout << path(picker.get_selection()) << delimiter;
+        }
+        // Enter in the side tree: its selected node, after the tree's
+        if (key != 0 and key == options.side_key and picker_options.side_tree != nullptr) {
+            const auto side_selection = picker.get_side_selection();
+            std::cout << (side_selection == side_tree.get_root() ? std::string(".") : side_selection->identifier)
+                      << delimiter;
         }
     }
     for (auto& node : picked) {

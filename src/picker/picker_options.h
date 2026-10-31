@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include "tree/tree.h"
+
 namespace picker {
 
 // A label at the start of the stats line, in bold, on its color (see guishell::label_color_pair),
@@ -72,6 +74,17 @@ struct PickerOptions {
     // finishing picking (see Picker::notify()); -1: none
     std::string notify_keys;
     int notify_fd = -1;
+    // Another tree, shown in the lower part of the right column (below the preview), to look
+    // through beside the picked one, e.g. where they'd go: Ctrl-L moves in it, Ctrl-H back. Not
+    // owned; nullptr: none.
+    treelib::Tree* side_tree = nullptr;
+    // A file descriptor to read the paths of the side tree's nodes to select from while picking
+    // (ending with updates_delimiter), e.g. where the selected node's would go, unless the user is
+    // moving in it; -1: none
+    int side_select_fd = -1;
+    // The key printed, as an expected key's, when Enter is pressed on a node of the side tree, which
+    // finishes picking (see Picker::get_side_selection()); 0: Enter does nothing there
+    int side_key = 0;
 };
 
 // The keys row's keys, in its order: treepicker's main ones (Space and Enter, as options says

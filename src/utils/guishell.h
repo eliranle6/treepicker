@@ -117,6 +117,10 @@ public:
   // room beside them; 0: at the screen's edge, less its last column (the default)
   void set_line_width(int nr_columns);
 
+  // Start the lines written from now on (after the first, which starts where the cursor is) at
+  // nr_columns from the screen's left edge, e.g. for a tree in a column on the right; 0: at it
+  void set_line_origin(int nr_columns);
+
   // The terminal's file descriptor, which keys are read from
   int terminal_fd(void) const { return _terminal_fd; }
 

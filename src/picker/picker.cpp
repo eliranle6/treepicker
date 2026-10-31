@@ -31,6 +31,20 @@ Picker::Picker(treelib::Tree& tree, const PickerOptions& options) :
                        }},
                        {options.preview_fd, [&](const std::string& data) {
                           _tree_keyboard_selector.apply_previews(_previews_reader.feed(data));
+                       }},
+                       {options.side_tree != nullptr ? options.side_select_fd : -1, [&](const std::string& data) {
+                          // The last whole path read: where the side tree's selection goes
+                          _side_select_pending += data;
+                          std::string path;
+                          bool is_any = false;
+                          for (std::size_t end; (end = _side_select_pending.find(_delimiter)) != std::string::npos;) {
+                              path = _side_select_pending.substr(0, end);
+                              _side_select_pending.erase(0, end + 1);
+                              is_any = true;
+                          }
+                          if (is_any) {
+                              _tree_keyboard_selector.apply_side_selection(path);
+                          }
                        }}})
 {
     if (_notify_fd >= 0) {

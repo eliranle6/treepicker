@@ -62,6 +62,8 @@ int display_width(const std::string& s) {
 static bool is_screen_full = false;
 // Where the stream's lines are cut (see GuiShell::set_line_width()); 0: the screen's edge
 static int line_width = 0;
+// Where the stream's lines start (see GuiShell::set_line_origin())
+static int line_origin = 0;
 
 namespace {
 struct LabelColor {
@@ -226,6 +228,10 @@ std::streamsize NCursesSink::write(const char *s, std::streamsize n) {
         if (newline != end) {
             if (getcury(stdscr) >= LINES - 1) {
                 is_screen_full = true;
+            } else if (line_origin > 0) {
+                // As a newline does, but to the origin
+                clrtoeol();
+                move(getcury(stdscr) + 1, line_origin);
             } else {
                 addch('\n');
             }
@@ -310,6 +316,11 @@ void GuiShell::refresh(void) {
 void GuiShell::set_line_width(int nr_columns) {
     flush();
     line_width = nr_columns;
+}
+
+void GuiShell::set_line_origin(int nr_columns) {
+    flush();
+    line_origin = nr_columns;
 }
 
 void GuiShell::clear(void) {

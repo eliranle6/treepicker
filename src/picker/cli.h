@@ -58,6 +58,13 @@ struct CliOptions {
     int preview_fd = -1;
     // --preview-below: show it below the tree, rather than in a column on the right
     bool is_preview_below = false;
+    // --side FILE: the side tree's paths (as stdin's, --typed), shown below the preview column;
+    // --side-root NAME, its root's name; --side-select FD, where to read the paths to select in
+    // it; --side-key KEY, printed when Enter is pressed in it (see PickerOptions)
+    std::string side_file;
+    std::string side_root_name;
+    int side_select_fd = -1;
+    int side_key = 0;
     // --selection FD: write the selected node's path to FD whenever the selection moves; -1: none
     int selection_fd = -1;
     // --notify KEYS, --notify-fd FD: keys that write the selection and the picks to FD, without

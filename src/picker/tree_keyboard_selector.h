@@ -32,6 +32,8 @@ enum {
     KEYCODE_ENTER = 13,
     KEYCODE_CTRL_J = 10,
     KEYCODE_CTRL_K = 11,
+    KEYCODE_CTRL_H = 8,
+    KEYCODE_CTRL_L = 12,
     KEYCODE_H = 104,
     KEYCODE_J = 106,
     KEYCODE_K = 107,
@@ -95,6 +97,15 @@ public:
     // for paths that aren't in the tree are kept anyway: they cost little.
     void apply_previews(const std::vector<Preview>& previews);
 
+    // Select the side tree's node at the path (or its closest ancestor there), unless the user is
+    // moving in the side tree (see PickerOptions::side_tree)
+    void apply_side_selection(const std::string& path);
+
+    // The side tree's selected node (nullptr without one)
+    std::shared_ptr<treelib::Node> get_side_selection(void) {
+        return _side_selector ? _side_selector->get_selection() : nullptr;
+    }
+
     // Call notify(key) when a PickerOptions::notify_keys key is pressed (moving around)
     void set_notify(std::function<void(int)> notify) { _notify = notify; }
 
@@ -135,6 +146,11 @@ private:
     bool show_help(void);
     bool toggle_filter(void);
     bool toggle_preview(void);
+    // Ctrl-L: move in the side tree (until Ctrl-H)
+    bool focus_side(void);
+    // A key pressed while moving in the side tree; returns whether picking is finished
+    bool side_char_pressed(int c);
+
     bool start_search(void);
     bool start_search_on_enter(void);
 
@@ -157,6 +173,8 @@ private:
     // width it takes, in fifths
     static constexpr int MIN_WIDTH_WITH_PREVIEW = 60;
     static constexpr int PREVIEW_FIFTHS = 2;
+    // The fewest rows the side tree is shown in
+    static constexpr int MIN_SIDE_HEIGHT = 3;
 
     // Where things go on the screen, from the top: the header, the tree (with the preview column
     // beside it), the stats line, the search line.
@@ -173,6 +191,12 @@ private:
         int tree_row;
         int preview_row;
         int nr_preview_rows;
+        // The right column's rows of the preview (from tree_row), and the side tree's: its title's
+        // row, its first one and how many (0: none)
+        int nr_column_preview_rows = 0;
+        int side_title_row = -1;
+        int side_row = -1;
+        int side_height = 0;
     };
     Layout get_layout(void);
 
@@ -188,6 +212,8 @@ private:
     // A line in styled parts (see guishell::parse_styled()) at row and column, cut at width
     void print_styled(int row, int column, const std::string& line, int width);
     void print_preview(const Layout& layout);
+    // Draw the side tree, below the preview, in the right column
+    void print_side(const Layout& layout);
 
     // Draw it below the tree instead (--preview-below), in its colored parts
     void print_preview_below(const Layout& layout, int window_width);
@@ -223,6 +249,10 @@ private:
     std::string _status;
     treelib::TreePrinter _tree_printer;
     TreeSelector _tree_selector;
+    // The side tree's printer and selection, and whether the user is moving in it
+    std::unique_ptr<treelib::TreePrinter> _side_printer;
+    std::unique_ptr<TreeSelector> _side_selector;
+    bool _is_side_focused = false;
     mode _mode;
     ::treelib::Search _search;
     PickerOptions _options;
