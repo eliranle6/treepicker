@@ -97,6 +97,18 @@ const std::string CLI_OPTIONS_USAGE = std::string(
     "Prints the picked nodes' paths, in the tree's order. Exits with 0 if a node was picked (or an\n"
     "--expect key was pressed), 1 if not.\n";
 
+// Whether treepicker uses the key (a byte) itself, when moving around
+static bool is_treepickers_key(unsigned char byte) {
+    for (auto& command : TreeKeyboardSelector::get_key_commands()) {
+        for (auto& binding : command.bindings) {
+            if (binding.first == byte) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 // Why key can't be an --expect key, or "" if it can: it must be printable, or a control key (e.g.
 // Ctrl-R), and not one treepicker uses
 static std::string expect_key_error(char key) {
@@ -104,13 +116,9 @@ static std::string expect_key_error(char key) {
     if (byte == 0 or byte == ' ' or byte > '~') {
         return "--expect keys must be letters, digits, punctuation or control keys";
     }
-    for (auto& command : TreeKeyboardSelector::get_key_commands()) {
-        for (auto& binding : command.bindings) {
-            if (binding.first == byte) {
-                return byte < ' ' ? "--expect key " + std::to_string(byte) + " is one of treepicker's keys" :
-                    std::string("--expect key '") + key + "' is one of treepicker's keys";
-            }
-        }
+    if (is_treepickers_key(byte)) {
+        return byte < ' ' ? "--expect key " + std::to_string(byte) + " is one of treepicker's keys" :
+            std::string("--expect key '") + key + "' is one of treepicker's keys";
     }
     return "";
 }
@@ -118,15 +126,8 @@ static std::string expect_key_error(char key) {
 // Why key can't be a --notify key, or "" if it can: any byte (a control key too, e.g. Tab, which is
 // Ctrl-I) but treepicker's own keys
 static std::string notify_key_error(char key) {
-    for (auto& command : TreeKeyboardSelector::get_key_commands()) {
-        for (auto& binding : command.bindings) {
-            if (binding.first == static_cast<unsigned char>(key)) {
-                return "--notify key " + std::to_string(static_cast<unsigned char>(key)) +
-                    " is one of treepicker's keys";
-            }
-        }
-    }
-    return "";
+    const auto byte = static_cast<unsigned char>(key);
+    return is_treepickers_key(byte) ? "--notify key " + std::to_string(byte) + " is one of treepicker's keys" : "";
 }
 
 CliOptions parse_cli(int argc, char* argv[]) {
