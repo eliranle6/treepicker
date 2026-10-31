@@ -13,6 +13,16 @@ struct Label {
     std::string color = "blue";
 };
 
+// A key the keys row at the bottom names, with what it does here, e.g. {"Space", "pick"}
+struct KeyHint {
+    std::string key;
+    std::string text;
+
+    bool operator==(const KeyHint& other) const {
+        return key == other.key and text == other.text;
+    }
+};
+
 struct PickerOptions {
     // Pick several nodes: Space picks or unpicks, Enter finishes
     bool is_multi = false;
@@ -23,6 +33,11 @@ struct PickerOptions {
     std::string header;
     // The labels at the start of the stats line, side by side
     std::vector<Label> labels;
+    // The caller's keys, for the keys row (see key_hints()) and the help (?): its own (e.g. an
+    // --expect key), or treepicker's with what they do here (e.g. {"Enter", "choose what to do"})
+    std::vector<KeyHint> key_hints;
+    // More lines for the help (?), after the keys, e.g. what the caller's tags mean
+    std::vector<std::string> help_lines;
     // Start with the root's first child selected, rather than the root
     bool is_first_child_selected_first = false;
     // Whether Enter picks the root (it may be just a title, e.g. of a list of options)
@@ -52,6 +67,11 @@ struct PickerOptions {
     std::string notify_keys;
     int notify_fd = -1;
 };
+
+// The keys row's keys, in its order: treepicker's main ones (Space and Enter, as options says
+// they're used), the caller's (one with a key of treepicker's says what it does instead), then
+// search, help and quit
+std::vector<KeyHint> key_hints(const PickerOptions& options);
 
 } // namespace picker
 

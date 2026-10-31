@@ -22,4 +22,31 @@ std::string keys_help(void) {
     return help;
 }
 
+std::vector<KeyHint> key_hints(const PickerOptions& options) {
+    std::vector<KeyHint> hints;
+    if (options.is_multi) {
+        hints.push_back({"Space", "pick"});
+        hints.push_back({"Enter", "done"});
+    } else {
+        hints.push_back({"Enter", options.is_root_pickable ? "pick" : "choose"});
+    }
+    std::vector<KeyHint> tail = {{"/", "search"}, {"?", "all keys"}, {"q", "quit"}};
+    for (auto& hint : options.key_hints) {
+        bool is_own = false;
+        for (auto* own : {&hints, &tail}) {
+            for (auto& existing : *own) {
+                if (existing.key == hint.key) {
+                    existing.text = hint.text;
+                    is_own = true;
+                }
+            }
+        }
+        if (not is_own) {
+            hints.push_back(hint);
+        }
+    }
+    hints.insert(hints.end(), tail.begin(), tail.end());
+    return hints;
+}
+
 } // namespace picker

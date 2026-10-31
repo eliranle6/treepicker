@@ -2,6 +2,9 @@
 #define PICKER_KEYS_HELP_H__
 
 #include <string>
+#include <vector>
+
+#include "picker/picker_options.h"
 
 namespace picker {
 

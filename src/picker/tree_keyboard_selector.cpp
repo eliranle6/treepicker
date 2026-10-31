@@ -352,6 +352,18 @@ void TreeKeyboardSelector::print_help(void) {
     for (std::string line; std::getline(keys, line);) {
         lines.push_back(line);
     }
+    // The caller's: what its keys do here, and what else it says
+    if (not _options.key_hints.empty() or not _options.help_lines.empty()) {
+        lines.push_back("");
+        lines.push_back("Here:");
+        for (auto& hint : _options.key_hints) {
+            lines.push_back("  " + hint.key + std::string(std::max<int>(1, 17 - hint.key.size()), ' ') +
+                            hint.text);
+        }
+        for (auto& line : _options.help_lines) {
+            lines.push_back(line);
+        }
+    }
     for (int row = 0; row < window_height and row < static_cast<int>(lines.size()); ++row) {
         print_line(row, lines[row], window_width, false);
     }
@@ -425,16 +437,6 @@ void TreeKeyboardSelector::print_tree(void) {
             labels_width += guishell::display_width(labels.back()) + 1;
         }
         stats_line = std::string(labels_width, ' ') + stats_line;
-        // With a reminder of the help key at the right end, which the stats give way to
-        static const std::string HELP_HINT = "?: help";
-        const int width = window_width - 1;
-        const int stats_width = width - guishell::display_width(HELP_HINT) - 1;
-        if (stats_width > 0) {
-            stats_line.resize(guishell::nr_bytes_that_fit(stats_line.data(), stats_line.size(),
-                                                          stats_width));
-            stats_line += std::string(stats_width + 1 - guishell::display_width(stats_line), ' ') +
-                HELP_HINT;
-        }
         attron(COLOR_PAIR(guishell::color_pair(guishell::BLACK_ON_WHITE)));
         print_line(layout.stats_row, stats_line, window_width, true);
         attroff(COLOR_PAIR(guishell::color_pair(guishell::BLACK_ON_WHITE)));
@@ -452,8 +454,11 @@ void TreeKeyboardSelector::print_tree(void) {
         }
     }
 
-    // Print search line (last, so that the cursor stays at its end while editing it)
-    if (layout.search_row >= 0) {
+    // The bottom row: the keys, or while there's a search, the search line (last, so that the
+    // cursor stays at its end while editing it)
+    if (layout.search_row >= 0 and not is_search_line_shown()) {
+        print_key_hints(layout.search_row, window_width);
+    } else if (layout.search_row >= 0) {
         const bool is_waiting_for_enter = _mode == mode::MODE_EDIT_SEARCH and _is_search_on_enter;
         // With the hint after the keyword, the cursor wouldn't be at the keyword's end
         if (is_waiting_for_enter) {
@@ -466,6 +471,28 @@ void TreeKeyboardSelector::print_tree(void) {
         }
     }
     refresh();
+}
+
+void TreeKeyboardSelector::print_key_hints(int row, int window_width) {
+    move(row, 0);
+    clrtoeol();
+    const int width = std::max(0, window_width - 1);
+    int column = 0;
+    for (auto& hint : key_hints(_options)) {
+        // The key in reverse video, then what it does, two spaces apart from the next
+        const std::string key = " " + guishell::printable(hint.key) + " ";
+        const std::string text = " " + guishell::printable(hint.text) + "  ";
+        if (column + guishell::display_width(key) > width) {
+            break;
+        }
+        attron(A_REVERSE);
+        mvaddstr(row, column, key.c_str());
+        attroff(A_REVERSE);
+        column += guishell::display_width(key);
+        const int left = width - column;
+        mvaddnstr(row, column, text.data(), guishell::nr_bytes_that_fit(text.data(), text.size(), left));
+        column += std::min(left, guishell::display_width(text));
+    }
 }
 
 void TreeKeyboardSelector::print_preview(const Layout& layout) {
@@ -505,9 +532,9 @@ TreeKeyboardSelector::Layout TreeKeyboardSelector::get_layout(void) {
     Layout layout;
     int nr_rows_left = getmaxy(stdscr);
 
-    // The search line, at the bottom, only while there's a search
+    // The bottom row: the keys, or the search line while there's a search
     layout.search_row = -1;
-    if (is_search_line_shown() and nr_rows_left > 0) {
+    if (nr_rows_left > 0) {
         layout.search_row = --nr_rows_left;
     }
 

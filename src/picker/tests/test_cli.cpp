@@ -220,3 +220,11 @@ TEST(cli, preview) {
     ASSERT_FALSE(parse({"--preview", "file.txt"}).error.empty());
     ASSERT_NE(picker::CLI_OPTIONS_USAGE.find("--preview FD"), std::string::npos);
 }
+
+TEST(cli, keys_and_help_lines) {
+    auto options = parse({"--key", "#", "hashing", "--key", "Enter", "act", "--help-line", "[x]: y"});
+    ASSERT_TRUE(options.error.empty());
+    ASSERT_EQ(options.key_hints, std::vector<picker::KeyHint>({{"#", "hashing"}, {"Enter", "act"}}));
+    ASSERT_EQ(options.help_lines, std::vector<std::string>({"[x]: y"}));
+    ASSERT_FALSE(parse({"--key", "#"}).error.empty());
+}

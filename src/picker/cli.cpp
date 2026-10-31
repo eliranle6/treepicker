@@ -23,6 +23,12 @@ const std::string CLI_OPTIONS_USAGE = std::string(
     "  --label-color COLOR\n"
     "                 the color of the --label before it: red, orange, yellow, green, blue\n"
     "                 (default), magenta, cyan\n"
+    "  --key KEY TEXT name KEY in the keys row at the bottom (and in ?'s help) as doing TEXT: a\n"
+    "                 key of the caller's (e.g. an --expect or --notify key), or one of\n"
+    "                 treepicker's, to say what it does here (e.g. --key Enter \"choose what to\n"
+    "                 do\"). Given again, for more keys.\n"
+    "  --help-line TEXT\n"
+    "                 a line for ?'s help, after the keys (e.g. what the caller's tags mean)\n"
     "  --picked FILE  with -m, start with the nodes whose paths are in FILE (as printed) picked\n"
     "  --updates FD   while picking, read changes to what nodes are shown as from file\n"
     "                 descriptor FD: each is the node's path (or option), a tab, and what\n"
@@ -101,6 +107,19 @@ CliOptions parse_cli(int argc, char* argv[]) {
             options.is_help_requested = true;
         } else if (arg == "-m" or arg == "--multi") {
             options.is_multi = true;
+        } else if (arg == "--key") {
+            if (i + 2 >= argc) {
+                options.error = "--key needs a key and what it does";
+            } else {
+                options.key_hints.push_back({argv[i + 1], argv[i + 2]});
+                i += 2;
+            }
+        } else if (arg == "--help-line") {
+            if (i + 1 == argc) {
+                options.error = "--help-line needs a value";
+            } else {
+                options.help_lines.push_back(argv[++i]);
+            }
         } else if (arg == "--header" or arg == "--root" or arg == "--picked" or arg == "--label" or
                    arg == "--label-color" or arg == "--expect" or arg == "--select" or arg == "--notify") {
             if (i + 1 == argc) {
@@ -190,6 +209,8 @@ int pick_and_print(treelib::Tree& tree, const CliOptions& options) {
     picker_options.is_selection_picked_if_none = options.is_selection_picked_if_none;
     picker_options.header = options.header;
     picker_options.labels = options.labels;
+    picker_options.key_hints = options.key_hints;
+    picker_options.help_lines = options.help_lines;
     // A list's root is only its title
     picker_options.is_first_child_selected_first = options.is_list;
     picker_options.is_root_pickable = not options.is_list;

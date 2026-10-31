@@ -157,6 +157,9 @@ private:
     // Draw the keys' help instead of the tree
     void print_help(void);
 
+    // Draw the keys row (see key_hints()) on the row
+    void print_key_hints(int row, int window_width);
+
     // Draw the selected node's preview in its column, right of the tree's rows
     void print_preview(const Layout& layout);
 

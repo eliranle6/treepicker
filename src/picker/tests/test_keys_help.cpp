@@ -32,3 +32,19 @@ TEST(keys_help, keys_do_one_thing) {
         }
     }
 }
+
+TEST(key_hints, treepickers_then_the_callers_then_search_help_and_quit) {
+    picker::PickerOptions options;
+    options.is_multi = true;
+    options.key_hints = {{"Enter", "choose what to do"}, {"#", "hashing"}, {"q", "back"}};
+    ASSERT_EQ(picker::key_hints(options), std::vector<picker::KeyHint>({
+        {"Space", "pick"}, {"Enter", "choose what to do"}, {"#", "hashing"}, {"/", "search"},
+        {"?", "all keys"}, {"q", "back"}}));
+}
+
+TEST(key_hints, a_list_chooses_and_a_tree_picks) {
+    picker::PickerOptions options;
+    options.is_root_pickable = false;
+    ASSERT_EQ(picker::key_hints(options)[0], picker::KeyHint({"Enter", "choose"}));
+    ASSERT_EQ(picker::key_hints(picker::PickerOptions())[0], picker::KeyHint({"Enter", "pick"}));
+}

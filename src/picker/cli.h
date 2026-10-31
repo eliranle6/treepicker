@@ -25,6 +25,10 @@ struct CliOptions {
     // --label TEXT, each followed by an optional --label-color COLOR: labels at the start of
     // the stats line
     std::vector<Label> labels;
+    // --key KEY TEXT: the caller's keys, for the keys row and the help (see PickerOptions)
+    std::vector<KeyHint> key_hints;
+    // --help-line TEXT: more lines for the help (?)
+    std::vector<std::string> help_lines;
     // --list: the input is a flat list of options (one per line), rather than paths
     bool is_list = false;
     // --typed: each path on stdin starts with its type and a space, like find -printf '%y %p'
