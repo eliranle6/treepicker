@@ -46,6 +46,8 @@ struct CliOptions {
     int updates_fd = -1;
     // --expect KEYS: keys that finish picking too, printed first (see CLI_OPTIONS_USAGE)
     std::string expect_keys;
+    // --expect-twice's: keys that finish picking when pressed twice in a row (e.g. cc)
+    std::string expect_twice_keys;
     // --select PATH: the node to start with selected ("." for the root)
     std::string selected_path;
     // --print-selection: print the selected node's path before the picked ones, so the caller

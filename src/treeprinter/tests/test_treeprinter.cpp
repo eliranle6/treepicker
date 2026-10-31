@@ -414,3 +414,18 @@ TEST(treeprinter, a_styled_tag_is_printed_in_its_parts_styles) {
     tree_printer.print(selected_out, false, file, 10);
     ASSERT_FALSE(does_string_contain_substring(split_string_by_newline(selected_out.str())[1], "\x1B[35m"));
 }
+
+TEST(treeprinter, a_picked_styled_tag_is_red_but_its_styled_parts) {
+    treelib::Tree tree;
+    tree.create_node("root", "root", "");
+    auto file = tree.create_node("a.jpg  [x]", "a.jpg", "root");
+    file->kind = 'f';
+    file->styled_tag = "a.jpg  \x02" "magenta\x02[x]";
+    file->is_picked = true;
+    treelib::TreePrinter tree_printer(tree);
+    std::ostringstream out;
+    tree_printer.print(out, false, tree.get_root(), 10);
+
+    auto lines = split_string_by_newline(out.str());
+    ASSERT_TRUE(does_string_contain_substring(lines[1], "\x1B[31ma.jpg  \x1B[39;49m\x1B[35m[x]"));
+}

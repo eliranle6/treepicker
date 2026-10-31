@@ -42,6 +42,7 @@ enum {
     KEYCODE_QUESTION_MARK = 63,
     KEYCODE_CTRL_SLASH = 31,  // What terminals send for Ctrl-/ (and Ctrl-_)
     KEYCODE_UPPER_G = 71,
+    KEYCODE_UPPER_V = 86,
     KEYCODE_Q = 113
 };
 
@@ -112,6 +113,13 @@ private:
     bool move_to_first_sibling(void);
     bool move_to_last_sibling(void);
     bool move_to_next_sibling(void);
+    // V: start picking a range, or end it, keeping its picks
+    bool toggle_range(void);
+    // Pick the range: every node shown from _range_start to the selection, in the tree's order,
+    // each with what's under it (as Space picks a dir)
+    void pick_range(void);
+    // Stop picking a range; without keep, unpick what it picked
+    void end_range(bool keep);
     // Move with first, then again with then while the selection is a skipped node (see
     // Node::is_skipped); back where it was if that gets to no other node
     void move_skipping(void (TreeSelector::*first)(void), void (TreeSelector::*then)(void));
@@ -224,6 +232,13 @@ private:
     std::vector<std::string> _header_lines;
     std::vector<std::shared_ptr<treelib::Node>> _picked;
     int _expected_key;
+    // While picking a range (V, with -m, like vim's visual line mode): the node V was pressed on,
+    // and the nodes the range picked (the ones picked before stay), to unpick when it changes or
+    // is dropped; nullptr: not picking a range
+    std::shared_ptr<treelib::Node> _range_start;
+    // An --expect-twice key pressed once, waiting for the second (0: none)
+    int _pending_twice_key = 0;
+    std::vector<std::shared_ptr<treelib::Node>> _range_picked;
 };
 
 }

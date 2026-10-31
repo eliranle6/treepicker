@@ -51,6 +51,8 @@ struct PickerOptions {
     // Keys (bytes) that finish picking too, like Enter, so the caller can do something about the
     // selected node (see TreeKeyboardSelector::get_expected_key())
     std::string expect_keys;
+    // Keys that do so when pressed twice in a row, as vim's cc (the key is the expected one)
+    std::string expect_twice_keys;
     // The id of the node to start with selected, rather than the root; "" (or one that isn't in
     // the tree): the root
     std::string selected_id;

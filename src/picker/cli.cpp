@@ -44,10 +44,14 @@ const std::string CLI_OPTIONS_USAGE = std::string(
     "                 an empty path, what to show is the caller's status: a yellow label on the\n"
     "                 bottom line (empty: none); or labels of other colors, each part starting\n"
     "                 with \\x01, a --label-color and \\x01 a label of that color.\n"
-    "  --expect KEYS  keys (letters, digits or punctuation) that finish picking too, so the\n"
+    "  --expect KEYS  keys (letters, digits, punctuation or control keys, e.g. Ctrl-R) that\n"
+    "                 finish picking too, so the\n"
     "                 caller can act on the selected node: then the first line printed is\n"
     "                 the key pressed (or an empty line for Enter), the selected node's path\n"
     "                 after it, then the picked ones (with -m). Not keys treepicker uses.\n"
+    "  --expect-twice KEYS\n"
+    "                 keys that finish picking as --expect's do, when pressed twice in a row (as\n"
+    "                 vim's cc); the key is printed once\n"
     "  --select PATH  start with the node at PATH (as printed) selected, rather than the root\n"
     "  --selection FD write the selected node's path (as printed) to file descriptor FD at the\n"
     "                 start and whenever the selection moves, ending like the paths do (see -0),\n"
@@ -80,16 +84,18 @@ const std::string CLI_OPTIONS_USAGE = std::string(
     "Prints the picked nodes' paths, in the tree's order. Exits with 0 if a node was picked (or an\n"
     "--expect key was pressed), 1 if not.\n";
 
-// Why key can't be an --expect key, or "" if it can: it must be printable, and not one treepicker
-// uses
+// Why key can't be an --expect key, or "" if it can: it must be printable, or a control key (e.g.
+// Ctrl-R), and not one treepicker uses
 static std::string expect_key_error(char key) {
-    if (key <= ' ' or key > '~') {
-        return "--expect keys must be letters, digits or punctuation";
+    const auto byte = static_cast<unsigned char>(key);
+    if (byte == 0 or byte == ' ' or byte > '~') {
+        return "--expect keys must be letters, digits, punctuation or control keys";
     }
     for (auto& command : TreeKeyboardSelector::get_key_commands()) {
         for (auto& binding : command.bindings) {
-            if (binding.first == key) {
-                return std::string("--expect key '") + key + "' is one of treepicker's keys";
+            if (binding.first == byte) {
+                return byte < ' ' ? "--expect key " + std::to_string(byte) + " is one of treepicker's keys" :
+                    std::string("--expect key '") + key + "' is one of treepicker's keys";
             }
         }
     }
@@ -132,11 +138,12 @@ CliOptions parse_cli(int argc, char* argv[]) {
                 options.help_lines.push_back(argv[++i]);
             }
         } else if (arg == "--header" or arg == "--root" or arg == "--picked" or arg == "--label" or
-                   arg == "--label-color" or arg == "--expect" or arg == "--select" or arg == "--notify") {
+                   arg == "--label-color" or arg == "--expect" or arg == "--select" or arg == "--notify" or
+                   arg == "--expect-twice") {
             if (i + 1 == argc) {
                 options.error = arg + " needs a value";
-            } else if (arg == "--expect") {
-                options.expect_keys += argv[++i];
+            } else if (arg == "--expect" or arg == "--expect-twice") {
+                (arg == "--expect" ? options.expect_keys : options.expect_twice_keys) += argv[++i];
                 for (char key : std::string(argv[i])) {
                     if (options.error.empty()) {
                         options.error = expect_key_error(key);
@@ -230,6 +237,7 @@ int pick_and_print(treelib::Tree& tree, const CliOptions& options) {
     picker_options.updates_fd = options.updates_fd;
     picker_options.updates_delimiter = delimiter;
     picker_options.expect_keys = options.expect_keys;
+    picker_options.expect_twice_keys = options.expect_twice_keys;
     if (not options.selected_path.empty() and tree.get_root() != nullptr) {
         picker_options.selected_id = options.selected_path == "." ? tree.get_root()->identifier :
             options.selected_path;
@@ -259,7 +267,7 @@ int pick_and_print(treelib::Tree& tree, const CliOptions& options) {
     // key first)
     const int key = picker.get_expected_key();
     if (key != 0 or not picked.empty()) {
-        if (not options.expect_keys.empty()) {
+        if (not options.expect_keys.empty() or not options.expect_twice_keys.empty()) {
             std::cout << (key != 0 ? std::string(1, static_cast<char>(key)) : "") << delimiter;
         }
         if (key != 0 or options.is_selection_printed) {

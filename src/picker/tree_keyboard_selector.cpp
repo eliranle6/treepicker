@@ -21,7 +21,8 @@ TreeKeyboardSelector::TreeKeyboardSelector(treelib::Tree& tree, const PickerOpti
     _search(tree),
     _options(options),
     _are_files_known(false),
-    _expected_key(0)
+    _expected_key(0),
+    _range_start(nullptr)
 {
     // Once, rather than on each redraw
     std::vector<treelib::Node*> dfs_stack;
@@ -80,11 +81,37 @@ bool TreeKeyboardSelector::char_pressed(int c)
                 std::vector<std::shared_ptr<treelib::Node>>();
             return true;
         }
+        // A key that's expected twice in a row: the first waits for the second; any other key
+        // drops it
+        const bool is_twice_key = c > 0 and c <= 0xff and
+            _options.expect_twice_keys.find(static_cast<char>(c)) != std::string::npos;
+        if (is_twice_key and _pending_twice_key != c) {
+            _pending_twice_key = c;
+            return false;
+        }
+        const int pending_twice_key = _pending_twice_key;
+        _pending_twice_key = 0;
+        if (is_twice_key and pending_twice_key == c) {
+            end_range(true);
+            _expected_key = c;
+            _picked = _options.is_multi ? _tree_selector.get_picked_nodes() :
+                std::vector<std::shared_ptr<treelib::Node>>();
+            return true;
+        }
         if (c > 0 and c <= 0xff and _notify and
                 _options.notify_keys.find(static_cast<char>(c)) != std::string::npos) {
             _notify(c);
             print_tree();
             return false;
+        }
+        // Picking a range: Space and Enter end it (keeping it), as V does; Esc drops it
+        if (_range_start != nullptr and (c == KEYCODE_SPACE or c == KEYCODE_ENTER or c == KEY_ENTER or
+                                         c == KEYCODE_ESCAPE)) {
+            end_range(c != KEYCODE_ESCAPE);
+            if (c != KEYCODE_ENTER and c != KEY_ENTER) {
+                print_tree();
+                return false;
+            }
         }
         for (auto& command : get_key_commands()) {
             for (auto& binding : command.bindings) {
@@ -93,6 +120,11 @@ bool TreeKeyboardSelector::char_pressed(int c)
                     break;
                 }
             }
+        }
+        // The range follows the selection
+        if (_range_start != nullptr and not is_finished) {
+            layout_tree();
+            pick_range();
         }
         if (not is_finished) {
             print_tree();
@@ -169,13 +201,16 @@ const std::vector<TreeKeyboardSelector::KeyCommand>& TreeKeyboardSelector::get_k
             {KEYCODE_SLASH, &T::start_search}}},
         {"Ctrl-/", "search when Enter is pressed", {
             {KEYCODE_CTRL_SLASH, &T::start_search_on_enter}}},
-        {"Esc", "drop the search filter", {
+        {"Esc, Ctrl-[", "drop the search filter (without one, with -m: unpick all)", {
             {KEYCODE_ESCAPE, &T::drop_search}}},
         {"f", "switch between showing only the matches and the\n"
               "whole tree with the matches in yellow", {
             {KEYCODE_F, &T::toggle_filter}}},
         {"p", "show or hide the preview column (with --preview)", {
             {KEYCODE_P, &T::toggle_preview}}},
+        {"V", "pick a range (with -m): moving picks the lines from here\n"
+              "to the selection (V, Space or Enter: done; Esc: unpick them)", {
+            {KEYCODE_UPPER_V, &T::toggle_range}}},
         {"Space", "pick or unpick (with -m)", {
             {KEYCODE_SPACE, &T::toggle_pick}}},
         {"Enter", "pick (with -m: finish)", {
@@ -312,6 +347,78 @@ bool TreeKeyboardSelector::toggle_pick(void) {
     return false;
 }
 
+bool TreeKeyboardSelector::toggle_range(void) {
+    if (not _options.is_multi) {
+        return false;
+    }
+    if (_range_start != nullptr) {
+        end_range(true);
+        return false;
+    }
+    _range_start = _tree_selector.get_selection();
+    pick_range();
+    return false;
+}
+
+void TreeKeyboardSelector::end_range(bool keep) {
+    if (not keep) {
+        for (auto& node : _range_picked) {
+            _tree_selector.set_picked(node, false);
+        }
+        _tree_selector.update_picked_dirs();
+    }
+    _range_start = nullptr;
+    _range_picked.clear();
+}
+
+void TreeKeyboardSelector::pick_range(void) {
+    for (auto& node : _range_picked) {
+        _tree_selector.set_picked(node, false);
+    }
+    _range_picked.clear();
+    // The nodes shown (that a search doesn't hide), in the tree's order, each with its depth
+    std::vector<std::pair<std::shared_ptr<treelib::Node>, int>> preorder;
+    std::vector<std::pair<const std::shared_ptr<treelib::Node>*, int>> dfs_stack = {{&_tree.get_root(), 0}};
+    while (not dfs_stack.empty()) {
+        auto top = dfs_stack.back();
+        dfs_stack.pop_back();
+        const auto& node = *top.first;
+        if (not node->is_search_visible) {
+            continue;
+        }
+        preorder.emplace_back(node, top.second);
+        for (auto child = node->children.rbegin(); child != node->children.rend(); ++child) {
+            dfs_stack.emplace_back(&*child, top.second + 1);
+        }
+    }
+    std::size_t first = preorder.size(), last = 0;
+    for (std::size_t i = 0; i < preorder.size(); ++i) {
+        if (preorder[i].first == _range_start or preorder[i].first == _tree_selector.get_selection()) {
+            first = std::min(first, i);
+            last = i;
+        }
+    }
+    if (first == preorder.size()) {
+        // The range's start is gone (e.g. hidden by a search)
+        _tree_selector.update_picked_dirs();
+        return;
+    }
+    // With what's under each node of it: under the last, the nodes after it that are deeper
+    for (std::size_t i = first; i <= last; ++i) {
+        while (last + 1 < preorder.size() and preorder[last + 1].second > preorder[i].second) {
+            ++last;
+        }
+    }
+    for (std::size_t i = first; i <= last; ++i) {
+        auto& node = preorder[i].first;
+        if (not node->is_picked and not node->is_disabled) {
+            _tree_selector.set_picked(node, true);
+            _range_picked.push_back(node);
+        }
+    }
+    _tree_selector.update_picked_dirs();
+}
+
 bool TreeKeyboardSelector::quit(void) {
     _picked.clear();
     return true;
@@ -322,6 +429,12 @@ bool TreeKeyboardSelector::drop_search(void) {
     if (not _applied_keyword.empty()) {
         _search_keyword = "";
         search();
+    } else if (_options.is_multi) {
+        // Without a search to drop, unpick all
+        for (auto& node : _tree_selector.get_picked_nodes()) {
+            _tree_selector.set_picked(node, false);
+        }
+        _tree_selector.update_picked_dirs();
     }
     return false;
 }
@@ -449,6 +562,9 @@ void TreeKeyboardSelector::print_tree(void) {
             stats_line += ", picked: " + (_are_files_known ?
                 std::to_string(_tree_selector.get_nr_picked_files()) + " files" :
                 std::to_string(_tree_selector.get_nr_picked()));
+        }
+        if (_range_start != nullptr) {
+            stats_line += " (picking a range: V done, Esc undo)";
         }
         stats_line += std::string(", selected: ") +
             guishell::printable(_tree_selector.get_selection()->tag);

@@ -168,7 +168,7 @@ TEST(cli, expect_keys_cant_be_treepickers_or_unprintable) {
     ASSERT_FALSE(parse({"--expect", "q"}).error.empty());
     ASSERT_FALSE(parse({"--expect", "?"}).error.empty());
     ASSERT_FALSE(parse({"--expect", " "}).error.empty());
-    ASSERT_FALSE(parse({"--expect", "\t"}).error.empty());
+    ASSERT_FALSE(parse({"--expect", "\x7f"}).error.empty());
 }
 
 TEST(cli, select) {
@@ -227,4 +227,18 @@ TEST(cli, keys_and_help_lines) {
     ASSERT_EQ(options.key_hints, std::vector<picker::KeyHint>({{"#", "hashing"}, {"Enter", "act"}}));
     ASSERT_EQ(options.help_lines, std::vector<std::string>({"[x]: y"}));
     ASSERT_FALSE(parse({"--key", "#"}).error.empty());
+}
+
+TEST(cli, expect_twice) {
+    ASSERT_EQ(parse({"--expect-twice", "c", "-"}).expect_twice_keys, "c");
+    ASSERT_TRUE(parse({"--expect-twice", "c"}).error.empty());
+    ASSERT_FALSE(parse({"--expect-twice", "j"}).error.empty());
+}
+
+TEST(cli, expect_a_control_key) {
+    // Ctrl-R
+    ASSERT_TRUE(parse({"--expect", "\x12"}).error.empty());
+    // Ctrl-C and Ctrl-D are treepicker's
+    ASSERT_FALSE(parse({"--expect", "\x03"}).error.empty());
+    ASSERT_FALSE(parse({"--expect", "\x04"}).error.empty());
 }
