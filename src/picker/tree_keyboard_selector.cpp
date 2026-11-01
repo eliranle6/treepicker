@@ -435,7 +435,8 @@ void TreeKeyboardSelector::print_side(const Layout& layout) {
     const int width = std::max(0, getmaxx(stdscr) - 1 - column);
     // Its title: its root's name, and whether the user is moving in it (and how to, if not)
     std::string title = (_is_side_focused ? "\u25b6 " : "") + guishell::printable(_options.side_tree->get_root()->tag) +
-        (_is_side_focused ? "  (Ctrl-H: back)" : "  (Ctrl-L: look through it)");
+        (_is_side_focused ? (_options.side_key != 0 ? "  (Enter: choose, Ctrl-H: back)" : "  (Ctrl-H: back)") :
+         "  (Ctrl-L: move here)");
     title.resize(guishell::nr_bytes_that_fit(title.data(), title.size(), width));
     attron(A_BOLD);
     if (_is_side_focused) {
@@ -811,10 +812,17 @@ void TreeKeyboardSelector::print_preview(const Layout& layout) {
     const int width = std::max(0, getmaxx(stdscr) - 1 - column);
     for (int i = 0; i < layout.tree_height; ++i) {
         const int row = layout.tree_row + i;
-        mvaddstr(row, layout.preview_column, "│");
-        // Above the side tree, if there's one
-        if (i < layout.nr_column_preview_rows and i < static_cast<int>(lines.size())) {
-            const PreviewLine line = parse_preview_line(lines[i]);
+        mvaddstr(row, layout.preview_column, row == layout.column_line_row ? "├" : "│");
+        if (row == layout.column_line_row) {
+            for (int column_left = 0; column_left <= width; ++column_left) {
+                addstr("─");
+            }
+        }
+        // Below the side tree, if there's one
+        const int line_index = row - layout.column_preview_row;
+        if (line_index >= 0 and line_index < layout.nr_column_preview_rows and
+                line_index < static_cast<int>(lines.size())) {
+            const PreviewLine line = parse_preview_line(lines[line_index]);
             std::string text = guishell::printable(line.text);
             text.resize(guishell::nr_bytes_that_fit(text.data(), text.size(), width));
             const int pair = line.highlight.empty() ? -1 : guishell::label_color_pair(line.highlight);
@@ -893,15 +901,20 @@ TreeKeyboardSelector::Layout TreeKeyboardSelector::get_layout(void) {
         layout.preview_column = window_width - window_width * PREVIEW_FIFTHS / 5;
     }
     layout.nr_column_preview_rows = has_column_preview ? layout.tree_height : 0;
+    layout.column_preview_row = layout.tree_row;
     if (layout.preview_column >= 0 and _side_selector != nullptr) {
-        // The side tree below the preview (half of the column each), after its title
-        const int nr_preview_rows = has_column_preview ? layout.tree_height / 2 : 0;
-        const int side_height = layout.tree_height - nr_preview_rows - 1;
+        // The side tree on top, level with the tree, after its title; and below it, after a line,
+        // the preview
+        const int nr_preview_rows = has_column_preview ? layout.tree_height * SIDE_PREVIEW_FIFTHS / 5 : 0;
+        const int nr_line_rows = nr_preview_rows > 0 ? 1 : 0;
+        const int side_height = layout.tree_height - nr_preview_rows - nr_line_rows - 1;
         if (side_height >= MIN_SIDE_HEIGHT) {
             layout.nr_column_preview_rows = nr_preview_rows;
-            layout.side_title_row = layout.tree_row + nr_preview_rows;
+            layout.side_title_row = layout.tree_row;
             layout.side_row = layout.side_title_row + 1;
             layout.side_height = side_height;
+            layout.column_line_row = nr_line_rows > 0 ? layout.side_row + side_height : -1;
+            layout.column_preview_row = layout.side_row + side_height + nr_line_rows;
         }
     }
     return layout;

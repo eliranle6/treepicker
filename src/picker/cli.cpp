@@ -77,7 +77,7 @@ const std::string CLI_OPTIONS_USAGE = std::string(
     "                 show --preview's text below the tree, above the bottom lines, rather than\n"
     "                 in a column (at most 4 lines), each line in parts: plain, then after \\x01,\n"
     "                 a --label-color and \\x01, on that color (an empty color: plain again)\n"
-    "  --side FILE    another tree to look through beside it, in the lower part of the right\n"
+    "  --side FILE    another tree to look through beside it, in the upper part of the right\n"
     "                 column (below --preview's text): its paths, as -'s with --typed, ending like\n"
     "                 the paths do (see -0). Ctrl-L moves in it, Ctrl-H (or Esc) back.\n"
     "  --side-root NAME\n"

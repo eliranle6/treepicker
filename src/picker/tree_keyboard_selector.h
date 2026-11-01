@@ -173,6 +173,7 @@ private:
     // width it takes, in fifths
     static constexpr int MIN_WIDTH_WITH_PREVIEW = 60;
     static constexpr int PREVIEW_FIFTHS = 2;
+    static constexpr int SIDE_PREVIEW_FIFTHS = 2;
     // The fewest rows the side tree is shown in
     static constexpr int MIN_SIDE_HEIGHT = 3;
 
@@ -191,9 +192,12 @@ private:
         int tree_row;
         int preview_row;
         int nr_preview_rows;
-        // The right column's rows of the preview (from tree_row), and the side tree's: its title's
-        // row, its first one and how many (0: none)
+        // The right column's rows of the preview (the first, and how many), the line above it
+        // when the side tree is too (-1: none), and the side tree's: its title's row, its first
+        // one and how many (0: none)
         int nr_column_preview_rows = 0;
+        int column_preview_row = -1;
+        int column_line_row = -1;
         int side_title_row = -1;
         int side_row = -1;
         int side_height = 0;
@@ -212,7 +216,7 @@ private:
     // A line in styled parts (see guishell::parse_styled()) at row and column, cut at width
     void print_styled(int row, int column, const std::string& line, int width);
     void print_preview(const Layout& layout);
-    // Draw the side tree, below the preview, in the right column
+    // Draw the side tree, above the preview, in the right column
     void print_side(const Layout& layout);
 
     // Draw it below the tree instead (--preview-below), in its colored parts

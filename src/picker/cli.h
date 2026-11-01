@@ -58,7 +58,7 @@ struct CliOptions {
     int preview_fd = -1;
     // --preview-below: show it below the tree, rather than in a column on the right
     bool is_preview_below = false;
-    // --side FILE: the side tree's paths (as stdin's, --typed), shown below the preview column;
+    // --side FILE: the side tree's paths (as stdin's, --typed), shown above the preview, in the column;
     // --side-root NAME, its root's name; --side-select FD, where to read the paths to select in
     // it; --side-key KEY, printed when Enter is pressed in it (see PickerOptions)
     std::string side_file;

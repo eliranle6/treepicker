@@ -74,7 +74,7 @@ struct PickerOptions {
     // finishing picking (see Picker::notify()); -1: none
     std::string notify_keys;
     int notify_fd = -1;
-    // Another tree, shown in the lower part of the right column (below the preview), to look
+    // Another tree, shown in the upper part of the right column (above the preview), to look
     // through beside the picked one, e.g. where they'd go: Ctrl-L moves in it, Ctrl-H back. Not
     // owned; nullptr: none.
     treelib::Tree* side_tree = nullptr;
