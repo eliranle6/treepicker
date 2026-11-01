@@ -65,6 +65,10 @@ struct CliOptions {
     std::string side_root_name;
     int side_select_fd = -1;
     int side_key = 0;
+    // --side-expect KEYS, --side-hint KEY TEXT, --key-if-none-picked KEY TEXT: see PickerOptions
+    std::string side_expect_keys;
+    std::vector<KeyHint> side_key_hints;
+    std::vector<KeyHint> none_picked_key_hints;
     // --selection FD: write the selected node's path to FD whenever the selection moves; -1: none
     int selection_fd = -1;
     // --notify KEYS, --notify-fd FD: keys that write the selection and the picks to FD, without

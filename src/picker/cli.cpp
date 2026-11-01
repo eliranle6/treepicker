@@ -89,6 +89,13 @@ const std::string CLI_OPTIONS_USAGE = std::string(
     "  --side-key KEY Enter on a side tree's node finishes picking, printing KEY (as an --expect\n"
     "                 key), the selected node's path, the side tree's selected node's, then the\n"
     "                 picked ones\n"
+    "  --side-expect KEYS\n"
+    "                 keys that do as Enter does there (--side-key is printed), printing after the\n"
+    "                 side tree's node the key pressed (nothing for Enter)\n"
+    "  --side-hint KEY TEXT\n"
+    "                 the keys row says it, while moving in the side tree\n"
+    "  --key-if-none-picked KEY TEXT\n"
+    "                 the keys row says it of a key it lists, while nothing's picked\n"
     "  -0             paths end with '\\0' rather than a newline (read ones and printed ones)\n"
     "  -h, --help     show this help\n"
     "\n"
@@ -144,6 +151,25 @@ CliOptions parse_cli(int argc, char* argv[]) {
             } else {
                 options.key_hints.push_back({argv[i + 1], argv[i + 2]});
                 i += 2;
+            }
+        } else if (arg == "--side-hint" or arg == "--key-if-none-picked") {
+            if (i + 2 >= argc) {
+                options.error = arg + " needs a key and what it does";
+            } else {
+                (arg == "--side-hint" ? options.side_key_hints : options.none_picked_key_hints).push_back(
+                    {argv[i + 1], argv[i + 2]});
+                i += 2;
+            }
+        } else if (arg == "--side-expect") {
+            if (i + 1 == argc) {
+                options.error = "--side-expect needs a value";
+            } else {
+                options.side_expect_keys = argv[++i];
+                for (char key : options.side_expect_keys) {
+                    if (not expect_key_error(key).empty()) {
+                        options.error = expect_key_error(key);
+                    }
+                }
             }
         } else if (arg == "--help-line") {
             if (i + 1 == argc) {
@@ -260,6 +286,7 @@ int pick_and_print(treelib::Tree& tree, const CliOptions& options) {
     picker_options.header = options.header;
     picker_options.labels = options.labels;
     picker_options.key_hints = options.key_hints;
+    picker_options.none_picked_key_hints = options.none_picked_key_hints;
     picker_options.help_lines = options.help_lines;
     // A list's root is only its title
     picker_options.is_first_child_selected_first = options.is_list;
@@ -302,6 +329,8 @@ int pick_and_print(treelib::Tree& tree, const CliOptions& options) {
         picker_options.side_tree = &side_tree;
         picker_options.side_select_fd = options.side_select_fd;
         picker_options.side_key = options.side_key;
+        picker_options.side_expect_keys = options.side_expect_keys;
+        picker_options.side_key_hints = options.side_key_hints;
     }
     Picker picker(tree, picker_options);
     const auto picked = picker.run();
@@ -323,6 +352,10 @@ int pick_and_print(treelib::Tree& tree, const CliOptions& options) {
             const auto side_selection = picker.get_side_selection();
             std::cout << (side_selection == side_tree.get_root() ? std::string(".") : side_selection->identifier)
                       << delimiter;
+            if (not options.side_expect_keys.empty()) {
+                const int pressed = picker.get_side_pressed_key();
+                std::cout << (pressed != 0 ? std::string(1, static_cast<char>(pressed)) : "") << delimiter;
+            }
         }
     }
     for (auto& node : picked) {

@@ -23,6 +23,7 @@ enum {
     KEYCODE_CTRL_D = 4,
     KEYCODE_CTRL_U = 21,
     KEYCODE_CTRL_W = 23,
+    KEYCODE_LOWER_W = 'w',
     KEYCODE_ESCAPE = 27,  // Also Ctrl-[
     KEYCODE_BACKSPACE = 127,
     KEYCODE_SLASH = 47,
@@ -82,6 +83,8 @@ public:
     // Once finished: the expect key (see PickerOptions::expect_keys) that finished it, or 0 if
     // none did. Then get_picked() is what's picked so far (with is_multi; else nothing).
     int get_expected_key(void) const { return _expected_key; }
+    // The key that finished picking in the side tree: one of --side-expect's, or 0 for Enter
+    int get_side_pressed_key(void) const { return _side_pressed_key; }
 
     std::shared_ptr<treelib::Node> get_selection(void) { return _tree_selector.get_selection(); }
 
@@ -146,6 +149,9 @@ private:
     bool show_help(void);
     bool toggle_filter(void);
     bool toggle_preview(void);
+    bool start_window_key(void);
+    // Finish picking on the side tree's selection, key (0: Enter) said by get_side_pressed_key()
+    bool finish_in_side(int key);
     // Ctrl-L: move in the side tree (until Ctrl-H)
     bool focus_side(void);
     // A key pressed while moving in the side tree; returns whether picking is finished
@@ -272,6 +278,8 @@ private:
     std::shared_ptr<treelib::Node> _range_start;
     // An --expect-twice key pressed once, waiting for the second (0: none)
     int _pending_twice_key = 0;
+    bool _is_window_key_pending = false;
+    int _side_pressed_key = 0;
     std::vector<std::shared_ptr<treelib::Node>> _range_picked;
 };
 

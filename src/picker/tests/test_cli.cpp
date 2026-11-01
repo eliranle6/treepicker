@@ -189,6 +189,15 @@ TEST(cli, print_selection) {
     ASSERT_NE(picker::CLI_OPTIONS_USAGE.find("--print-selection"), std::string::npos);
 }
 
+TEST(cli, side_expect_hints_and_none_picked) {
+    auto options = parse({"-m", "--side-expect", "d:", "--side-hint", "d", "remove", "--key-if-none-picked", "Enter", "pick", "-"});
+    ASSERT_EQ(options.error, "");
+    ASSERT_EQ(options.side_expect_keys, "d:");
+    ASSERT_EQ(options.side_key_hints, std::vector<picker::KeyHint>({{"d", "remove"}}));
+    ASSERT_EQ(options.none_picked_key_hints, std::vector<picker::KeyHint>({{"Enter", "pick"}}));
+    ASSERT_NE(parse({"--side-expect", "j", "-"}).error, "");
+}
+
 TEST(cli, enter_picks_selection) {
     ASSERT_FALSE(parse({}).is_selection_picked_if_none);
     ASSERT_TRUE(parse({"-m", "--enter-picks-selection", "-"}).is_selection_picked_if_none);

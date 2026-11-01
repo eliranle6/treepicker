@@ -85,12 +85,20 @@ struct PickerOptions {
     // The key printed, as an expected key's, when Enter is pressed on a node of the side tree, which
     // finishes picking (see Picker::get_side_selection()); 0: Enter does nothing there
     int side_key = 0;
+    // Keys that do so too, when pressed in the side tree (see get_side_pressed_key())
+    std::string side_expect_keys;
+    // The keys row while moving in the side tree: what its keys do there
+    std::vector<KeyHint> side_key_hints;
+    // What the keys row says of keys while nothing's picked, in place of what key_hints says
+    std::vector<KeyHint> none_picked_key_hints;
 };
 
 // The keys row's keys, in its order: treepicker's main ones (Space and Enter, as options says
 // they're used), the caller's (one with a key of treepicker's says what it does instead), then
-// search, help and quit
-std::vector<KeyHint> key_hints(const PickerOptions& options);
+// search, help and quit. With is_none_picked, what none_picked_key_hints says instead. With
+// is_side_focused, the side tree's: side_key_hints, the way back, help and quit.
+std::vector<KeyHint> key_hints(const PickerOptions& options, bool is_none_picked = false,
+                               bool is_side_focused = false);
 
 } // namespace picker
 

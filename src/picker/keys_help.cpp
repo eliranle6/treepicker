@@ -22,8 +22,21 @@ std::string keys_help(void) {
     return help;
 }
 
-std::vector<KeyHint> key_hints(const PickerOptions& options) {
+std::vector<KeyHint> key_hints(const PickerOptions& options, bool is_none_picked, bool is_side_focused) {
     std::vector<KeyHint> hints;
+    if (is_side_focused) {
+        hints = options.side_key_hints;
+        hints.push_back({"Ctrl-W h", "back"});
+        hints.push_back({"?", "all keys"});
+        std::string quit = "quit";
+        for (auto& hint : options.key_hints) {
+            if (hint.key == "q") {
+                quit = hint.text;
+            }
+        }
+        hints.push_back({"q", quit});
+        return hints;
+    }
     if (options.is_multi) {
         hints.push_back({"Space", "pick"});
         hints.push_back({"Enter", "done"});
@@ -46,6 +59,15 @@ std::vector<KeyHint> key_hints(const PickerOptions& options) {
         }
     }
     hints.insert(hints.end(), tail.begin(), tail.end());
+    if (is_none_picked) {
+        for (auto& override_hint : options.none_picked_key_hints) {
+            for (auto& hint : hints) {
+                if (hint.key == override_hint.key) {
+                    hint.text = override_hint.text;
+                }
+            }
+        }
+    }
     return hints;
 }
 

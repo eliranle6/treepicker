@@ -22,6 +22,7 @@ public:
 
     // Once run: the expect key that finished it, or 0 (see PickerOptions::expect_keys)
     int get_expected_key(void) const { return _tree_keyboard_selector.get_expected_key(); }
+    int get_side_pressed_key(void) const { return _tree_keyboard_selector.get_side_pressed_key(); }
 
     // The selected node, e.g. when an expect key finished it
     std::shared_ptr<treelib::Node> get_selection(void) { return _tree_keyboard_selector.get_selection(); }

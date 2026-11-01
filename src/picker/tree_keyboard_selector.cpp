@@ -77,6 +77,28 @@ bool TreeKeyboardSelector::char_pressed(int c)
         return false;
     }
 
+    // Moving between the windows, as vim's Ctrl-W: its key waits for the next one, which is only that
+    if (_mode == mode::MODE_NAVIGATION and _is_window_key_pending) {
+        _is_window_key_pending = false;
+        if (c == KEYCODE_L or c == KEYCODE_CTRL_L or c == KEY_RIGHT) {
+            focus_side();
+        } else if (c == KEYCODE_H or c == KEYCODE_CTRL_H or c == KEY_LEFT) {
+            _is_side_focused = false;
+        } else if (c == KEYCODE_LOWER_W or c == KEYCODE_CTRL_W) {
+            if (_is_side_focused) {
+                _is_side_focused = false;
+            } else {
+                focus_side();
+            }
+        }
+        print_tree();
+        return false;
+    }
+    if (_mode == mode::MODE_NAVIGATION and c == KEYCODE_CTRL_W) {
+        _is_window_key_pending = true;
+        return false;
+    }
+
     if (_mode == mode::MODE_NAVIGATION and _is_side_focused) {
         return side_char_pressed(c);
     }
@@ -217,6 +239,8 @@ const std::vector<TreeKeyboardSelector::KeyCommand>& TreeKeyboardSelector::get_k
             {KEYCODE_P, &T::toggle_preview}}},
         {"Ctrl-L/Ctrl-H", "move in the side tree (with --side), and back", {
             {KEYCODE_CTRL_L, &T::focus_side}}},
+        {"Ctrl-W l/h", "the same, as vim's (Ctrl-W w switches)", {
+            {KEYCODE_CTRL_W, &T::start_window_key}}},
         {"V", "pick a range (with -m): moving picks the lines from here\n"
               "to the selection (V, Space or Enter: done; Esc: unpick them)", {
             {KEYCODE_UPPER_V, &T::toggle_range}}},
@@ -364,6 +388,19 @@ bool TreeKeyboardSelector::focus_side(void) {
     return false;
 }
 
+bool TreeKeyboardSelector::start_window_key(void) {
+    _is_window_key_pending = true;
+    return false;
+}
+
+bool TreeKeyboardSelector::finish_in_side(int key) {
+    _expected_key = _options.side_key;
+    _side_pressed_key = key;
+    _picked = _options.is_multi ? _tree_selector.get_picked_nodes() :
+        std::vector<std::shared_ptr<treelib::Node>>();
+    return true;
+}
+
 bool TreeKeyboardSelector::side_char_pressed(int c) {
     const int height = get_layout().side_height;
     if (height <= 0) {
@@ -371,6 +408,10 @@ bool TreeKeyboardSelector::side_char_pressed(int c) {
         _is_side_focused = false;
         print_tree();
         return false;
+    }
+    if (_options.side_key != 0 and c > 0 and c <= 0xff and
+            _options.side_expect_keys.find(static_cast<char>(c)) != std::string::npos) {
+        return finish_in_side(c);
     }
     // Moving relies on what's printed (as in the tree), so it's laid out first
     _side_printer->layout(false, _side_selector->get_selection(), height);
@@ -392,11 +433,11 @@ bool TreeKeyboardSelector::side_char_pressed(int c) {
         case KEYCODE_ENTER:
         case KEY_ENTER:
             if (_options.side_key != 0) {
-                _expected_key = _options.side_key;
-                _picked = _options.is_multi ? _tree_selector.get_picked_nodes() :
-                    std::vector<std::shared_ptr<treelib::Node>>();
-                return true;
+                return finish_in_side(0);
             }
+            break;
+        case KEYCODE_QUESTION_MARK:
+            show_help();
             break;
         case KEYCODE_Q:
         case KEYCODE_CTRL_C:
@@ -435,8 +476,7 @@ void TreeKeyboardSelector::print_side(const Layout& layout) {
     const int width = std::max(0, getmaxx(stdscr) - 1 - column);
     // Its title: its root's name, and whether the user is moving in it (and how to, if not)
     std::string title = (_is_side_focused ? "\u25b6 " : "") + guishell::printable(_options.side_tree->get_root()->tag) +
-        (_is_side_focused ? (_options.side_key != 0 ? "  (Enter: choose, Ctrl-H: back)" : "  (Ctrl-H: back)") :
-         "  (Ctrl-L: move here)");
+        (_is_side_focused ? "  (Ctrl-W h: back)" : "  (Ctrl-W l: move here)");
     title.resize(guishell::nr_bytes_that_fit(title.data(), title.size(), width));
     attron(A_BOLD);
     if (_is_side_focused) {
@@ -738,7 +778,7 @@ void TreeKeyboardSelector::print_key_hints(int row, int window_width) {
     clrtoeol();
     const int width = std::max(0, window_width - 1);
     int column = 0;
-    for (auto& hint : key_hints(_options)) {
+    for (auto& hint : key_hints(_options, _tree_selector.get_nr_picked() == 0, _is_side_focused)) {
         // The key in reverse video, then what it does, two spaces apart from the next
         const std::string key = " " + guishell::printable(hint.key) + " ";
         const std::string text = " " + guishell::printable(hint.text) + "  ";

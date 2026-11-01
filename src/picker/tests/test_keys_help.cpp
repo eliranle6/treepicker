@@ -42,6 +42,24 @@ TEST(key_hints, treepickers_then_the_callers_then_search_help_and_quit) {
         {"?", "all keys"}, {"q", "back"}}));
 }
 
+TEST(key_hints, says_otherwise_while_nothings_picked) {
+    picker::PickerOptions options;
+    options.is_multi = true;
+    options.key_hints = {{"Enter", "choose what to do"}};
+    options.none_picked_key_hints = {{"Enter", "Pick & choose what to do"}};
+    ASSERT_EQ(picker::key_hints(options)[1], picker::KeyHint({"Enter", "choose what to do"}));
+    ASSERT_EQ(picker::key_hints(options, true)[1], picker::KeyHint({"Enter", "Pick & choose what to do"}));
+}
+
+TEST(key_hints, in_the_side_tree_its_own_the_way_back_help_and_quit) {
+    picker::PickerOptions options;
+    options.is_multi = true;
+    options.key_hints = {{"Enter", "choose what to do"}, {"q", "back"}};
+    options.side_key_hints = {{"d", "remove"}};
+    ASSERT_EQ(picker::key_hints(options, true, true), std::vector<picker::KeyHint>({
+        {"d", "remove"}, {"Ctrl-W h", "back"}, {"?", "all keys"}, {"q", "back"}}));
+}
+
 TEST(key_hints, a_list_chooses_and_a_tree_picks) {
     picker::PickerOptions options;
     options.is_root_pickable = false;
