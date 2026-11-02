@@ -280,21 +280,12 @@ int pick_and_print(treelib::Tree& tree, const CliOptions& options) {
     if (not options.root_name.empty() and tree.get_root() != nullptr) {
         tree.get_root()->tag = options.root_name;
     }
-    PickerOptions picker_options;
-    picker_options.is_multi = options.is_multi;
-    picker_options.is_selection_picked_if_none = options.is_selection_picked_if_none;
-    picker_options.header = options.header;
-    picker_options.labels = options.labels;
-    picker_options.key_hints = options.key_hints;
-    picker_options.none_picked_key_hints = options.none_picked_key_hints;
-    picker_options.help_lines = options.help_lines;
+    // What's given as it is; what isn't, worked out here
+    PickerOptions picker_options = options;
     // A list's root is only its title
     picker_options.is_first_child_selected_first = options.is_list;
     picker_options.is_root_pickable = not options.is_list;
-    picker_options.updates_fd = options.updates_fd;
     picker_options.updates_delimiter = delimiter;
-    picker_options.expect_keys = options.expect_keys;
-    picker_options.expect_twice_keys = options.expect_twice_keys;
     if (not options.selected_path.empty() and tree.get_root() != nullptr) {
         picker_options.selected_id = options.selected_path == "." ? tree.get_root()->identifier :
             options.selected_path;
@@ -310,11 +301,6 @@ int pick_and_print(treelib::Tree& tree, const CliOptions& options) {
                 path == "." ? tree.get_root()->identifier : path);
         }
     }
-    picker_options.preview_fd = options.preview_fd;
-    picker_options.is_preview_below = options.is_preview_below;
-    picker_options.selection_fd = options.selection_fd;
-    picker_options.notify_keys = options.notify_keys;
-    picker_options.notify_fd = options.notify_fd;
     // The side tree, from its file (as stdin's tree is read, typed)
     pathtree::PathTree side_tree("-");
     if (not options.side_file.empty()) {
@@ -327,10 +313,6 @@ int pick_and_print(treelib::Tree& tree, const CliOptions& options) {
             side_tree.get_root()->tag = options.side_root_name.empty() ? "." : options.side_root_name;
         }
         picker_options.side_tree = &side_tree;
-        picker_options.side_select_fd = options.side_select_fd;
-        picker_options.side_key = options.side_key;
-        picker_options.side_expect_keys = options.side_expect_keys;
-        picker_options.side_key_hints = options.side_key_hints;
     }
     Picker picker(tree, picker_options);
     const auto picked = picker.run();

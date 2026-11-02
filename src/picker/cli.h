@@ -10,25 +10,17 @@
 
 namespace picker {
 
-// The command line options that every picker program has, so they all work the same way
-struct CliOptions {
+// The command line options that every picker program has, so they all work the same way: the
+// picker's own, which are as they are given (-m is is_multi, --header TEXT header, --label TEXT with
+// an optional --label-color COLOR labels, --key KEY TEXT key_hints, --help-line TEXT help_lines,
+// --updates FD updates_fd, --expect KEYS expect_keys (see CLI_OPTIONS_USAGE), --preview FD preview_fd,
+// --selection FD selection_fd, --notify KEYS and --notify-fd FD notify_keys and notify_fd, ...), and
+// those that the program uses to make its tree and options
+struct CliOptions : PickerOptions {
     // -0: paths (on stdin, and the picked ones printed) end with '\0' rather than a newline
     bool is_null_separated = false;
-    // -m, --multi: pick several nodes
-    bool is_multi = false;
-    // --enter-picks-selection: with -m, Enter with nothing picked picks the selected node
-    bool is_selection_picked_if_none = false;
-    // --header TEXT: lines shown above the tree
-    std::string header;
     // --root NAME: the name shown for the tree's root (e.g. a stdin tree's, which is ".")
     std::string root_name;
-    // --label TEXT, each followed by an optional --label-color COLOR: labels at the start of
-    // the stats line
-    std::vector<Label> labels;
-    // --key KEY TEXT: the caller's keys, for the keys row and the help (see PickerOptions)
-    std::vector<KeyHint> key_hints;
-    // --help-line TEXT: more lines for the help (?)
-    std::vector<std::string> help_lines;
     // --list: the input is a flat list of options (one per line), rather than paths
     bool is_list = false;
     // --typed: each path on stdin starts with its type and a space, like find -printf '%y %p'
@@ -42,39 +34,17 @@ struct CliOptions {
     bool is_dirs_only = false;
     // --lazy: scan a dir a dir at a time, only what's shown, rather than all of it at the start
     bool is_lazy = false;
-    // --updates FD: read changes to the nodes' shown names from FD while picking (-1: none)
-    int updates_fd = -1;
-    // --expect KEYS: keys that finish picking too, printed first (see CLI_OPTIONS_USAGE)
-    std::string expect_keys;
-    // --expect-twice's: keys that finish picking when pressed twice in a row (e.g. cc)
-    std::string expect_twice_keys;
     // --select PATH: the node to start with selected ("." for the root)
     std::string selected_path;
     // --print-selection: print the selected node's path before the picked ones, so the caller
     // can show the tree again where it was
     bool is_selection_printed = false;
-    // --preview FD: read the lines to show beside the tree for nodes from FD while picking (see
-    // PreviewsReader); -1: none
-    int preview_fd = -1;
-    // --preview-below: show it below the tree, rather than in a column on the right
-    bool is_preview_below = false;
     // --side FILE: the side tree's paths (as stdin's, --typed), shown above the preview, in the column;
     // --side-root NAME, its root's name; --side-select FD, where to read the paths to select in
-    // it; --side-key KEY, printed when Enter is pressed in it (see PickerOptions)
+    // it, side_select_fd; --side-key KEY, printed when Enter is pressed in it, side_key (see
+    // PickerOptions)
     std::string side_file;
     std::string side_root_name;
-    int side_select_fd = -1;
-    int side_key = 0;
-    // --side-expect KEYS, --side-hint KEY TEXT, --key-if-none-picked KEY TEXT: see PickerOptions
-    std::string side_expect_keys;
-    std::vector<KeyHint> side_key_hints;
-    std::vector<KeyHint> none_picked_key_hints;
-    // --selection FD: write the selected node's path to FD whenever the selection moves; -1: none
-    int selection_fd = -1;
-    // --notify KEYS, --notify-fd FD: keys that write the selection and the picks to FD, without
-    // finishing picking
-    std::string notify_keys;
-    int notify_fd = -1;
 
     bool is_help_requested = false;
     // Set if the command line isn't valid

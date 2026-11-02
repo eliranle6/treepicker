@@ -5,6 +5,8 @@
 #include <utility>
 #include <vector>
 
+#include "picker/delimited_buffer.h"
+#include "picker/markup.h"
 #include "picker/picker_options.h"
 
 namespace picker {
@@ -42,17 +44,8 @@ public:
     std::vector<Update> feed(const std::string& data);
 
 private:
-    char _delimiter;
-    // The start of an update whose end hasn't been read yet
-    std::string _pending;
+    DelimitedBuffer _buffer;
 };
-
-// The labels of a status (an update with an empty ID): one yellow label of the whole text, or, if
-// it starts with STATUS_MARK, a label for each part starting with STATUS_MARK, a label color's name
-// and STATUS_MARK again (as a preview's highlighted line does), in that color (yellow, if it's not
-// one). Empty ones are dropped.
-const char STATUS_MARK = '\x01';
-std::vector<Label> parse_status(const std::string& status);
 
 } // namespace picker
 

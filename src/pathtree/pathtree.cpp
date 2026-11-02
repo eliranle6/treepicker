@@ -155,24 +155,10 @@ void PathTree::update_from_stream(std::istream& in, char delimiter, bool is_type
     }
 }
 
-// Whether path has empty or "." components (find's paths never do)
-static bool needs_cleaning(const std::string& path) {
-    std::size_t component_start = 0;
-    for (std::size_t i = 0; i <= path.size(); ++i) {
-        if (i == path.size() or path[i] == '/') {
-            const std::size_t length = i - component_start;
-            if (length == 0 or (length == 1 and path[component_start] == '.')) {
-                return true;
-            }
-            component_start = i + 1;
-        }
-    }
-    return false;
-}
-
 // path without empty and "." components
 static std::string clean_path(const std::string& path) {
     std::string cleaned;
+    cleaned.reserve(path.size());
     std::size_t component_start = 0;
     for (std::size_t i = 0; i <= path.size(); ++i) {
         if (i == path.size() or path[i] == '/') {
@@ -190,7 +176,7 @@ static std::string clean_path(const std::string& path) {
 }
 
 void PathTree::add_path(const std::string& path, char kind) {
-    const std::string cleaned = needs_cleaning(path) ? clean_path(path) : path;
+    const std::string cleaned = clean_path(path);
     if (cleaned.empty()) {
         return;
     }

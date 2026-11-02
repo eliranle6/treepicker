@@ -811,10 +811,10 @@ void TreeKeyboardSelector::print_preview_below(const Layout& layout, int window_
             continue;
         }
         int column = 0;
-        for (auto& segment : parse_preview_segments(lines[i])) {
+        for (auto& segment : parse_segments(lines[i])) {
             std::string text = guishell::printable(segment.text);
             text.resize(guishell::nr_bytes_that_fit(text.data(), text.size(), std::max(0, width - column)));
-            const int pair = segment.highlight.empty() ? -1 : guishell::label_color_pair(segment.highlight);
+            const int pair = segment.color.empty() ? -1 : guishell::label_color_pair(segment.color);
             if (pair >= 0) {
                 attron(COLOR_PAIR(pair));
                 attron(A_BOLD);
@@ -862,10 +862,10 @@ void TreeKeyboardSelector::print_preview(const Layout& layout) {
         const int line_index = row - layout.column_preview_row;
         if (line_index >= 0 and line_index < layout.nr_column_preview_rows and
                 line_index < static_cast<int>(lines.size())) {
-            const PreviewLine line = parse_preview_line(lines[line_index]);
+            const Label line = parse_preview_line(lines[line_index]);
             std::string text = guishell::printable(line.text);
             text.resize(guishell::nr_bytes_that_fit(text.data(), text.size(), width));
-            const int pair = line.highlight.empty() ? -1 : guishell::label_color_pair(line.highlight);
+            const int pair = line.color.empty() ? -1 : guishell::label_color_pair(line.color);
             if (pair < 0 and line.text.find(guishell::STYLE_MARK) != std::string::npos) {
                 print_styled(row, column, line.text, width);
                 continue;

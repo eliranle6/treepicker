@@ -26,10 +26,14 @@ TEST(previews, null_delimited) {
 
 TEST(previews, a_line_may_be_highlighted) {
     ASSERT_EQ(picker::parse_preview_line("\x01green\x01-> moved").text, "-> moved");
-    ASSERT_EQ(picker::parse_preview_line("\x01green\x01-> moved").highlight, "green");
-    ASSERT_EQ(picker::parse_preview_line("plain").highlight, "");
-    // Without the second mark, it's text (shown with '?' for the mark)
-    ASSERT_EQ(picker::parse_preview_line("\x01green").text, "\x01green");
+    ASSERT_EQ(picker::parse_preview_line("\x01green\x01-> moved").color, "green");
+    ASSERT_EQ(picker::parse_preview_line("plain").color, "");
+    ASSERT_EQ(picker::parse_preview_line("").color, "");
+    // Without the second mark, it's text
+    ASSERT_EQ(picker::parse_preview_line("\x01green").text, "green");
+    // Its parts' marks aren't shown
+    ASSERT_EQ(picker::parse_preview_line("\x01" "green\x01" "a\x01" "red\x01" "b").text, "ab");
+    ASSERT_EQ(picker::parse_preview_line("\x01" "green\x01" "a\x01" "red\x01" "b").color, "green");
 }
 
 TEST(previews, ones_without_a_tab_are_skipped_and_the_path_may_be_empty) {
@@ -37,14 +41,14 @@ TEST(previews, ones_without_a_tab_are_skipped_and_the_path_may_be_empty) {
     ASSERT_EQ(reader.feed("no tab\n\tWorking...\n"), Previews({{"", {"Working..."}}}));
 }
 
-using Segments = std::vector<picker::PreviewLine>;
+using Segments = std::vector<picker::Label>;
 
 static bool same(const Segments& a, const Segments& b) {
     if (a.size() != b.size()) {
         return false;
     }
     for (std::size_t i = 0; i < a.size(); ++i) {
-        if (a[i].text != b[i].text or a[i].highlight != b[i].highlight) {
+        if (a[i].text != b[i].text or a[i].color != b[i].color) {
             return false;
         }
     }
@@ -53,9 +57,9 @@ static bool same(const Segments& a, const Segments& b) {
 
 TEST(previews, a_line_below_the_tree_in_colored_parts) {
     // "\x01" apart from what follows it, which may be a hex digit
-    ASSERT_TRUE(same(picker::parse_preview_segments("/root/\x01" "magenta\x01" "docs/\x01\x01" "x.pdf"),
+    ASSERT_TRUE(same(picker::parse_segments("/root/\x01" "magenta\x01" "docs/\x01\x01" "x.pdf"),
                      Segments({{"/root/", ""}, {"docs/", "magenta"}, {"x.pdf", ""}})));
-    ASSERT_TRUE(same(picker::parse_preview_segments("plain"), Segments({{"plain", ""}})));
-    ASSERT_TRUE(same(picker::parse_preview_segments(""), Segments()));
-    ASSERT_TRUE(same(picker::parse_preview_segments("a\x01" "green"), Segments({{"a", ""}, {"green", ""}})));
+    ASSERT_TRUE(same(picker::parse_segments("plain"), Segments({{"plain", ""}})));
+    ASSERT_TRUE(same(picker::parse_segments(""), Segments()));
+    ASSERT_TRUE(same(picker::parse_segments("a\x01" "green"), Segments({{"a", ""}, {"green", ""}})));
 }

@@ -65,6 +65,10 @@ TEST(status, plain_text_is_one_yellow_label) {
     ASSERT_EQ(picker::parse_status("Claude: 3 files"), Labels({{"Claude: 3 files", "yellow"}}));
 }
 
+TEST(status, plain_text_before_a_mark_is_yellow_too) {
+    ASSERT_EQ(picker::parse_status("a\x01" "green\x01" "b"), Labels({{"a", "yellow"}, {"b", "green"}}));
+}
+
 TEST(status, empty_is_none) {
     ASSERT_EQ(picker::parse_status(""), Labels());
 }
@@ -80,8 +84,8 @@ TEST(status, an_unknown_color_is_yellow_and_empty_parts_are_dropped) {
               Labels({{"a", "yellow"}}));
 }
 
-TEST(status, a_part_without_its_closing_mark_is_dropped) {
-    ASSERT_EQ(picker::parse_status("\x01" "green\x01" "a\x01" "red"), Labels({{"a", "green"}}));
+TEST(status, a_mark_without_its_closing_mark_is_followed_by_text) {
+    ASSERT_EQ(picker::parse_status("\x01" "green\x01" "a\x01" "red"), Labels({{"a", "green"}, {"red", "green"}}));
 }
 
 TEST(updates, a_skipped_node_is_disabled_too) {
