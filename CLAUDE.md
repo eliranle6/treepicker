@@ -48,9 +48,8 @@ src/picker/       TreeSelector (the selection, and picked nodes: a dir is picked
                   Picker, cli (the programs' shared options
                   and output), keys_help (the key list, for --help and the ? key, made from
                   TreeKeyboardSelector's key table)
-src/utils/        guishell (curses on /dev/tty, colors, cutting lines by display width),
-                  subprocess (running find)
-src/pathtree/     PathTree: a tree of paths, from find (sorted), from a stream (in order), or
+src/utils/        guishell (curses on /dev/tty, colors, cutting lines by display width)
+src/pathtree/     PathTree: a tree of paths, from a dir's scan (readdir, sorted), from a stream (in order), or
                   read lazily a dir at a time (--lazy: Tree::load_children(), which
                   TreeKeyboardSelector calls for what may be shown around the selection)
 src/treepicker/     the treepicker program; src/picker/main.cpp is the demo program
@@ -74,7 +73,7 @@ a program's `main.cpp` only builds its tree and calls `picker::pick_and_print()`
   `// Today i learned: <feature>` comment and mention it in the commit message (see README.md).
   Several features came in without it in 2026-10; ask before adding the comments.
 - The tree is agnostic of what it holds: it doesn't sort; whoever fills it decides the order
-  (PathTree sorts find's output).
+  (PathTree sorts its scan).
 - No Boost: the standard library only.
 - Don't push; commit locally. The working copy at /home/eliran/code/treepicker and dirdelta's
   `lib/treepicker` are separate clones: commit here, then move dirdelta's submodule to it (fetch

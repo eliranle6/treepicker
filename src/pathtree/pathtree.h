@@ -7,7 +7,6 @@
 #include <filesystem>
 
 #include "tree/tree.h"
-#include "utils/subprocess.h"
 
 namespace pathtree {
 
@@ -17,7 +16,7 @@ public:
     std::filesystem::path path;
     PathTree(std::string _path);
 
-    // Add the dir's contents (found with `find`), sorted by name, down to max_depth levels below
+    // Add the dir's contents (read with readdir()), sorted by name, down to max_depth levels below
     // the dir (-1: all). With is_dirs_only, only its dirs.
     void update_from_filesystem(int max_depth = -1, bool is_dirs_only = false);
 
@@ -31,8 +30,8 @@ public:
     // can't be read is left empty.
     bool load_children(const node_t& node) override;
 
-    // find's error messages from the last update_from_filesystem(), one per path it couldn't
-    // read (e.g. "find: '/a/b': Permission denied"), so the tree may lack what's under them
+    // What couldn't be read in the last update_from_filesystem(), one per path it couldn't
+    // read (e.g. "'/a/b': Permission denied"), so the tree may lack what's under them
     std::vector<std::string> scan_errors;
 
     // Add the paths read from in, each ending with delimiter (or the end of input), in the order

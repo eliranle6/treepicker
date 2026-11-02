@@ -351,7 +351,7 @@ std::string scan_errors_warning(const std::string& dir, const std::vector<std::s
     if (errors.empty()) {
         return "";
     }
-    std::string warning = "Warning: find couldn't read everything in " + dir + " (" +
+    std::string warning = "Warning: couldn't read everything in " + dir + " (" +
         std::to_string(errors.size()) + " errors), so the tree may lack files:";
     for (std::size_t i = 0; i < errors.size() and i < MAX_ERRORS_SHOWN; ++i) {
         warning += "\n  " + errors[i];

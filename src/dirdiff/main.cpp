@@ -7,7 +7,7 @@
 static const char USAGE[] =
     "Usage: dirdiff [-0] [--max-depth N] A B\n"
     "Print the paths (relative to A) of A's files that B doesn't have, by path only, in A's\n"
-    "order (sorted by name). Both dirs are scanned with find; what find couldn't read is on\n"
+    "order (sorted by name). Both dirs are scanned; what couldn't be read is on\n"
     "stderr.\n"
     "\n"
     "  -0             end the paths with '\\0' rather than a newline\n"

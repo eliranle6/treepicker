@@ -39,6 +39,6 @@ Prints the files of one dir that another doesn't have, by path only (no content 
 $ dirdiff A B        # A's files (paths relative to A) that B lacks; -0 ends them with '\0'
 ```
 
-It scans both with the same fast scan as treepicker; what find couldn't read goes to stderr.
+It scans both with the same fast scan as treepicker; what couldn't be read goes to stderr.
 dirdelta uses it to diff two local dirs.
 

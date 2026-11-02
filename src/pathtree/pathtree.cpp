@@ -1,14 +1,15 @@
+#include <dirent.h>
+#include <fcntl.h>
+#include <libgen.h>
 #include <stdlib.h>
-#include <sys/wait.h>
+#include <sys/stat.h>
 #include <algorithm>
 #include <cerrno>
-#include <cstdio>
 #include <cstring>
-#include <sstream>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 #include "pathtree.h"
-#include "utils/subprocess.h"
 
 namespace pathtree {
 
@@ -32,55 +33,72 @@ void PathTree::add_dir_root(void) {
     get_root()->kind = 'd';
 }
 
+// Call visit(name, kind) for each dir ('d') and, unless is_dirs_only, each file ('f') in dir, not
+// what symlinks point at (so not into a symlinked dir), nor other types. Returns 0, or the errno of
+// why it couldn't be read (or not all of it: what was read of it is visited). readdir() rather than
+// std::filesystem's iterator or a find: measured on 318k entries, 0.62s, against 1.7s and 1.06s.
+template <typename Visit>
+static int visit_dir(const std::string& dir, bool is_dirs_only, Visit visit) {
+    DIR* stream = opendir(dir.c_str());
+    if (stream == nullptr) {
+        return errno;
+    }
+    errno = 0;
+    while (const dirent* entry = readdir(stream)) {
+        const char* name = entry->d_name;
+        if (name[0] == '.' and (name[1] == '\0' or (name[1] == '.' and name[2] == '\0'))) {
+            continue;
+        }
+        unsigned char type = entry->d_type;
+        if (type == DT_UNKNOWN) {
+            // Not every filesystem says
+            struct stat status;
+            if (fstatat(dirfd(stream), name, &status, AT_SYMLINK_NOFOLLOW) != 0) {
+                // Gone since it was listed, or unreadable: skip it
+                errno = 0;
+                continue;
+            }
+            type = S_ISDIR(status.st_mode) ? DT_DIR : S_ISREG(status.st_mode) ? DT_REG : DT_LNK;
+        }
+        if (type == DT_DIR) {
+            visit(name, 'd');
+        } else if (type == DT_REG and not is_dirs_only) {
+            visit(name, 'f');
+        }
+        errno = 0;
+    }
+    const int error = errno;
+    closedir(stream);
+    return error;
+}
+
 void PathTree::update_from_filesystem(int max_depth, bool is_dirs_only) {
     add_dir_root();
-
-    // Execute the `find` command to explore the dir contents. Entries end with '\0' rather
-    // than '\n', since file names may contain newlines.
-    // A named string, since path.string() returns a temporary, which the pointers would outlive
-    const std::string path_string = path.string();
-    const std::string max_depth_string = std::to_string(max_depth);
-    // find on PATH, as the Python side runs it
-    std::vector<char const*> argv = {"find", path_string.c_str()};
-    if (max_depth >= 0) {
-        argv.insert(argv.end(), {"-maxdepth", max_depth_string.c_str()});
-    }
-    argv.insert(argv.end(), {"!", "-path", path_string.c_str(), "-printf", "%y %P\\0", nullptr});
-    // find's errors go to a temporary file rather than a pipe: reading two pipes one after the
-    // other could block find on a full one
-    FILE* errors_file = std::tmpfile();
-    pid_t find_pid = -1;
-    auto entries_stream = utils::subprocess_read_output(
-        "find", argv.data(), errors_file == nullptr ? -1 : fileno(errors_file), &find_pid);
-
-    // Read the dirs and files (skipping other types, e.g. symlinks)
-    // Each its path and kind
-    std::vector<std::pair<std::string, char>> entries;
-    std::string entry;
-    while (getline(*entries_stream, entry, '\0')) {
-        const bool is_dir_or_file = entry.size() > 2 and entry[1] == ' ' and
-            (entry[0] == 'd' or (entry[0] == 'f' and not is_dirs_only));
-        if (is_dir_or_file) {
-            entries.emplace_back(entry.substr(2), entry[0]);
-        }
-    }
-
-    // Reap the find process: its own, not any child (e.g. one the caller ran)
-    if (find_pid > 0) {
-        waitpid(find_pid, nullptr, 0);
-    }
-
     scan_errors.clear();
-    if (errors_file != nullptr) {
-        std::rewind(errors_file);
-        char* line = nullptr;
-        std::size_t line_capacity = 0;
-        ssize_t line_size;
-        while ((line_size = getline(&line, &line_capacity, errors_file)) > 0) {
-            scan_errors.emplace_back(line, line[line_size - 1] == '\n' ? line_size - 1 : line_size);
+
+    // Each entry's path and kind
+    std::vector<std::pair<std::string, char>> entries;
+    const std::string root = path.string();
+    // The dirs left to read: each one's path and depth (the root's is 0, what's in it 1)
+    std::vector<std::pair<std::string, int>> dirs = {{"", 0}};
+    while (not dirs.empty()) {
+        const std::string dir = std::move(dirs.back().first);
+        const int depth = dirs.back().second;
+        dirs.pop_back();
+        if (max_depth >= 0 and depth >= max_depth) {
+            continue;
         }
-        free(line);
-        std::fclose(errors_file);
+        const std::string full_path = dir.empty() ? root : root + "/" + dir;
+        const int error = visit_dir(full_path, is_dirs_only, [&](const char* name, char kind) {
+            std::string entry_path = dir.empty() ? name : dir + "/" + name;
+            if (kind == 'd') {
+                dirs.emplace_back(entry_path, depth + 1);
+            }
+            entries.emplace_back(std::move(entry_path), kind);
+        });
+        if (error != 0) {
+            scan_errors.push_back("'" + full_path + "': " + strerror(error));
+        }
     }
 
     // Show each dir's entries sorted by name (the tree keeps them in the order they're added).
@@ -109,25 +127,12 @@ bool PathTree::load_children(const node_t& node) {
         return false;
     }
 
-    // Like find's scan: dirs and files, not what symlinks point at (so not into a symlinked dir)
     std::vector<std::pair<std::string, char>> entries;
-    std::error_code error;
     const auto dir = node == get_root() ? path : path / node->identifier;
-    std::filesystem::directory_iterator entry(dir, error), end;
-    for (; not error and entry != end; entry.increment(error)) {
-        const auto status = entry->symlink_status(error);
-        if (error) {
-            // Gone since it was listed, or unreadable: skip it, like find does
-            error.clear();
-            continue;
-        }
-        if (std::filesystem::is_directory(status)) {
-            entries.emplace_back(entry->path().filename().string(), 'd');
-        } else if (std::filesystem::is_regular_file(status) and not _is_lazy_dirs_only) {
-            entries.emplace_back(entry->path().filename().string(), 'f');
-        }
-    }
     // A dir that can't be read (or fails midway) keeps what was read of it
+    visit_dir(dir.string(), _is_lazy_dirs_only, [&entries](const char* name, char kind) {
+        entries.emplace_back(name, kind);
+    });
 
     // By name, like update_from_filesystem()
     std::sort(entries.begin(), entries.end());
