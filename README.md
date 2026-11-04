@@ -29,6 +29,18 @@ $ treepicker -m -0 --header 'Pick files' - < paths    # several nodes, '\0'-sepa
 $ printf 'Copy\nRemove\n' | treepicker --list          # a menu
 ```
 
+A second tree can sit beside the one you pick from, to look through while picking, e.g. where the
+picked files would go:
+
+```
+$ treepicker -m --typed --side other.txt --side-root other -    # other.txt: its paths, as --typed's
+```
+
+`Ctrl-W l` moves into it and `Ctrl-W h` (or Esc) back. `--side-start PATH` starts there, on PATH or
+its closest ancestor; `--side-select FD` reads paths to select in it as the selection moves. `--side-key
+KEY` makes Enter there finish picking, printing KEY and its selected node, `--side-expect KEYS` does so
+for other keys too, and `--side-hint KEY TEXT` says what they do in the keys row.
+
 It draws on the terminal (`/dev/tty`), so stdin and stdout are free for the tree and the result.
 It exits with 0 if something was picked, and 1 if the user quit. `treepicker --help` lists the
 options and keys. dirdelta (github.com/eliranle6/dirdelta) uses it for all of its pickers.

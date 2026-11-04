@@ -79,7 +79,7 @@ const std::string CLI_OPTIONS_USAGE = std::string(
     "                 a --label-color and \\x01, on that color (an empty color: plain again)\n"
     "  --side FILE    another tree to look through beside it, in the upper part of the right\n"
     "                 column (below --preview's text): its paths, as -'s with --typed, ending like\n"
-    "                 the paths do (see -0). Ctrl-L moves in it, Ctrl-H (or Esc) back.\n"
+    "                 the paths do (see -0). Ctrl-W l moves in it, Ctrl-W h (or Esc) back.\n"
     "  --side-root NAME\n"
     "                 the name shown for the side tree's root\n"
     "  --side-select FD\n"
