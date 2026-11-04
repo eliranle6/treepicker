@@ -48,6 +48,13 @@ TreeKeyboardSelector::TreeKeyboardSelector(treelib::Tree& tree, const PickerOpti
     if (options.side_tree != nullptr and options.side_tree->get_root() != nullptr) {
         _side_printer.reset(new treelib::TreePrinter(*options.side_tree));
         _side_selector.reset(new TreeSelector(*options.side_tree, *_side_printer));
+        if (not options.side_start_path.empty()) {
+            const auto node = closest_in_side(options.side_start_path);
+            if (node != nullptr) {
+                _side_selector->select(node);
+            }
+            _is_side_focused = true;
+        }
     }
     if (options.is_first_child_selected_first) {
         _tree_selector.explore_children_of_selection();
@@ -449,12 +456,8 @@ bool TreeKeyboardSelector::side_char_pressed(int c) {
     return false;
 }
 
-void TreeKeyboardSelector::apply_side_selection(const std::string& path) {
-    if (_side_selector == nullptr or _is_side_focused) {
-        return;
-    }
+std::shared_ptr<treelib::Node> TreeKeyboardSelector::closest_in_side(const std::string& path) {
     auto& side_tree = *_options.side_tree;
-    // The closest of it the side tree has
     std::string id = path == "." ? "" : path;
     auto node = id.empty() ? side_tree.get_root() : side_tree.get_node(id);
     while (node == nullptr and not id.empty()) {
@@ -462,6 +465,14 @@ void TreeKeyboardSelector::apply_side_selection(const std::string& path) {
         id = slash == std::string::npos ? "" : id.substr(0, slash);
         node = id.empty() ? side_tree.get_root() : side_tree.get_node(id);
     }
+    return node;
+}
+
+void TreeKeyboardSelector::apply_side_selection(const std::string& path) {
+    if (_side_selector == nullptr or _is_side_focused) {
+        return;
+    }
+    const auto node = closest_in_side(path);
     if (node == nullptr or node == _side_selector->get_selection()) {
         return;
     }

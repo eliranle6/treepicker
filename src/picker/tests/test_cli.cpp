@@ -190,6 +190,11 @@ TEST(cli, print_selection) {
     ASSERT_NE(picker::CLI_OPTIONS_USAGE.find("--print-selection"), std::string::npos);
 }
 
+TEST(cli, side_start) {
+    ASSERT_EQ(parse({"--side-start", "a/b", "-"}).side_start_path, "a/b");
+    ASSERT_NE(parse({"--side-start"}).error, "");
+}
+
 TEST(cli, side_expect_hints_and_none_picked) {
     auto options = parse({"-m", "--side-expect", "d:", "--side-hint", "d", "remove", "--key-if-none-picked", "Enter", "pick", "-"});
     ASSERT_EQ(options.error, "");

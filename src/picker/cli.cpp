@@ -86,6 +86,9 @@ const std::string CLI_OPTIONS_USAGE = std::string(
     "                 read paths of the side tree's nodes to select from file descriptor FD while\n"
     "                 picking (e.g. where the selected node would go), ending like the paths do,\n"
     "                 unless the user is moving in the side tree\n"
+    "  --side-start PATH\n"
+    "                 start moving in the side tree, on the node at PATH (as printed), or its\n"
+    "                 closest ancestor there\n"
     "  --side-key KEY Enter on a side tree's node finishes picking, printing KEY (as an --expect\n"
     "                 key), the selected node's path, the side tree's selected node's, then the\n"
     "                 picked ones\n"
@@ -179,7 +182,7 @@ CliOptions parse_cli(int argc, char* argv[]) {
             }
         } else if (arg == "--header" or arg == "--exclude" or arg == "--root" or arg == "--picked" or arg == "--label" or
                    arg == "--label-color" or arg == "--expect" or arg == "--select" or arg == "--notify" or
-                   arg == "--expect-twice") {
+                   arg == "--expect-twice" or arg == "--side-start") {
             if (i + 1 == argc) {
                 options.error = arg + " needs a value";
             } else if (arg == "--expect" or arg == "--expect-twice") {
@@ -191,6 +194,8 @@ CliOptions parse_cli(int argc, char* argv[]) {
                 }
             } else if (arg == "--select") {
                 options.selected_path = argv[++i];
+            } else if (arg == "--side-start") {
+                options.side_start_path = argv[++i];
             } else if (arg == "--exclude") {
                 options.excluded_paths.push_back(argv[++i]);
             } else if (arg == "--notify") {

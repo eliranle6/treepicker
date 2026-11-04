@@ -82,6 +82,9 @@ struct PickerOptions {
     // (ending with updates_delimiter), e.g. where the selected node's would go, unless the user is
     // moving in it; -1: none
     int side_select_fd = -1;
+    // Start moving in the side tree, on the node at this path (or its closest ancestor there; "."
+    // is its root); empty: start in the tree
+    std::string side_start_path;
     // The key printed, as an expected key's, when Enter is pressed on a node of the side tree, which
     // finishes picking (see Picker::get_side_selection()); 0: Enter does nothing there
     int side_key = 0;

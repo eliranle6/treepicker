@@ -154,6 +154,8 @@ private:
     bool finish_in_side(int key);
     // Ctrl-L: move in the side tree (until Ctrl-H)
     bool focus_side(void);
+    // The side tree's node at path, or its closest ancestor there
+    std::shared_ptr<treelib::Node> closest_in_side(const std::string& path);
     // A key pressed while moving in the side tree; returns whether picking is finished
     bool side_char_pressed(int c);
 
