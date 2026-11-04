@@ -677,6 +677,11 @@ void TreeKeyboardSelector::print_tree(void) {
     load_around_selection();
     const int window_width = getmaxx(stdscr);
     const Layout layout = get_layout();
+    // No room for the side tree (too small a window, from the start or after a resize): back to the
+    // tree, so its selection shows, and the next key goes to it rather than taking the user back
+    if (_is_side_focused and layout.side_height <= 0) {
+        _is_side_focused = false;
+    }
 
     // Print header
     for (int row = 0; row < layout.nr_header_rows; ++row) {
