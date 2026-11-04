@@ -34,6 +34,8 @@ struct CliOptions : PickerOptions {
     bool is_dirs_only = false;
     // --lazy: scan a dir a dir at a time, only what's shown, rather than all of it at the start
     bool is_lazy = false;
+    // --exclude PATH, each: a dir's scan leaves it out, with all in it (see PathTree::excluded_paths)
+    std::vector<std::string> excluded_paths;
     // --select PATH: the node to start with selected ("." for the root)
     std::string selected_path;
     // --print-selection: print the selected node's path before the picked ones, so the caller

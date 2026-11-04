@@ -3,6 +3,7 @@
 
 #include <istream>
 #include <string>
+#include <unordered_set>
 #include <vector>
 #include <filesystem>
 
@@ -29,6 +30,10 @@ public:
     // With update_lazily_from_filesystem(): add the dir's entries, if they aren't yet. A dir that
     // can't be read is left empty.
     bool load_children(const node_t& node) override;
+
+    // What a dir's scan (update_from_filesystem(), load_children()) leaves out, with all in it: paths
+    // relative to the root, as the tree's ids. Set before scanning.
+    std::unordered_set<std::string> excluded_paths;
 
     // What couldn't be read in the last update_from_filesystem(), one per path it couldn't
     // read (e.g. "'/a/b': Permission denied"), so the tree may lack what's under them

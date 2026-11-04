@@ -12,6 +12,7 @@ static const char USAGE[] =
     "  DIR            the dir to pick from (default: the current dir)\n"
     "  --max-depth N  scan DIR at most N levels deep\n"
     "  --dirs-only    only dirs: DIR's (or, with - and --typed, the tree's) files aren't shown\n"
+    "  --exclude PATH leave PATH (relative to DIR) out of DIR's scan, with all in it; may be repeated\n"
     "  --lazy         read DIR a dir at a time, only what's shown, rather than all of it at the\n"
     "                 start: for a huge DIR (e.g. /). A search finds only what was read. Not with\n"
     "                 -m, whose picks would miss what wasn't read.\n"
@@ -48,6 +49,7 @@ int main(int argc, char* argv[]) {
 
     try {
         pathtree::PathTree tree(dir);
+        tree.excluded_paths.insert(options.excluded_paths.begin(), options.excluded_paths.end());
         const char delimiter = options.is_null_separated ? '\0' : '\n';
         if (options.is_list) {
             std::ios::sync_with_stdio(false);

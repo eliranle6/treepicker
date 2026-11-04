@@ -91,6 +91,9 @@ void PathTree::update_from_filesystem(int max_depth, bool is_dirs_only) {
         const std::string full_path = dir.empty() ? root : root + "/" + dir;
         const int error = visit_dir(full_path, is_dirs_only, [&](const char* name, char kind) {
             std::string entry_path = dir.empty() ? name : dir + "/" + name;
+            if (excluded_paths.count(entry_path) != 0) {
+                return;
+            }
             if (kind == 'd') {
                 dirs.emplace_back(entry_path, depth + 1);
             }
@@ -130,13 +133,15 @@ bool PathTree::load_children(const node_t& node) {
     std::vector<std::pair<std::string, char>> entries;
     const auto dir = node == get_root() ? path : path / node->identifier;
     // A dir that can't be read (or fails midway) keeps what was read of it
-    visit_dir(dir.string(), _is_lazy_dirs_only, [&entries](const char* name, char kind) {
-        entries.emplace_back(name, kind);
+    const std::string prefix = node == get_root() ? "" : node->identifier + "/";
+    visit_dir(dir.string(), _is_lazy_dirs_only, [&](const char* name, char kind) {
+        if (excluded_paths.count(prefix + name) == 0) {
+            entries.emplace_back(name, kind);
+        }
     });
 
     // By name, like update_from_filesystem()
     std::sort(entries.begin(), entries.end());
-    const std::string prefix = node == get_root() ? "" : node->identifier + "/";
     for (auto& name_and_kind : entries) {
         auto child = create_node(name_and_kind.first, prefix + name_and_kind.first,
                                  node->identifier);

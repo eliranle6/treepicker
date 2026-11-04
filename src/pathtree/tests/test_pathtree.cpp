@@ -254,6 +254,44 @@ TEST(pathtree, empty_stream) {
     ASSERT_EQ(dir.get_nr_nodes(), 1);
 }
 
+TEST(pathtree, excluded_paths_are_left_out_with_all_in_them) {
+    TempDir temp;
+    temp.make_dir("meta");
+    temp.make_file("meta/hashes");
+    temp.make_dir("a/inbox");
+    temp.make_file("a/inbox/x");
+    temp.make_file("a/keep");
+    temp.make_dir("a/meta");
+    temp.make_file("a/meta/mine");
+    pathtree::PathTree dir(temp.path);
+    dir.excluded_paths = {"meta", "a/inbox"};
+    dir.update_from_filesystem();
+
+    ASSERT_EQ(dir.get_node("meta"), nullptr);
+    ASSERT_EQ(dir.get_node("meta/hashes"), nullptr);
+    ASSERT_EQ(dir.get_node("a/inbox"), nullptr);
+    ASSERT_NE(dir.get_node("a/keep"), nullptr);
+    // Only the path given: one of its name elsewhere isn't it
+    ASSERT_NE(dir.get_node("a/meta/mine"), nullptr);
+}
+
+TEST(pathtree, excluded_paths_are_left_out_of_a_lazy_scan_too) {
+    TempDir temp;
+    temp.make_dir("meta");
+    temp.make_file("meta/hashes");
+    temp.make_dir("a/inbox");
+    temp.make_file("a/inbox/x");
+    temp.make_file("a/keep");
+    pathtree::PathTree dir(temp.path);
+    dir.excluded_paths = {"meta", "a/inbox"};
+    dir.update_lazily_from_filesystem();
+    dir.load_children(dir.get_root());
+    ASSERT_EQ(dir.get_node("meta"), nullptr);
+    dir.load_children(dir.get_node("a"));
+    ASSERT_EQ(dir.get_node("a/inbox"), nullptr);
+    ASSERT_NE(dir.get_node("a/keep"), nullptr);
+}
+
 TEST(pathtree, max_depth) {
     TempDir temp;
     temp.make_dir("a/b/c");

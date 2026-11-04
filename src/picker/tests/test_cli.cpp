@@ -252,3 +252,10 @@ TEST(cli, expect_a_control_key) {
     ASSERT_FALSE(parse({"--expect", "\x03"}).error.empty());
     ASSERT_FALSE(parse({"--expect", "\x04"}).error.empty());
 }
+
+TEST(cli, exclude_may_be_repeated) {
+    const auto options = parse({"--exclude", "meta", "--exclude", "a/b", "dir"});
+    ASSERT_EQ(options.excluded_paths, std::vector<std::string>({"meta", "a/b"}));
+    ASSERT_EQ(options.args, std::vector<std::string>({"dir"}));
+    ASSERT_NE(parse({"--exclude"}).error, "");
+}

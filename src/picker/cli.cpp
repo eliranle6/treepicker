@@ -177,7 +177,7 @@ CliOptions parse_cli(int argc, char* argv[]) {
             } else {
                 options.help_lines.push_back(argv[++i]);
             }
-        } else if (arg == "--header" or arg == "--root" or arg == "--picked" or arg == "--label" or
+        } else if (arg == "--header" or arg == "--exclude" or arg == "--root" or arg == "--picked" or arg == "--label" or
                    arg == "--label-color" or arg == "--expect" or arg == "--select" or arg == "--notify" or
                    arg == "--expect-twice") {
             if (i + 1 == argc) {
@@ -191,6 +191,8 @@ CliOptions parse_cli(int argc, char* argv[]) {
                 }
             } else if (arg == "--select") {
                 options.selected_path = argv[++i];
+            } else if (arg == "--exclude") {
+                options.excluded_paths.push_back(argv[++i]);
             } else if (arg == "--notify") {
                 options.notify_keys += argv[++i];
                 for (char key : std::string(argv[i])) {
