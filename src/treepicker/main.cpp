@@ -46,6 +46,10 @@ int main(int argc, char* argv[]) {
         std::cerr << "treepicker: --exclude is of a DIR's scan, so not with - or --list\n";
         return 2;
     }
+    if (not options.side_start_path.empty() and options.side_file.empty()) {
+        std::cerr << "treepicker: --side-start needs --side, a tree to start in\n";
+        return 2;
+    }
     if (options.is_lazy and (dir == "-" or options.is_multi)) {
         std::cerr << "treepicker: --lazy reads a DIR, and not with -m\n";
         return 2;
