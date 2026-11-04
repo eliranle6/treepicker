@@ -12,7 +12,7 @@ static const char USAGE[] =
     "  DIR            the dir to pick from (default: the current dir)\n"
     "  --max-depth N  scan DIR at most N levels deep\n"
     "  --dirs-only    only dirs: DIR's (or, with - and --typed, the tree's) files aren't shown\n"
-    "  --exclude PATH leave PATH (relative to DIR) out of DIR's scan, with all in it; may be repeated\n"
+    "  --exclude PATH leave PATH (relative to DIR) out of DIR's scan, with all in it; may be repeated (not with -)\n"
     "  --lazy         read DIR a dir at a time, only what's shown, rather than all of it at the\n"
     "                 start: for a huge DIR (e.g. /). A search finds only what was read. Not with\n"
     "                 -m, whose picks would miss what wasn't read.\n"
@@ -40,6 +40,10 @@ int main(int argc, char* argv[]) {
     const std::string dir = options.args.empty() ? (options.is_list ? "-" : ".") : options.args[0];
     if (options.is_list and dir != "-") {
         std::cerr << "treepicker: --list reads from stdin, so it takes no DIR\n";
+        return 2;
+    }
+    if (not options.excluded_paths.empty() and dir == "-") {
+        std::cerr << "treepicker: --exclude is of a DIR's scan, so not with - or --list\n";
         return 2;
     }
     if (options.is_lazy and (dir == "-" or options.is_multi)) {
