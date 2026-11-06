@@ -27,6 +27,40 @@
 
 namespace treelib {
 
+// The size of the node's name (its identifier's last part) at the start of its tag, if the tag says
+// more after it (e.g. a caller's description), else 0
+static std::size_t name_size_in_tag(const Node& node) {
+    const std::size_t slash = node.identifier.rfind('/');
+    const std::string name = slash == std::string::npos ? node.identifier : node.identifier.substr(slash + 1);
+    if (name.empty() or node.tag.size() <= name.size() or node.tag.compare(0, name.size(), name) != 0) {
+        return 0;
+    }
+    return name.size();
+}
+
+// Print styled_tag's parts in their styles (plain ones in the default color), but its first skipped
+// bytes of text
+static void print_styled_after(std::ostream& out, const std::string& styled_tag, std::size_t skipped) {
+    for (auto& part : guishell::parse_styled(styled_tag)) {
+        std::string text = guishell::printable(part.text);
+        if (skipped >= text.size()) {
+            skipped -= text.size();
+            continue;
+        }
+        text = text.substr(skipped);
+        skipped = 0;
+        out << guishell::Color(part.style);
+        if (part.is_bold) {
+            out << guishell::Bold();
+        }
+        out << text;
+        if (part.is_bold) {
+            out << guishell::Unbold();
+        }
+        out << guishell::Color(guishell::DEFAULT);
+    }
+}
+
 // The vertical lines of the ancestors that have siblings after them, under the printed subtree
 // root's children (depth 1), which hang from the root's line
 static void print_ancestors_lines(std::ostream &out, int depth,
@@ -96,8 +130,15 @@ void print_node(
         // colors too
         const bool is_dir = pn.node->children.size() or pn.node->kind == 'd';
 
-        // Create current node text
+        // Create current node text. A dir's that says more after its name (e.g. a caller's
+        // description of it): its '/' after the name, and the rest after that.
         auto tag = guishell::printable(pn.node->tag);
+        const std::size_t name_size = is_dir ? name_size_in_tag(*pn.node) : 0;
+        std::string after_name;
+        if (name_size > 0) {
+            after_name = tag.substr(name_size);
+            tag.resize(name_size);
+        }
         if (is_dir) {
             tag += '/';
         }
@@ -118,8 +159,23 @@ void print_node(
             } else if (pn.node->is_search_match and not is_selection) {
                 color = guishell::YELLOW;
             }
-            out << guishell::Color(color) << guishell::Bold() <<
-                tag << guishell::Unbold() << guishell::Color(guishell::DEFAULT);
+            // The name and the rest of the tag apart: the rest only if it says more than the name
+            const std::string more = tag.substr(std::min(tag.size(), name_size > 0 ? name_size + 1 :
+                                                         guishell::printable(pn.node->tag).size() + 1));
+            tag.resize(tag.size() - more.size());
+            out << guishell::Color(color) << guishell::Bold() << tag << guishell::Unbold();
+            if (not after_name.empty()) {
+                // In its parts' styles, as a file's, unless it's selected, picked, greyed or a match
+                const bool is_styled = not pn.node->styled_tag.empty() and not is_selection and not is_picked and
+                    not is_partly_picked and not pn.node->is_disabled and not pn.node->is_search_match;
+                if (is_styled) {
+                    print_styled_after(out, pn.node->styled_tag, name_size);
+                    out << guishell::Color(color);
+                } else {
+                    out << after_name;
+                }
+            }
+            out << guishell::Bold() << more << guishell::Unbold() << guishell::Color(guishell::DEFAULT);
 
         } else {
             const bool is_highlighted = pn.node->is_search_match and not is_selection;

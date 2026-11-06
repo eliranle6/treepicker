@@ -444,3 +444,32 @@ TEST(treeprinter, a_skipped_styled_tag_keeps_its_styles_its_plain_parts_grey) {
     ASSERT_TRUE(does_string_contain_substring(lines[1], "\x1B[32mSynced"));
     ASSERT_TRUE(does_string_contain_substring(lines[1], "\x1B[90m today"));
 }
+
+TEST(treeprinter, a_dirs_tag_that_says_more_has_its_slash_after_its_name) {
+    treelib::Tree tree;
+    tree.create_node("root", "root", "");
+    auto dir = tree.create_node("rome  [x]", "trips/rome", "root");
+    dir->kind = 'd';
+    dir->styled_tag = "rome  \x02" "magenta\x02[x]";
+    tree.create_node("b", "b", "root")->kind = 'f';
+    treelib::TreePrinter tree_printer(tree);
+    std::ostringstream out;
+    tree_printer.print(out, false, tree.get_node("b"), 10);
+    auto lines = split_string_by_newline(out.str());
+    ASSERT_EQ(split_string_by_newline(strip_escape_codes(out.str()))[1], "  ├── rome/  [x]");
+    // The rest in its style
+    ASSERT_TRUE(does_string_contain_substring(lines[1], "\x1B[35m[x]"));
+
+    // Selected, all in the selection's colors
+    std::ostringstream selected_out;
+    tree_printer.print(selected_out, false, dir, 10);
+    ASSERT_EQ(split_string_by_newline(strip_escape_codes(selected_out.str()))[1], "> ├── rome/  [x]");
+    ASSERT_FALSE(does_string_contain_substring(split_string_by_newline(selected_out.str())[1], "\x1B[35m"));
+
+    // A tag that isn't the name and more: as it is, then '/'
+    dir->tag = "elsewhere";
+    dir->styled_tag = "";
+    std::ostringstream other_out;
+    tree_printer.print(other_out, false, tree.get_node("b"), 10);
+    ASSERT_EQ(split_string_by_newline(strip_escape_codes(other_out.str()))[1], "  ├── elsewhere/");
+}
