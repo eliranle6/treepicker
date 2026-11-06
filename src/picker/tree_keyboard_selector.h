@@ -239,9 +239,13 @@ private:
 
     // The selected node's preview's lines
     const std::vector<std::string>& selected_preview(void);
-    // Draw the selected node's image in the preview column's rows from row on (nr_rows), if it
-    // has one, and they're enough
-    void print_image(int row, int nr_rows, int column, int width);
+    // The selected node's image, if it has one and the terminal can show it, else nullptr
+    const Image* selected_image(void);
+    // Draw an image in the preview column's rows from row on (nr_rows), width columns from column,
+    // if they're enough (MIN_IMAGE_ROWS, MIN_IMAGE_WIDTH: fewer, and it's too small to make out)
+    void print_image(const Image& image, int row, int nr_rows, int column, int width);
+    static constexpr int MIN_IMAGE_ROWS = 3;
+    static constexpr int MIN_IMAGE_WIDTH = 6;
 
     // Lay the tree out without drawing it, so the selection can move relative to what would
     // be printed

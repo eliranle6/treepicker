@@ -892,6 +892,12 @@ void TreeKeyboardSelector::print_preview(const Layout& layout) {
     // After the line and a space, up to the screen's last column, which stays empty
     const int column = layout.preview_column + 2;
     const int width = std::max(0, getmaxx(stdscr) - 1 - column);
+    // A portrait image goes on the right half, beside the lines (on the left half), all the way
+    // down; a landscape one below them
+    const Image* image = selected_image();
+    const int half_width = (width - 1) / 2;
+    const bool is_beside = image != nullptr and image->height > image->width and half_width >= MIN_IMAGE_WIDTH;
+    const int text_width = is_beside ? half_width : width;
     for (int i = 0; i < layout.tree_height; ++i) {
         const int row = layout.tree_row + i;
         mvaddstr(row, layout.preview_column, row == layout.column_line_row ? "├" : "│");
@@ -906,10 +912,10 @@ void TreeKeyboardSelector::print_preview(const Layout& layout) {
                 line_index < static_cast<int>(lines.size())) {
             const Label line = parse_preview_line(lines[line_index]);
             std::string text = guishell::printable(line.text);
-            text.resize(guishell::nr_bytes_that_fit(text.data(), text.size(), width));
+            text.resize(guishell::nr_bytes_that_fit(text.data(), text.size(), text_width));
             const int pair = line.color.empty() ? -1 : guishell::label_color_pair(line.color);
             if (pair < 0 and line.text.find(guishell::STYLE_MARK) != std::string::npos) {
-                print_styled(row, column, line.text, width);
+                print_styled(row, column, line.text, text_width);
                 continue;
             }
             if (pair < 0) {
@@ -917,7 +923,7 @@ void TreeKeyboardSelector::print_preview(const Layout& layout) {
                 continue;
             }
             // Across the column, so it's seen at once
-            text += std::string(std::max(0, width - guishell::display_width(text)), ' ');
+            text += std::string(std::max(0, text_width - guishell::display_width(text)), ' ');
             attron(COLOR_PAIR(pair));
             attron(A_BOLD);
             mvaddstr(row, column, text.c_str());
@@ -925,26 +931,36 @@ void TreeKeyboardSelector::print_preview(const Layout& layout) {
             attroff(COLOR_PAIR(pair));
         }
     }
-    // The image below the lines, after a blank row
+    if (image == nullptr) {
+        return;
+    }
+    if (is_beside) {
+        // After a space between them
+        print_image(*image, layout.column_preview_row, layout.nr_column_preview_rows,
+                    column + half_width + 1, width - half_width - 1);
+        return;
+    }
+    // Below the lines, after a blank row
     const int nr_lines = std::min(layout.nr_column_preview_rows, static_cast<int>(lines.size()));
     const int image_row = layout.column_preview_row + nr_lines + (nr_lines > 0 ? 1 : 0);
-    print_image(image_row, layout.column_preview_row + layout.nr_column_preview_rows - image_row,
+    print_image(*image, image_row, layout.column_preview_row + layout.nr_column_preview_rows - image_row,
                 column, width);
 }
 
-void TreeKeyboardSelector::print_image(int row, int nr_rows, int column, int width) {
-    // Fewer, and it's too small to make out
-    static constexpr int MIN_ROWS = 3;
-    static constexpr int MIN_WIDTH = 6;
-    if (nr_rows < MIN_ROWS or width < MIN_WIDTH or not guishell::can_show_images()) {
-        return;
+const Image* TreeKeyboardSelector::selected_image(void) {
+    if (not guishell::can_show_images()) {
+        return nullptr;
     }
     const auto found = _images.find(_tree_selector.get_selection()->identifier);
-    if (found == _images.end()) {
+    return found == _images.end() ? nullptr : &found->second;
+}
+
+void TreeKeyboardSelector::print_image(const Image& selected, int row, int nr_rows, int column, int width) {
+    if (nr_rows < MIN_IMAGE_ROWS or width < MIN_IMAGE_WIDTH) {
         return;
     }
     // Two pixels a character, one above the other
-    const Image image = fit_image(found->second, width, nr_rows * 2);
+    const Image image = fit_image(selected, width, nr_rows * 2);
     if (guishell::nr_image_color_pairs_left() < image.width * (image.height + 1) / 2) {
         guishell::reset_image_color_pairs();
     }
