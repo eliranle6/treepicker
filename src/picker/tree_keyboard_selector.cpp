@@ -75,8 +75,9 @@ bool TreeKeyboardSelector::char_pressed(int c)
 {
     bool is_finished = false;
 
-    // The help stays until a key is pressed, which only takes it away (a resize redraws it)
-    if (_mode == mode::MODE_HELP) {
+    // The help (or a picture) stays until a key is pressed, which only takes it away (a resize
+    // redraws it)
+    if (_mode == mode::MODE_HELP or _mode == mode::MODE_PICTURE) {
         if (c != KEY_RESIZE) {
             _mode = mode::MODE_NAVIGATION;
         }
@@ -246,6 +247,9 @@ const std::vector<TreeKeyboardSelector::KeyCommand>& TreeKeyboardSelector::get_k
             {KEYCODE_F, &T::toggle_filter}}},
         {"p", "show or hide the preview column (with --preview)", {
             {KEYCODE_P, &T::toggle_preview}}},
+        {"z", "see the selected node's picture on the whole screen\n"
+              "(with --preview's pictures; any key goes back)", {
+            {KEYCODE_Z, &T::show_picture}}},
         {"Ctrl-L/Ctrl-H", "move in the side tree (with --side), and back", {
             {KEYCODE_CTRL_L, &T::focus_side}}},
         {"Ctrl-W l/h", "the same, as vim's (Ctrl-W w switches)", {
@@ -627,6 +631,13 @@ bool TreeKeyboardSelector::show_help(void) {
     return false;
 }
 
+bool TreeKeyboardSelector::show_picture(void) {
+    if (selected_image() != nullptr) {
+        _mode = mode::MODE_PICTURE;
+    }
+    return false;
+}
+
 bool TreeKeyboardSelector::toggle_filter(void) {
     _is_filtering = not _is_filtering;
     if (not _applied_keyword.empty()) {
@@ -698,6 +709,10 @@ void TreeKeyboardSelector::print_tree(void) {
     _out.clear();
     if (_mode == mode::MODE_HELP) {
         print_help();
+        return;
+    }
+    if (_mode == mode::MODE_PICTURE) {
+        print_picture();
         return;
     }
     load_around_selection();
@@ -975,6 +990,27 @@ void TreeKeyboardSelector::print_image(const Image& selected, int row, int nr_ro
         }
     }
     attr_set(A_NORMAL, 0, nullptr);
+}
+
+void TreeKeyboardSelector::print_picture(void) {
+    const int window_height = getmaxy(stdscr);
+    const int window_width = getmaxx(stdscr);
+    erase();
+    const Image* image = selected_image();
+    if (image == nullptr) {
+        // Dropped meanwhile (e.g. pictures switched off): back to the tree
+        _mode = mode::MODE_NAVIGATION;
+        print_tree();
+        return;
+    }
+    print_line(0, _tree_selector.get_selection()->identifier + "  (any key goes back)", window_width, false);
+    // Below its name, up to the screen's last column, which stays empty; centered
+    const int width = std::max(0, window_width - 1);
+    const int nr_rows = std::max(0, window_height - 1);
+    const Image fitted = fit_image(*image, width, nr_rows * 2);
+    const int nr_image_rows = (fitted.height + 1) / 2;
+    print_image(*image, 1 + (nr_rows - nr_image_rows) / 2, nr_rows, (width - fitted.width) / 2, width);
+    refresh();
 }
 
 bool TreeKeyboardSelector::is_search_line_shown(void) {

@@ -49,14 +49,17 @@ enum {
     KEYCODE_UPPER_J = 74,
     KEYCODE_UPPER_K = 75,
     KEYCODE_UPPER_V = 86,
-    KEYCODE_Q = 113
+    KEYCODE_Q = 113,
+    KEYCODE_Z = 122
 };
 
 enum mode {
     MODE_NAVIGATION,
     MODE_EDIT_SEARCH,
     // Showing the keys, until any key is pressed
-    MODE_HELP
+    MODE_HELP,
+    // Showing the selected node's picture on the whole screen, until any key is pressed
+    MODE_PICTURE
 };
 
 class TreeKeyboardSelector
@@ -154,6 +157,8 @@ private:
     bool quit(void);
     bool drop_search(void);
     bool show_help(void);
+    // z: the selected node's picture on the whole screen, if it has one
+    bool show_picture(void);
     bool toggle_filter(void);
     bool toggle_preview(void);
     bool start_window_key(void);
@@ -223,6 +228,8 @@ private:
 
     // Draw the keys' help instead of the tree
     void print_help(void);
+    // The selected node's picture, as big as the screen lets it be, its name above it
+    void print_picture(void);
 
     // Draw the keys row (see key_hints()) on the row
     void print_key_hints(int row, int window_width);
