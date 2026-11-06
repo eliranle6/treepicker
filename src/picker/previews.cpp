@@ -13,6 +13,11 @@ std::vector<Preview> PreviewsReader::feed(const std::string& data) {
         if (tab == std::string::npos) {
             continue;
         }
+        if (not entry.empty() and entry[0] == IMAGE_MARK) {
+            Preview preview{entry.substr(1, tab - 1), {}, true, parse_image(entry.substr(tab + 1))};
+            previews.push_back(std::move(preview));
+            continue;
+        }
         Preview preview{entry.substr(0, tab), {}};
         for (std::size_t line_start = tab + 1;; line_start = tab + 1) {
             tab = entry.find('\t', line_start);

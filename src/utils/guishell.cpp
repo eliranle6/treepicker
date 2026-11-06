@@ -6,6 +6,7 @@
 #include <cwchar>
 #include <limits>
 #include <streambuf>
+#include <unordered_map>
 #include <iostream>
 #include <curses.h>
 #include <unistd.h>
@@ -114,6 +115,16 @@ static_assert(sizeof(STYLES) / sizeof(STYLES[0]) == NR_STYLES, "a style without 
 const short FIRST_STYLE_COLOR_PAIR = 1;
 // Past the styles' pairs
 const short FIRST_LABEL_COLOR_PAIR = FIRST_STYLE_COLOR_PAIR + NR_STYLES;
+// Past the labels' pairs, a few spare, then the images', made as they're needed
+const short FIRST_IMAGE_COLOR_PAIR = FIRST_LABEL_COLOR_PAIR + 32;
+// The images' pairs so far, by their colors (foreground << 16 | background, each + 1), and the next
+std::unordered_map<int, short> image_color_pairs;
+int next_image_color_pair = FIRST_IMAGE_COLOR_PAIR;
+
+// The most pairs curses (init_pair()'s short) and the terminal have
+int max_color_pair(void) {
+    return std::min(COLOR_PAIRS, static_cast<int>(std::numeric_limits<short>::max()) + 1);
+}
 }
 
 Style text_style(const std::string& color) {
@@ -176,6 +187,35 @@ std::string unstyled(const std::string& s) {
 
 int color_pair(Style style) {
     return FIRST_STYLE_COLOR_PAIR + style;
+}
+
+bool can_show_images(void) {
+    return COLORS >= 256 and max_color_pair() - FIRST_IMAGE_COLOR_PAIR >= 256;
+}
+
+short image_color_pair(short foreground, short background) {
+    const int key = (foreground + 1) << 16 | (background + 1);
+    const auto found = image_color_pairs.find(key);
+    if (found != image_color_pairs.end()) {
+        return found->second;
+    }
+    if (next_image_color_pair >= max_color_pair()) {
+        // Out of pairs: the default colors, rather than another's
+        return 0;
+    }
+    const short pair = static_cast<short>(next_image_color_pair++);
+    init_pair(pair, foreground, background);
+    image_color_pairs[key] = pair;
+    return pair;
+}
+
+void reset_image_color_pairs(void) {
+    image_color_pairs.clear();
+    next_image_color_pair = FIRST_IMAGE_COLOR_PAIR;
+}
+
+int nr_image_color_pairs_left(void) {
+    return std::max(0, max_color_pair() - next_image_color_pair);
 }
 
 bool is_label_color(const std::string& color) {

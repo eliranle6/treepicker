@@ -4,6 +4,7 @@
 
 #include <functional>
 #include <memory>
+#include <deque>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -238,6 +239,9 @@ private:
 
     // The selected node's preview's lines
     const std::vector<std::string>& selected_preview(void);
+    // Draw the selected node's image in the preview column's rows from row on (nr_rows), if it
+    // has one, and they're enough
+    void print_image(int row, int nr_rows, int column, int width);
 
     // Lay the tree out without drawing it, so the selection can move relative to what would
     // be printed
@@ -262,6 +266,11 @@ private:
     // The previews' lines, by node id, and the lines of the nodes without one
     std::unordered_map<std::string, std::vector<std::string>> _previews;
     std::vector<std::string> _default_preview;
+    // The previews' images, by node id, below their lines; the most kept, and the order they came
+    // in, to drop the oldest past it
+    static constexpr std::size_t MAX_IMAGES = 64;
+    std::unordered_map<std::string, Image> _images;
+    std::deque<std::string> _image_ids;
     std::function<void(int)> _notify;
     // What the caller says it's doing (an update with no id), shown as a label; "": nothing
     std::string _status;

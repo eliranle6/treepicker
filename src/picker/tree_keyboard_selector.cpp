@@ -925,6 +925,40 @@ void TreeKeyboardSelector::print_preview(const Layout& layout) {
             attroff(COLOR_PAIR(pair));
         }
     }
+    // The image below the lines, after a blank row
+    const int nr_lines = std::min(layout.nr_column_preview_rows, static_cast<int>(lines.size()));
+    const int image_row = layout.column_preview_row + nr_lines + (nr_lines > 0 ? 1 : 0);
+    print_image(image_row, layout.column_preview_row + layout.nr_column_preview_rows - image_row,
+                column, width);
+}
+
+void TreeKeyboardSelector::print_image(int row, int nr_rows, int column, int width) {
+    // Fewer, and it's too small to make out
+    static constexpr int MIN_ROWS = 3;
+    static constexpr int MIN_WIDTH = 6;
+    if (nr_rows < MIN_ROWS or width < MIN_WIDTH or not guishell::can_show_images()) {
+        return;
+    }
+    const auto found = _images.find(_tree_selector.get_selection()->identifier);
+    if (found == _images.end()) {
+        return;
+    }
+    // Two pixels a character, one above the other
+    const Image image = fit_image(found->second, width, nr_rows * 2);
+    if (guishell::nr_image_color_pairs_left() < image.width * (image.height + 1) / 2) {
+        guishell::reset_image_color_pairs();
+    }
+    for (int y = 0; y < image.height; y += 2) {
+        move(row + y / 2, column);
+        for (int x = 0; x < image.width; ++x) {
+            const short upper = nearest_256_color(image.at(x, y));
+            // The last row of an odd height: the background's color below
+            const short lower = y + 1 < image.height ? nearest_256_color(image.at(x, y + 1)) : -1;
+            attr_set(A_NORMAL, guishell::image_color_pair(upper, lower), nullptr);
+            addstr("\u2580");
+        }
+    }
+    attr_set(A_NORMAL, 0, nullptr);
 }
 
 bool TreeKeyboardSelector::is_search_line_shown(void) {
@@ -1108,7 +1142,21 @@ void TreeKeyboardSelector::apply_previews(const std::vector<Preview>& previews) 
         return;
     }
     for (const auto& preview : previews) {
-        if (preview.path.empty()) {
+        if (preview.is_image) {
+            const std::string id = preview.path == "." and _tree.get_root() != nullptr ?
+                _tree.get_root()->identifier : preview.path;
+            _image_ids.erase(std::remove(_image_ids.begin(), _image_ids.end(), id), _image_ids.end());
+            if (preview.image.empty()) {
+                _images.erase(id);
+                continue;
+            }
+            _images[id] = preview.image;
+            _image_ids.push_back(id);
+            if (_image_ids.size() > MAX_IMAGES) {
+                _images.erase(_image_ids.front());
+                _image_ids.pop_front();
+            }
+        } else if (preview.path.empty()) {
             _default_preview = preview.lines;
         } else if (preview.path == "." and _tree.get_root() != nullptr) {
             // As printed: the root is "."

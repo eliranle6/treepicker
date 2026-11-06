@@ -41,6 +41,21 @@ TEST(previews, ones_without_a_tab_are_skipped_and_the_path_may_be_empty) {
     ASSERT_EQ(reader.feed("no tab\n\tWorking...\n"), Previews({{"", {"Working..."}}}));
 }
 
+TEST(previews, an_image_replaces_the_paths_image) {
+    picker::PreviewsReader reader('\n');
+    const Previews previews = reader.feed("\x03" "a/x.jpg\t2 1 ff000000ff00\n\x03" "b\t\n");
+    ASSERT_EQ(previews.size(), 2u);
+    ASSERT_EQ(previews[0].path, "a/x.jpg");
+    ASSERT_TRUE(previews[0].is_image);
+    ASSERT_TRUE(previews[0].lines.empty());
+    ASSERT_EQ(previews[0].image.width, 2);
+    ASSERT_EQ(previews[0].image.pixels, std::vector<std::uint32_t>({0xff0000, 0x00ff00}));
+    // An empty one: no image
+    ASSERT_EQ(previews[1].path, "b");
+    ASSERT_TRUE(previews[1].is_image);
+    ASSERT_TRUE(previews[1].image.empty());
+}
+
 using Segments = std::vector<picker::Label>;
 
 static bool same(const Segments& a, const Segments& b) {

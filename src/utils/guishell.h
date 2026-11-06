@@ -69,6 +69,17 @@ std::size_t nr_bytes_that_fit(const char *s, std::size_t n, int nr_columns);
 // white or black text, whichever reads better on it; -1 for an unknown color name. Needs curses.
 int label_color_pair(const std::string& color);
 
+// Whether the terminal shows images (picker/image.h): with 256 colors, and room for their pairs
+bool can_show_images(void);
+
+// The curses color pair of an image's character: foreground and background colors of 256 (-1 for
+// the terminal's default). Pairs are made as needed; reset_image_color_pairs() starts them over,
+// e.g. before drawing an image, if there may not be room for its own. Needs curses.
+short image_color_pair(short foreground, short background);
+void reset_image_color_pairs(void);
+// How many pairs image_color_pair() can make before reset_image_color_pairs() is needed
+int nr_image_color_pairs_left(void);
+
 // Whether label_color_pair() knows the color name
 bool is_label_color(const std::string& color);
 
