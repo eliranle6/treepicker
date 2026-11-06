@@ -169,6 +169,41 @@ void TreeSelector::move_to_prev(void) {
     }
 }
 
+void TreeSelector::move_to_next_in_tree(void) {
+    if (_selection == nullptr) {
+        return;
+    }
+    _tree.load_children(_selection);
+    const auto start = _selection;
+    explore_children_of_selection();
+    if (_selection == start) {
+        select(get_next_beyond_screen(_selection));
+    }
+}
+
+void TreeSelector::move_to_prev_in_tree(void) {
+    if (_selection == nullptr or _selection == _tree.get_root()) {
+        return;
+    }
+    const auto start = _selection;
+    move_to_prev_sibling();
+    if (_selection == start) {
+        move_one_up();
+        return;
+    }
+    // The previous sibling's last node: the last one down from it
+    while (true) {
+        _tree.load_children(_selection);
+        auto& children = _selection->children;
+        auto last = std::find_if(children.rbegin(), children.rend(),
+                                 [](const NodePtr& child) { return child->is_search_visible; });
+        if (last == children.rend()) {
+            return;
+        }
+        _selection = *last;
+    }
+}
+
 void TreeSelector::toggle_pick_of_selection(bool only_shown) {
     if (_selection == nullptr) {
         return;

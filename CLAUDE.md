@@ -62,6 +62,8 @@ selection), not through the tree's order: so the screen stays steady while movin
 than being redrawn around each new selection, which is hard to follow (the author's choice,
 2026-10-24). Past the screen's edges they go on, like scrolling a list: `j` on the last line to the
 node a bigger screen would show next, `k` on the first child to the printed root.
+`J`/`K` are the other way: through the whole tree in its order, into dirs shown collapsed too, with
+the screen redrawn around the selection.
 
 Every program feature goes in the shared core (`src/picker` and below), so all programs get it;
 a program's `main.cpp` only builds its tree and calls `picker::pick_and_print()`.

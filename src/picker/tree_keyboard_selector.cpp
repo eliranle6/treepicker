@@ -224,6 +224,8 @@ const std::vector<TreeKeyboardSelector::KeyCommand>& TreeKeyboardSelector::get_k
             {KEYCODE_J, &T::move_to_next}, {KEY_DOWN, &T::move_to_next},
             {KEYCODE_H, &T::move_one_up}, {KEY_LEFT, &T::move_one_up},
             {KEYCODE_L, &T::explore_children}, {KEY_RIGHT, &T::explore_children}}},
+        {"J/K", "next/previous node of the whole tree, collapsed dirs too", {
+            {KEYCODE_UPPER_J, &T::move_to_next_in_tree}, {KEYCODE_UPPER_K, &T::move_to_prev_in_tree}}},
         {"g/G", "first/last line on the screen", {
             {KEYCODE_LOWER_G, &T::move_to_first_shown}, {KEYCODE_UPPER_G, &T::move_to_last_shown}}},
         {"Home/End", "first/last sibling", {
@@ -326,6 +328,28 @@ bool TreeKeyboardSelector::move_to_next_sibling(void) {
 bool TreeKeyboardSelector::move_to_prev_sibling(void) {
     move_skipping(&TreeSelector::move_to_prev_sibling, &TreeSelector::move_to_prev_sibling);
     return false;
+}
+
+bool TreeKeyboardSelector::move_to_next_in_tree(void) {
+    const auto nr_nodes = _tree.get_nr_nodes();
+    move_skipping(&TreeSelector::move_to_next_in_tree, &TreeSelector::move_to_next_in_tree);
+    search_again_if_loaded(nr_nodes);
+    return false;
+}
+
+bool TreeKeyboardSelector::move_to_prev_in_tree(void) {
+    const auto nr_nodes = _tree.get_nr_nodes();
+    move_skipping(&TreeSelector::move_to_prev_in_tree, &TreeSelector::move_to_prev_in_tree);
+    search_again_if_loaded(nr_nodes);
+    return false;
+}
+
+void TreeKeyboardSelector::search_again_if_loaded(int nr_nodes_before) {
+    // Moving through a lazy tree may have loaded dirs that a search doesn't know of yet
+    if (_tree.get_nr_nodes() != nr_nodes_before and not _applied_keyword.empty()) {
+        _search.search(_applied_keyword, _is_filtering);
+        _tree_selector.select_visible_ancestor();
+    }
 }
 
 bool TreeKeyboardSelector::move_to_first_shown(void) {
@@ -433,6 +457,8 @@ bool TreeKeyboardSelector::side_char_pressed(int c) {
         case KEYCODE_K: case KEY_UP: _side_selector->move_to_prev(); break;
         case KEYCODE_H: case KEY_LEFT: _side_selector->move_one_up(); break;
         case KEYCODE_L: case KEY_RIGHT: _side_selector->explore_children_of_selection(); break;
+        case KEYCODE_UPPER_J: _side_selector->move_to_next_in_tree(); break;
+        case KEYCODE_UPPER_K: _side_selector->move_to_prev_in_tree(); break;
         case KEYCODE_CTRL_J: _side_selector->move_to_next_sibling(); break;
         case KEYCODE_CTRL_K: _side_selector->move_to_prev_sibling(); break;
         case KEY_HOME: _side_selector->move_to_first_sibling(); break;

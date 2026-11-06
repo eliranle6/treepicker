@@ -45,6 +45,8 @@ enum {
     KEYCODE_QUESTION_MARK = 63,
     KEYCODE_CTRL_SLASH = 31,  // What terminals send for Ctrl-/ (and Ctrl-_)
     KEYCODE_UPPER_G = 71,
+    KEYCODE_UPPER_J = 74,
+    KEYCODE_UPPER_K = 75,
     KEYCODE_UPPER_V = 86,
     KEYCODE_Q = 113
 };
@@ -137,7 +139,11 @@ private:
     // Move with first, then again with then while the selection is a skipped node (see
     // Node::is_skipped); back where it was if that gets to no other node
     void move_skipping(void (TreeSelector::*first)(void), void (TreeSelector::*then)(void));
+    // After moving: if the tree has more nodes than nr_nodes_before, search again, for them
+    void search_again_if_loaded(int nr_nodes_before);
     bool move_to_prev_sibling(void);
+    bool move_to_next_in_tree(void);
+    bool move_to_prev_in_tree(void);
     bool move_to_first_shown(void);
     bool move_to_last_shown(void);
     bool explore_children(void);

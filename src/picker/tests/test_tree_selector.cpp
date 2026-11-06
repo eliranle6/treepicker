@@ -252,7 +252,18 @@ TEST(tree_selector, random_walks_keep_the_selection_shown) {
                 case 0: tree_selector.move_to_next(); actions += 'j'; break;
                 case 1: tree_selector.move_to_prev(); actions += 'k'; break;
                 case 2: tree_selector.explore_children_of_selection(); actions += 'l'; break;
-                case 3: tree_selector.move_one_up(); actions += 'h'; break;
+                case 3:
+                    if (random() % 2 == 0) {
+                        tree_selector.move_one_up();
+                        actions += 'h';
+                    } else if (random() % 2 == 0) {
+                        tree_selector.move_to_next_in_tree();
+                        actions += 'J';
+                    } else {
+                        tree_selector.move_to_prev_in_tree();
+                        actions += 'K';
+                    }
+                    break;
                 case 4:
                     if (random() % 3 == 0 or keyword.size() > 2) {
                         keyword.clear();
@@ -484,6 +495,72 @@ TEST(tree_selector, move_to_next_and_prev_sibling_skips_hidden_ones_and_stays_at
     ASSERT_EQ(tree_selector.get_selection()->tag, "child000000");
     tree_selector.move_to_prev_sibling();
     ASSERT_EQ(tree_selector.get_selection()->tag, "child000000");
+}
+
+// The nodes a search leaves shown (all, without one), each before the nodes under it
+static void add_visible_preorder(const std::shared_ptr<treelib::Node>& node,
+                                 std::vector<std::shared_ptr<treelib::Node>>& nodes) {
+    nodes.push_back(node);
+    for (auto& child : node->children) {
+        if (child->is_search_visible) {
+            add_visible_preorder(child, nodes);
+        }
+    }
+}
+
+// J from the root goes through nodes, in order, and stays at the last; K comes back, and stays at
+// the root. Printing between moves, in a small window, as the picker does: what's printed mustn't matter.
+static void expect_walk_through(treelib::Tree& tree, const std::vector<std::shared_ptr<treelib::Node>>& nodes,
+                                bool filter) {
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    for (std::size_t i = 1; i < nodes.size(); ++i) {
+        print(tree_printer, tree_selector, 6, filter);
+        tree_selector.move_to_next_in_tree();
+        ASSERT_EQ(tree_selector.get_selection(), nodes[i]);
+    }
+    tree_selector.move_to_next_in_tree();
+    ASSERT_EQ(tree_selector.get_selection(), nodes.back());
+    for (int i = static_cast<int>(nodes.size()) - 2; i >= 0; --i) {
+        print(tree_printer, tree_selector, 6, filter);
+        tree_selector.move_to_prev_in_tree();
+        ASSERT_EQ(tree_selector.get_selection(), nodes[i]);
+    }
+    tree_selector.move_to_prev_in_tree();
+    ASSERT_EQ(tree_selector.get_selection(), tree.get_root());
+}
+
+TEST(tree_selector, moving_in_the_tree_goes_through_all_of_it_and_back) {
+    for (int seed = 0; seed < 100; ++seed) {
+        SCOPED_TRACE("seed=" + std::to_string(seed));
+        std::mt19937 random(seed);
+        auto tree = get_random_tree(random, 1 + random() % 80);
+        std::vector<std::shared_ptr<treelib::Node>> nodes;
+        add_visible_preorder(tree.get_root(), nodes);
+        ASSERT_EQ(nodes.size(), tree.get_nr_nodes());
+        expect_walk_through(tree, nodes, false);
+    }
+}
+
+TEST(tree_selector, moving_in_the_tree_skips_what_a_search_hides) {
+    for (int seed = 0; seed < 100; ++seed) {
+        SCOPED_TRACE("seed=" + std::to_string(seed));
+        std::mt19937 random(seed);
+        auto tree = get_random_tree(random, 1 + random() % 80);
+        treelib::Search(tree).search("a");
+        std::vector<std::shared_ptr<treelib::Node>> nodes;
+        add_visible_preorder(tree.get_root(), nodes);
+        expect_walk_through(tree, nodes, true);
+    }
+}
+
+TEST(tree_selector, moving_in_an_empty_tree_stays) {
+    treelib::Tree tree;
+    treelib::TreePrinter tree_printer(tree);
+    picker::TreeSelector tree_selector(tree, tree_printer);
+    tree_selector.move_to_next_in_tree();
+    tree_selector.move_to_prev_in_tree();
+    ASSERT_EQ(tree_selector.get_selection(), nullptr);
 }
 
 TEST(tree_selector, move_to_sibling_of_the_root_stays) {

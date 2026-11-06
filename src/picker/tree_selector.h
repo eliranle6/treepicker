@@ -35,6 +35,12 @@ public:
     void move_to_next_sibling(void);
     void move_to_prev_sibling(void);
 
+    // Select the next/previous node in the tree's order (that an ongoing search doesn't hide),
+    // each node before the nodes under it, whatever is printed now: so unlike move_to_next(), it
+    // goes into a dir shown collapsed, and the printer's view follows. At the tree's ends, it stays.
+    void move_to_next_in_tree(void);
+    void move_to_prev_in_tree(void);
+
     // If an ongoing search hides the selection, select its closest visible ancestor
     void select_visible_ancestor(void);
 
