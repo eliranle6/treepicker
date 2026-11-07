@@ -33,6 +33,9 @@ struct PickerOptions {
     bool is_selection_picked_if_none = false;
     // Lines shown above the tree
     std::string header;
+    // Lines shown below the tree, above the bottom lines (each plain, or in styled parts, as
+    // --preview's lines)
+    std::string footer;
     // The labels at the start of the stats line, side by side
     std::vector<Label> labels;
     // The caller's keys, for the keys row (see key_hints()) and the help (?): its own (e.g. an

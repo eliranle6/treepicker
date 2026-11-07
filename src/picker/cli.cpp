@@ -18,6 +18,8 @@ const std::string CLI_OPTIONS_USAGE = std::string(
     "                 with -m, Enter with nothing picked picks the selected node (and everything\n"
     "                 under it, as Space does) and finishes, rather than doing nothing\n"
     "  --header TEXT  show TEXT (one or more lines) above the tree\n"
+    "  --footer TEXT  show TEXT (one or more lines, plain or in styled parts as --preview's)\n"
+    "                 below the tree, above the bottom lines, e.g. a warning\n"
     "  --root NAME    show the tree's root as NAME\n"
     "  --label TEXT   show TEXT in bold at the start of the bottom line, e.g. a mode. Given\n"
     "                 again, the labels are shown side by side.\n"
@@ -186,7 +188,7 @@ CliOptions parse_cli(int argc, char* argv[]) {
             } else {
                 options.help_lines.push_back(argv[++i]);
             }
-        } else if (arg == "--header" or arg == "--exclude" or arg == "--root" or arg == "--picked" or arg == "--label" or
+        } else if (arg == "--header" or arg == "--footer" or arg == "--exclude" or arg == "--root" or arg == "--picked" or arg == "--label" or
                    arg == "--label-color" or arg == "--expect" or arg == "--select" or arg == "--notify" or
                    arg == "--expect-twice" or arg == "--side-start") {
             if (i + 1 == argc) {
@@ -213,6 +215,8 @@ CliOptions parse_cli(int argc, char* argv[]) {
                 }
             } else if (arg == "--header") {
                 options.header = argv[++i];
+            } else if (arg == "--footer") {
+                options.footer = argv[++i];
             } else if (arg == "--root") {
                 options.root_name = argv[++i];
             } else if (arg == "--label") {

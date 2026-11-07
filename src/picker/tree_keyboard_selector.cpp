@@ -68,6 +68,12 @@ TreeKeyboardSelector::TreeKeyboardSelector(treelib::Tree& tree, const PickerOpti
             _header_lines.push_back(line);
         }
     }
+    if (not options.footer.empty()) {
+        std::istringstream footer(options.footer);
+        for (std::string line; std::getline(footer, line);) {
+            _footer_lines.push_back(line);
+        }
+    }
     curs_set(0);
 }
 
@@ -748,6 +754,16 @@ void TreeKeyboardSelector::print_tree(void) {
     if (layout.nr_preview_rows > 0) {
         print_preview_below(layout, window_width);
     }
+    for (int i = 0; i < layout.nr_footer_rows; ++i) {
+        const std::string& line = _footer_lines[i];
+        if (line.find(guishell::STYLE_MARK) != std::string::npos) {
+            move(layout.footer_row + i, 0);
+            clrtoeol();
+            print_styled(layout.footer_row + i, 0, line, window_width - 1);
+        } else {
+            print_line(layout.footer_row + i, guishell::printable(line), window_width, false);
+        }
+    }
     if (layout.preview_column >= 0) {
         print_preview(layout);
     }
@@ -1032,6 +1048,12 @@ TreeKeyboardSelector::Layout TreeKeyboardSelector::get_layout(void) {
     if (nr_rows_left - 1 >= MIN_TREE_HEIGHT) {
         layout.stats_row = --nr_rows_left;
     }
+
+    // The footer above it, as much of it as leaves the tree enough room
+    layout.nr_footer_rows = std::min(static_cast<int>(_footer_lines.size()),
+                                     std::max(0, nr_rows_left - MIN_TREE_HEIGHT));
+    nr_rows_left -= layout.nr_footer_rows;
+    layout.footer_row = layout.nr_footer_rows > 0 ? nr_rows_left : -1;
 
     // The preview below the tree (with --preview-below), as many rows as its longest, if the tree
     // keeps enough room

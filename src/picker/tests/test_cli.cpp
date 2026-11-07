@@ -52,6 +52,11 @@ TEST(cli, header) {
     ASSERT_EQ(options.args, std::vector<std::string>({"-"}));
 }
 
+TEST(cli, footer) {
+    ASSERT_EQ(parse({"--footer", "a warning", "-"}).footer, "a warning");
+    ASSERT_FALSE(parse({"--footer"}).error.empty());
+}
+
 TEST(cli, header_without_value) {
     ASSERT_FALSE(parse({"--header"}).error.empty());
 }

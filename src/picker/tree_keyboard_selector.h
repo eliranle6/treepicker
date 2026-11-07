@@ -202,6 +202,9 @@ private:
     // A row (or column) of -1 means it isn't shown.
     struct Layout {
         int nr_header_rows;
+        // The footer's rows (--footer), above the stats line: the first, and how many (0: none)
+        int footer_row = -1;
+        int nr_footer_rows = 0;
         int tree_height;
         int stats_row;
         int search_row;
@@ -298,6 +301,7 @@ private:
     bool _are_files_known;
     // The header's lines
     std::vector<std::string> _header_lines;
+    std::vector<std::string> _footer_lines;
     std::vector<std::shared_ptr<treelib::Node>> _picked;
     int _expected_key;
     // While picking a range (V, with -m, like vim's visual line mode): the node V was pressed on,
