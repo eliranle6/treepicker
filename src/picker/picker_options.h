@@ -25,6 +25,41 @@ struct KeyHint {
     }
 };
 
+// How a state is shown for a group's nodes (see StateOption)
+struct GroupMark {
+    int group;
+    std::string mark;
+    std::string color;
+};
+
+// A state a node can be in (see PickerOptions::states): its name (printed with the node), its mark
+// (one column, shown before the node) and color (a guishell::text_style() name), the key that
+// sets it (0: none), and other marks for some groups' nodes (e.g. "copy here" is a different
+// thing for nodes of each side)
+struct StateOption {
+    std::string name;
+    std::string mark;
+    std::string color;
+    int key = 0;
+    std::vector<GroupMark> group_marks;
+};
+
+// A tab (see PickerOptions::tabs): its title, and the groups of nodes it shows (indexes into
+// PickerOptions::groups; empty: all the nodes)
+struct TabOption {
+    std::string title;
+    std::vector<int> groups;
+};
+
+// A node's states (see PickerOptions::states): the ones it allows (a bit each, by their index), the
+// one it starts in, and its group (-1: none)
+struct NodeStates {
+    std::string id;
+    unsigned allowed = ~0u;
+    int initial = 0;
+    int group = -1;
+};
+
 struct PickerOptions {
     // Pick several nodes: Space picks or unpicks, Enter finishes
     bool is_multi = false;
@@ -97,6 +132,18 @@ struct PickerOptions {
     std::vector<KeyHint> side_key_hints;
     // What the keys row says of keys while nothing's picked, in place of what key_hints says
     std::vector<KeyHint> none_picked_key_hints;
+    // States for the nodes, rather than picked or not (with is_multi): each node is in one, the
+    // first (e.g. skip) unpicked, the others picked; Space cycles the selection's through the ones
+    // it allows (a dir's: the ones all its nodes allow, set on all of them), and a state's key sets
+    // it. Empty: no states.
+    std::vector<StateOption> states;
+    // The nodes' states (each a node without children; the others allow all and start in the
+    // first), and their groups' names
+    std::vector<NodeStates> node_states;
+    std::vector<std::string> groups;
+    // Tabs, a row of them above the tree, each showing some of the groups: Tab and Shift-Tab
+    // switch. Empty: none.
+    std::vector<TabOption> tabs;
 };
 
 // The keys row's keys, in its order: treepicker's main ones (Space and Enter, as options says

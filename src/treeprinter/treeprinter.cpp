@@ -49,7 +49,7 @@ int TreePrinter::print(std::ostream &out,
         } else {
             print_node(out, line, _is_selection_highlighted ? selection : nullptr, _printed_subtree_root,
                        _tree, has_next_sibling, window_width,
-                       _is_selection_highlighted ? nullptr : selection);
+                       _is_selection_highlighted ? nullptr : selection, _state_marks);
         }
     }
     return _lines.size();

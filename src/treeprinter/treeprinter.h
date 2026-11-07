@@ -31,6 +31,8 @@ public:
     // Whether print() highlights the selection (the default), or only marks it, e.g. while the
     // user moves in another tree
     void set_selection_highlighted(bool is_highlighted) { _is_selection_highlighted = is_highlighted; }
+    // Show the nodes' states by these marks (see print_node()); not owned, nullptr: none
+    void set_state_marks(const StateMarks* marks) { _state_marks = marks; }
 
     // What the last layout showed
     std::shared_ptr<treelib::Node> get_next_printed_node_after_selected(void);
@@ -63,6 +65,7 @@ private:
     std::shared_ptr< Node > _next_printed_node_after_selected;
     bool _was_selection_printed;
     bool _is_selection_highlighted = true;
+    const StateMarks* _state_marks = nullptr;
 };
 } // namespace treelib
 

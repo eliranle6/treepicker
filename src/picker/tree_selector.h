@@ -63,18 +63,18 @@ public:
     // The picked nodes, in the tree's order (each node before the nodes under it)
     std::vector<NodePtr> get_picked_nodes(void);
 
+    // Update node's picked state from its children's
+    void update_from_children(treelib::Node* node);
+
+    // Set node's is_picked, and the counts
+    void set_picked_flag(treelib::Node* node, bool is_picked);
+
 private:
     treelib::Tree& _tree;
     treelib::TreePrinter& _tree_printer;
     // The node after node that a bigger screen would show, when node is the last line printed:
     // its next sibling, or else the closest ancestor's next sibling; nullptr at the tree's end
     NodePtr get_next_beyond_screen(NodePtr node);
-
-    // Update node's picked state from its children's
-    void update_from_children(treelib::Node* node);
-
-    // Set node's is_picked, and the counts
-    void set_picked_flag(treelib::Node* node, bool is_picked);
 
     NodePtr _selection;
     std::size_t _nr_picked;

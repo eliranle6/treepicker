@@ -81,14 +81,17 @@ void print_node(
         Tree& tree,
         const std::vector<bool>& has_next_sibling,
         int window_width,
-        const std::shared_ptr<Node> dimmed_selection
+        const std::shared_ptr<Node> dimmed_selection,
+        const StateMarks* state_marks
         ) {
     const PrintedLine& pn = line;
 
     // Print selection marker if node is selected node
     const bool is_selection = pn.node == selection;
-    const bool is_picked = pn.node->is_picked;
-    const bool is_partly_picked = pn.node->is_partly_picked;
+    // With states, a node's mark says its state, and its text isn't colored as picked
+    const bool has_state = state_marks != nullptr and pn.node->state != Node::NO_STATE;
+    const bool is_picked = pn.node->is_picked and not has_state;
+    const bool is_partly_picked = pn.node->is_partly_picked and not has_state;
 
     if (is_selection) {
         out << ">";
@@ -97,7 +100,19 @@ void print_node(
         out << (dimmed_selection != nullptr and pn.node == dimmed_selection ? ">" : " ");
     }
     // Then a column marking picked nodes (the root's line has none: it shows the root in red)
-    if (pn.node->identifier != printed_subtree_root->identifier) {
+    if (pn.node->identifier != printed_subtree_root->identifier and has_state) {
+        const int state = pn.node->state;
+        if (state >= 0 and state < static_cast<int>(state_marks->size()) and not (*state_marks)[state].empty()) {
+            const auto& marks = (*state_marks)[state];
+            const std::size_t index = static_cast<std::size_t>(pn.node->group + 1);
+            const StateMark& mark = index > 0 and index < marks.size() and not marks[index].mark.empty() ?
+                marks[index] : marks[0];
+            out << guishell::Color(static_cast<guishell::Style>(mark.style)) << mark.mark
+                << guishell::Color(is_selection ? guishell::BLACK_ON_BLUE : guishell::DEFAULT);
+        } else {
+            out << (state == Node::MIXED_STATE ? "*" : " ");
+        }
+    } else if (pn.node->identifier != printed_subtree_root->identifier) {
         out << (is_picked ? "X" : is_partly_picked ? "-" : " ");
     }
 

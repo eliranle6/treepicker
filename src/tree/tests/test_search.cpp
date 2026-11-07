@@ -155,3 +155,46 @@ TEST(treesearch, empty_keyword_highlights_nothing) {
     search.search("");
     ASSERT_FALSE(tree.get_node("child1.1_id")->is_search_match);
 }
+
+TEST(treesearch, filter_shows_only_the_nodes_it_passes_and_their_dirs) {
+    treelib::Tree tree = get_example_tree();
+    treelib::Search search(tree);
+    search.set_filter([](const treelib::Node& node) { return node.identifier == "child2.1_id"; });
+    search.search("");
+
+    ASSERT_TRUE(tree.get_node("root_id")->is_search_visible);
+    ASSERT_FALSE(tree.get_node("child1_id")->is_search_visible);
+    ASSERT_FALSE(tree.get_node("child1.1_id")->is_search_visible);
+    ASSERT_TRUE(tree.get_node("child2_id")->is_search_visible);
+    ASSERT_TRUE(tree.get_node("child2.1_id")->is_search_visible);
+    ASSERT_FALSE(tree.get_node("child2.2_id")->is_search_visible);
+}
+
+TEST(treesearch, filter_and_keyword_both_hide) {
+    treelib::Tree tree = get_example_tree();
+    treelib::Search search(tree);
+    // child1's nodes pass, but only child1.2 matches
+    search.set_filter([](const treelib::Node& node) { return node.parent == "child1_id"; });
+    search.search("1.2");
+
+    ASSERT_EQ(search.get_nr_matching(), 1u);
+    ASSERT_TRUE(tree.get_node("child1.2_id")->is_search_visible);
+    ASSERT_FALSE(tree.get_node("child1.1_id")->is_search_visible);
+    ASSERT_FALSE(tree.get_node("child2_id")->is_search_visible);
+    // A match the filter doesn't pass is hidden: child2.2 matches "2.2" but isn't child1's
+    search.search("2.2");
+    ASSERT_EQ(search.get_nr_matching(), 0u);
+    ASSERT_FALSE(tree.get_node("child2.2_id")->is_search_visible);
+}
+
+TEST(treesearch, without_the_filter_all_is_shown_again) {
+    treelib::Tree tree = get_example_tree();
+    treelib::Search search(tree);
+    search.set_filter([](const treelib::Node&) { return false; });
+    search.search("");
+    ASSERT_FALSE(tree.get_node("child1_id")->is_search_visible);
+    search.set_filter(nullptr);
+    search.search("");
+    ASSERT_TRUE(tree.get_node("child1_id")->is_search_visible);
+    ASSERT_TRUE(tree.get_node("child2.2_id")->is_search_visible);
+}

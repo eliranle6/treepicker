@@ -38,8 +38,17 @@ std::vector<KeyHint> key_hints(const PickerOptions& options, bool is_none_picked
         return hints;
     }
     if (options.is_multi) {
-        hints.push_back({"Space", "pick"});
+        hints.push_back({"Space", options.states.empty() ? "pick" : "next state"});
         hints.push_back({"Enter", "done"});
+        // The keys that set a state
+        for (auto& state : options.states) {
+            if (state.key != 0) {
+                hints.push_back({std::string(1, static_cast<char>(state.key)), state.name});
+            }
+        }
+        if (not options.tabs.empty()) {
+            hints.push_back({"Tab", "next tab"});
+        }
     } else {
         hints.push_back({"Enter", options.is_root_pickable ? "pick" : "choose"});
     }

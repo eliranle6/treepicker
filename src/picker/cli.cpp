@@ -1,4 +1,6 @@
+#include <algorithm>
 #include <cstdlib>
+#include <sstream>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
@@ -107,6 +109,24 @@ const std::string CLI_OPTIONS_USAGE = std::string(
     "                 the keys row says it, while moving in the side tree\n"
     "  --key-if-none-picked KEY TEXT\n"
     "                 the keys row says it of a key it lists, while nothing's picked\n"
+    "  --state NAME MARK COLOR KEY\n"
+    "                 with -m, nodes are in states rather than picked or not: given once for\n"
+    "                 each, in order, the first (e.g. skip) being unpicked. MARK (one column) is\n"
+    "                 shown before a node in that state, in COLOR (a --label-color, grey or\n"
+    "                 orange), and KEY (or \"\" for none) sets the selection's (a dir's: all under\n"
+    "                 it that allow it). Space sets the next one it allows. Printed: each node\n"
+    "                 without children not in the first state, as its state's NAME, a tab and\n"
+    "                 its path.\n"
+    "  --state-mark NAME GROUP MARK COLOR\n"
+    "                 show state NAME by MARK in COLOR for GROUP's nodes (see --states)\n"
+    "  --states FILE  the nodes' states: each line (ending like the paths do) the states the\n"
+    "                 node allows (names separated by commas; empty: all), a tab, the one it\n"
+    "                 starts in (empty: the first), a tab, its group (a name; empty: none), a tab\n"
+    "                 and its path (as printed)\n"
+    "  --tab TITLE GROUPS\n"
+    "                 a tab, in a row above the tree, that shows only the nodes of GROUPS (their\n"
+    "                 names separated by commas; empty: all), with their count. Given again, for\n"
+    "                 more tabs; Tab and Shift-Tab switch.\n"
     "  -0             paths end with '\\0' rather than a newline (read ones and printed ones)\n"
     "  -h, --help     show this help\n"
     "\n"
@@ -233,6 +253,57 @@ CliOptions parse_cli(int argc, char* argv[]) {
             } else {
                 options.picked_file = argv[++i];
             }
+        } else if (arg == "--state" or arg == "--state-mark") {
+            if (i + 4 >= argc) {
+                options.error = arg + " needs four values";
+            } else if (arg == "--state") {
+                StateOption state{argv[i + 1], argv[i + 2], argv[i + 3]};
+                const std::string key = argv[i + 4];
+                if (key.size() > 1) {
+                    options.error = "--state needs one key, or \"\"";
+                } else if (key.size() == 1) {
+                    state.key = static_cast<unsigned char>(key[0]);
+                    const std::string error = expect_key_error(key[0]);
+                    if (not error.empty()) {
+                        options.error = "--state key '" + key + "' can't be used: " + error;
+                    }
+                }
+                if (not guishell::is_label_color(state.color) and state.color != "grey" and state.color != "orange") {
+                    options.error = "unknown --state color '" + state.color + "'";
+                }
+                options.states.push_back(state);
+                i += 4;
+            } else {
+                const std::string name = argv[i + 1];
+                auto state = std::find_if(options.states.begin(), options.states.end(),
+                                          [&](const StateOption& s) { return s.name == name; });
+                if (state == options.states.end()) {
+                    options.error = "--state-mark of an unknown state '" + name + "' (give its --state first)";
+                } else {
+                    state->group_marks.push_back({group_index(options, argv[i + 2]), argv[i + 3], argv[i + 4]});
+                }
+                i += 4;
+            }
+        } else if (arg == "--states") {
+            if (i + 1 == argc) {
+                options.error = arg + " needs a value";
+            } else {
+                options.states_file = argv[++i];
+            }
+        } else if (arg == "--tab") {
+            if (i + 2 >= argc) {
+                options.error = "--tab needs a title and groups";
+            } else {
+                TabOption tab{argv[i + 1], {}};
+                std::istringstream groups(argv[i + 2]);
+                for (std::string group; std::getline(groups, group, ',');) {
+                    if (not group.empty()) {
+                        tab.groups.push_back(group_index(options, group));
+                    }
+                }
+                options.tabs.push_back(tab);
+                i += 2;
+            }
         } else if (arg == "--side" or arg == "--side-root" or arg == "--side-key") {
             if (i + 1 == argc) {
                 options.error = arg + " needs a value";
@@ -289,7 +360,71 @@ CliOptions parse_cli(int argc, char* argv[]) {
             options.args.push_back(arg);
         }
     }
+    if (options.error.empty() and not options.states.empty() and not options.is_multi) {
+        options.error = "--state needs -m";
+    }
+    if (options.error.empty() and options.states.empty() and not options.states_file.empty()) {
+        options.error = "--states needs --state";
+    }
     return options;
+}
+
+int group_index(PickerOptions& options, const std::string& name) {
+    auto group = std::find(options.groups.begin(), options.groups.end(), name);
+    if (group != options.groups.end()) {
+        return static_cast<int>(group - options.groups.begin());
+    }
+    options.groups.push_back(name);
+    return static_cast<int>(options.groups.size()) - 1;
+}
+
+// The index of the state named name, or -1
+static int state_index(const PickerOptions& options, const std::string& name) {
+    for (std::size_t i = 0; i < options.states.size(); ++i) {
+        if (options.states[i].name == name) {
+            return static_cast<int>(i);
+        }
+    }
+    return -1;
+}
+
+std::string read_node_states(CliOptions& options, std::istream& in, char delimiter) {
+    for (std::string line; std::getline(in, line, delimiter);) {
+        if (line.empty()) {
+            continue;
+        }
+        std::vector<std::string> fields;
+        std::size_t start = 0;
+        // Three tabs: the path after the last may have tabs of its own
+        for (int i = 0; i < 3; ++i) {
+            const std::size_t tab = line.find('\t', start);
+            if (tab == std::string::npos) {
+                return "--states: a line without its four fields: " + line;
+            }
+            fields.push_back(line.substr(start, tab - start));
+            start = tab + 1;
+        }
+        NodeStates node;
+        node.id = line.substr(start);
+        if (not fields[0].empty()) {
+            node.allowed = 0;
+            std::istringstream names(fields[0]);
+            for (std::string name; std::getline(names, name, ',');) {
+                const int state = state_index(options, name);
+                if (state < 0) {
+                    return "--states: an unknown state '" + name + "'";
+                }
+                node.allowed |= 1u << state;
+            }
+        }
+        node.initial = fields[1].empty() ? 0 : state_index(options, fields[1]);
+        if (node.initial < 0) {
+            return "--states: an unknown state '" + fields[1] + "'";
+        }
+        node.group = fields[2].empty() ? -1 : group_index(options, fields[2]);
+        options.node_states.push_back(node);
+    }
+    return "";
 }
 
 int pick_and_print(treelib::Tree& tree, const CliOptions& options) {
@@ -306,6 +441,20 @@ int pick_and_print(treelib::Tree& tree, const CliOptions& options) {
     if (not options.selected_path.empty() and tree.get_root() != nullptr) {
         picker_options.selected_id = options.selected_path == "." ? tree.get_root()->identifier :
             options.selected_path;
+    }
+    if (not options.states_file.empty()) {
+        std::ifstream states_file(options.states_file);
+        if (not states_file) {
+            throw std::runtime_error("Cannot read " + options.states_file);
+        }
+        // Into a copy: the groups' names are added to as they're read
+        CliOptions with_states = options;
+        const std::string error = read_node_states(with_states, states_file, delimiter);
+        if (not error.empty()) {
+            throw std::runtime_error(error);
+        }
+        picker_options.node_states = with_states.node_states;
+        picker_options.groups = with_states.groups;
     }
     if (not options.picked_file.empty()) {
         std::ifstream picked_file(options.picked_file);
@@ -358,7 +507,13 @@ int pick_and_print(treelib::Tree& tree, const CliOptions& options) {
         }
     }
     for (auto& node : picked) {
-        std::cout << path(node) << delimiter;
+        // With states: the nodes without children, each with its state's name
+        if (options.states.empty()) {
+            std::cout << path(node) << delimiter;
+        } else if (node->children.empty() and node->state > 0 and
+                   static_cast<std::size_t>(node->state) < options.states.size()) {
+            std::cout << options.states[node->state].name << '\t' << path(node) << delimiter;
+        }
     }
     return picked.empty() and key == 0 ? 1 : 0;
 }

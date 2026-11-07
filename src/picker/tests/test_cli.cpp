@@ -269,3 +269,47 @@ TEST(cli, exclude_may_be_repeated) {
     ASSERT_EQ(options.args, std::vector<std::string>({"dir"}));
     ASSERT_NE(parse({"--exclude"}).error, "");
 }
+
+TEST(cli, states) {
+    auto options = parse({"-m", "--state", "skip", " ", "grey", "", "--state", "to-b", ">", "green", ">",
+                          "--state-mark", "to-b", "only-b", "x", "red", "--tab", "All", "",
+                          "--tab", "Only in B", "only-b"});
+    ASSERT_TRUE(options.error.empty()) << options.error;
+    ASSERT_EQ(options.states.size(), 2u);
+    ASSERT_EQ(options.states[0].key, 0);
+    ASSERT_EQ(options.states[1].key, '>');
+    ASSERT_EQ(options.groups, std::vector<std::string>{"only-b"});
+    ASSERT_EQ(options.states[1].group_marks.size(), 1u);
+    ASSERT_EQ(options.states[1].group_marks[0].group, 0);
+    ASSERT_EQ(options.tabs.size(), 2u);
+    ASSERT_TRUE(options.tabs[0].groups.empty());
+    ASSERT_EQ(options.tabs[1].groups, std::vector<int>{0});
+}
+
+TEST(cli, states_errors) {
+    // Without -m, with a key of treepicker's, an unknown color, a mark of an unknown state
+    ASSERT_FALSE(parse({"--state", "skip", " ", "grey", ""}).error.empty());
+    ASSERT_FALSE(parse({"-m", "--state", "skip", " ", "grey", "j"}).error.empty());
+    ASSERT_FALSE(parse({"-m", "--state", "skip", " ", "pink", ""}).error.empty());
+    ASSERT_FALSE(parse({"-m", "--state-mark", "skip", "g", "x", "red"}).error.empty());
+    ASSERT_FALSE(parse({"-m", "--states", "file"}).error.empty());
+}
+
+TEST(cli, read_node_states) {
+    auto options = parse({"-m", "--state", "skip", " ", "grey", "", "--state", "to-b", ">", "green", "",
+                          "--state", "to-a", "<", "green", ""});
+    std::istringstream in("skip,to-a\tto-a\tonly-b\tb/z\n\t\t\ta/x\twith a tab\n");
+    ASSERT_EQ(picker::read_node_states(options, in, '\n'), "");
+    ASSERT_EQ(options.node_states.size(), 2u);
+    ASSERT_EQ(options.node_states[0].id, "b/z");
+    ASSERT_EQ(options.node_states[0].allowed, 0b101u);
+    ASSERT_EQ(options.node_states[0].initial, 2);
+    ASSERT_EQ(options.node_states[0].group, 0);
+    ASSERT_EQ(options.node_states[1].id, "a/x\twith a tab");
+    ASSERT_EQ(options.node_states[1].allowed, ~0u);
+    ASSERT_EQ(options.node_states[1].group, -1);
+    std::istringstream unknown("nope\t\t\ta\n");
+    ASSERT_NE(picker::read_node_states(options, unknown, '\n'), "");
+    std::istringstream short_line("a\n");
+    ASSERT_NE(picker::read_node_states(options, short_line, '\n'), "");
+}

@@ -35,7 +35,8 @@ to see the colors). The picker draws on `/dev/tty`, so it needs a (pseudo-)termi
 
 ```
 src/tree/         Tree, Node (children keep the order they're added), Search (smartcase,
-                  matches names; hides non-matching nodes, or only highlights matches)
+                  matches names; hides non-matching nodes, or only highlights matches; and
+                  a filter, hiding the nodes it doesn't pass)
 src/treeprinter/  TreePrinter (lays out and prints the part of the tree that fits around the
                   selection), treewindowfitter (how many levels fit), paginator (siblings
                   that don't fit become "... N more" lines), printnode (one line)
@@ -45,6 +46,9 @@ src/picker/       TreeSelector (the selection, and picked nodes: a dir is picked
                   KeyboardReactor (the key loop, which also reads --updates' and --preview's fds),
                   UpdatesReader (--updates: changes to tags, and disabled nodes, while picking),
                   PreviewsReader (--preview: text shown beside the tree for the selected node),
+                  States (--state: nodes in the caller's states rather than picked or not; a
+                  dir's is its nodes' if they agree), Tabs (--tab: a row of them, each showing
+                  some groups of nodes, by Search's filter),
                   Picker, cli (the programs' shared options
                   and output), keys_help (the key list, for --help and the ? key, made from
                   TreeKeyboardSelector's key table)

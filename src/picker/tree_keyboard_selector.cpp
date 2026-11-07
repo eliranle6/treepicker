@@ -17,6 +17,8 @@ TreeKeyboardSelector::TreeKeyboardSelector(treelib::Tree& tree, const PickerOpti
     _is_preview_shown(true),
     _tree_printer(tree),
     _tree_selector(tree, _tree_printer),
+    _states(tree, _tree_selector, options),
+    _tabs(tree, options),
     _mode(mode::MODE_NAVIGATION),
     _search(tree),
     _options(options),
@@ -37,7 +39,12 @@ TreeKeyboardSelector::TreeKeyboardSelector(treelib::Tree& tree, const PickerOpti
             dfs_stack.push_back(child.get());
         }
     }
-    if (options.is_multi) {
+    _tree_printer.set_state_marks(_states.get_marks());
+    if (_tabs.is_filtering()) {
+        _search.set_filter(_tabs.get_filter());
+        _search.search("", _is_filtering);
+    }
+    if (options.is_multi and not _states.is_on()) {
         for (auto& id : options.initially_picked_ids) {
             _tree_selector.set_picked(_tree.get_node(id), true);
         }
@@ -118,6 +125,17 @@ bool TreeKeyboardSelector::char_pressed(int c)
     }
     if (_mode == mode::MODE_NAVIGATION) {
         load_around_selection();
+        if (_tabs.is_on() and (c == KEYCODE_TAB or c == KEY_BTAB)) {
+            move_tab(c == KEYCODE_TAB ? 1 : -1);
+            print_tree();
+            return false;
+        }
+        const int state = _states.get_state_of_key(c);
+        if (state >= 0 and _options.is_multi) {
+            _states.set(_tree_selector.get_selection(), state, is_acting_on_shown());
+            print_tree();
+            return false;
+        }
         if (c > 0 and c <= 0xff and _options.expect_keys.find(static_cast<char>(c)) != std::string::npos) {
             _expected_key = c;
             _picked = _options.is_multi ? _tree_selector.get_picked_nodes() :
@@ -246,7 +264,8 @@ const std::vector<TreeKeyboardSelector::KeyCommand>& TreeKeyboardSelector::get_k
             {KEYCODE_SLASH, &T::start_search}}},
         {"Ctrl-/", "search when Enter is pressed", {
             {KEYCODE_CTRL_SLASH, &T::start_search_on_enter}}},
-        {"Esc, Ctrl-[", "drop the search filter (without one, with -m: unpick all)", {
+        {"Esc, Ctrl-[", "drop the search filter (without one, with -m: unpick all;\n"
+              "with states: all in the first one)", {
             {KEYCODE_ESCAPE, &T::drop_search}}},
         {"f", "switch between showing only the matches and the\n"
               "whole tree with the matches in yellow", {
@@ -260,10 +279,12 @@ const std::vector<TreeKeyboardSelector::KeyCommand>& TreeKeyboardSelector::get_k
             {KEYCODE_CTRL_L, &T::focus_side}}},
         {"Ctrl-W l/h", "the same, as vim's (Ctrl-W w switches)", {
             {KEYCODE_CTRL_W, &T::start_window_key}}},
-        {"V", "pick a range (with -m): moving picks the lines from here\n"
-              "to the selection (V, Space or Enter: done; Esc: unpick them)", {
+        {"V", "pick a range (with -m, no states): moving picks the lines\n"
+              "from here to the selection (V, Space or Enter: done;\n"
+              "Esc: unpick them)", {
             {KEYCODE_UPPER_V, &T::toggle_range}}},
-        {"Space", "pick or unpick (with -m)", {
+        {"Space", "pick or unpick (with -m); with states, the next state the\n"
+              "selection allows (a dir's: all under it)", {
             {KEYCODE_SPACE, &T::toggle_pick}}},
         {"Enter", "pick (with -m: finish)", {
             {KEYCODE_ENTER, &T::pick}, {KEY_ENTER, &T::pick}}},
@@ -356,7 +377,7 @@ bool TreeKeyboardSelector::move_to_prev_in_tree(void) {
 
 void TreeKeyboardSelector::search_again_if_loaded(int nr_nodes_before) {
     // Moving through a lazy tree may have loaded dirs that a search doesn't know of yet
-    if (_tree.get_nr_nodes() != nr_nodes_before and not _applied_keyword.empty()) {
+    if (_tree.get_nr_nodes() != nr_nodes_before and is_tree_filtered()) {
         _search.search(_applied_keyword, _is_filtering);
         _tree_selector.select_visible_ancestor();
     }
@@ -415,10 +436,29 @@ bool TreeKeyboardSelector::pick(void) {
 
 bool TreeKeyboardSelector::toggle_pick(void) {
     if (_options.is_multi and not _tree_selector.get_selection()->is_disabled) {
-        // While a search hides what doesn't match, only what it shows
-        _tree_selector.toggle_pick_of_selection(not _applied_keyword.empty() and _is_filtering);
+        // While a search (or a tab) hides some nodes, only what it shows
+        if (_states.is_on()) {
+            _states.cycle(_tree_selector.get_selection(), is_acting_on_shown());
+        } else {
+            _tree_selector.toggle_pick_of_selection(is_acting_on_shown());
+        }
     }
     return false;
+}
+
+bool TreeKeyboardSelector::is_tree_filtered(void) const {
+    return not _applied_keyword.empty() or _tabs.is_filtering();
+}
+
+bool TreeKeyboardSelector::is_acting_on_shown(void) const {
+    return (not _applied_keyword.empty() and _is_filtering) or _tabs.is_filtering();
+}
+
+void TreeKeyboardSelector::move_tab(int step) {
+    _tabs.move(step);
+    _search.set_filter(_tabs.get_filter());
+    _search.search(_applied_keyword, _is_filtering);
+    _tree_selector.select_visible_ancestor();
 }
 
 bool TreeKeyboardSelector::focus_side(void) {
@@ -541,7 +581,8 @@ void TreeKeyboardSelector::print_side(const Layout& layout) {
 }
 
 bool TreeKeyboardSelector::toggle_range(void) {
-    if (not _options.is_multi) {
+    // Not with states (it picks)
+    if (not _options.is_multi or _states.is_on()) {
         return false;
     }
     if (_range_start != nullptr) {
@@ -622,6 +663,9 @@ bool TreeKeyboardSelector::drop_search(void) {
     if (not _applied_keyword.empty()) {
         _search_keyword = "";
         search();
+    } else if (_states.is_on()) {
+        // Without a search to drop, all back in the first state
+        _states.reset();
     } else if (_options.is_multi) {
         // Without a search to drop, unpick all
         for (auto& node : _tree_selector.get_picked_nodes()) {
@@ -737,7 +781,9 @@ void TreeKeyboardSelector::print_tree(void) {
 
     // Print tree, below it: up to the screen's last column, which stays empty (see
     // NCursesSink::write), or with a preview, up to a space before its column
-    if (layout.tree_row > layout.nr_header_rows) {
+    if (layout.tab_row >= 0) {
+        print_tabs(layout.tab_row, window_width);
+    } else if (layout.tree_row > layout.nr_header_rows) {
         print_line(layout.nr_header_rows, "", window_width, false);
     }
     move(layout.tree_row, 0);
@@ -746,7 +792,7 @@ void TreeKeyboardSelector::print_tree(void) {
     if (layout.tree_height > 0) {
         _tree_printer.set_selection_highlighted(not _is_side_focused);
         _out.set_line_width(tree_width);
-        _tree_printer.print(_out, not _applied_keyword.empty(), _tree_selector.get_selection(),
+        _tree_printer.print(_out, is_tree_filtered(), _tree_selector.get_selection(),
                             layout.tree_height, tree_width);
         _out.set_line_width(0);
     }
@@ -780,7 +826,10 @@ void TreeKeyboardSelector::print_tree(void) {
                 stats_line += " (highlighted)";
             }
         }
-        if (_options.is_multi) {
+        if (_states.is_on()) {
+            const std::string counts = _states.get_counts_text();
+            stats_line += ", " + (counts.empty() ? std::string("all skipped") : counts);
+        } else if (_options.is_multi) {
             // Files, when the tree knows which nodes are files (else nodes, dirs too)
             stats_line += ", picked: " + (_are_files_known ?
                 std::to_string(_tree_selector.get_nr_picked_files()) + " files" :
@@ -792,7 +841,7 @@ void TreeKeyboardSelector::print_tree(void) {
         stats_line += std::string(", selected: ") +
             guishell::printable(_tree_selector.get_selection()->tag);
         // Where it is in its dir, which a long one shows only part of
-        const auto place = _tree_selector.get_place_among_siblings(not _applied_keyword.empty());
+        const auto place = _tree_selector.get_place_among_siblings(is_tree_filtered());
         if (place.second > 1) {
             stats_line += " (" + std::to_string(place.first) + "/" +
                 std::to_string(place.second) + ")";
@@ -844,6 +893,31 @@ void TreeKeyboardSelector::print_tree(void) {
         }
     }
     refresh();
+}
+
+void TreeKeyboardSelector::print_tabs(int row, int window_width) {
+    move(row, 0);
+    clrtoeol();
+    const int width = std::max(0, window_width - 1);
+    int column = 0;
+    const auto titles = _tabs.get_titles();
+    for (std::size_t i = 0; i < titles.size() and column < width; ++i) {
+        // The shown one in reverse video, bold; a line between them
+        const std::string title = " " + guishell::printable(titles[i]) + " ";
+        const bool is_current = i == _tabs.get_current();
+        if (is_current) {
+            attron(A_REVERSE | A_BOLD);
+        }
+        mvaddnstr(row, column, title.data(), guishell::nr_bytes_that_fit(title.data(), title.size(), width - column));
+        if (is_current) {
+            attroff(A_REVERSE | A_BOLD);
+        }
+        column += guishell::display_width(title);
+        if (i + 1 < titles.size() and column < width) {
+            mvaddstr(row, column, "│");
+            column += 1;
+        }
+    }
 }
 
 void TreeKeyboardSelector::print_key_hints(int row, int window_width) {
@@ -1075,7 +1149,11 @@ TreeKeyboardSelector::Layout TreeKeyboardSelector::get_layout(void) {
                                      std::max(0, nr_rows_left - MIN_TREE_HEIGHT));
     nr_rows_left -= layout.nr_header_rows;
     layout.tree_row = layout.nr_header_rows;
-    if (layout.nr_header_rows > 0 and nr_rows_left - 1 >= MIN_TREE_HEIGHT) {
+    if (_tabs.is_on() and nr_rows_left - 1 >= MIN_TREE_HEIGHT) {
+        // The tabs, in the blank row's place
+        layout.tab_row = layout.tree_row++;
+        --nr_rows_left;
+    } else if (layout.nr_header_rows > 0 and nr_rows_left - 1 >= MIN_TREE_HEIGHT) {
         ++layout.tree_row;
         --nr_rows_left;
     }
@@ -1114,7 +1192,7 @@ void TreeKeyboardSelector::layout_tree(void) {
     load_around_selection();
     const int tree_max_height = get_layout().tree_height;
     if (tree_max_height > 0) {
-        _tree_printer.layout(not _applied_keyword.empty(), _tree_selector.get_selection(),
+        _tree_printer.layout(is_tree_filtered(), _tree_selector.get_selection(),
                              tree_max_height);
     }
 }
@@ -1152,7 +1230,7 @@ void TreeKeyboardSelector::load_around_selection(void) {
     }
 
     // New nodes are shown, whatever a search would say of them
-    if (is_any_loaded and not _applied_keyword.empty()) {
+    if (is_any_loaded and is_tree_filtered()) {
         _search.search(_applied_keyword, _is_filtering);
         _tree_selector.select_visible_ancestor();
     }
@@ -1204,7 +1282,7 @@ void TreeKeyboardSelector::apply_updates(const std::vector<Update>& updates) {
         }
     }
     // Searches match tags
-    if (not _applied_keyword.empty()) {
+    if (is_tree_filtered()) {
         _search.search(_applied_keyword, _is_filtering);
         _tree_selector.select_visible_ancestor();
     }

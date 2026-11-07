@@ -43,6 +43,17 @@ public:
     // when it isn't selected, picked, greyed or a search's match; "": none
     std::string styled_tag;
 
+    // Its state, when the picker gives the nodes states (see picker::States): an index into the
+    // caller's states (0: the first, e.g. skip), MIXED_STATE for a dir whose nodes' differ, or
+    // NO_STATE without states. A file's allowed states are a bit each in allowed_states, and its
+    // group (a tab shows some groups: see picker::Tabs) an index, or -1 for none (a dir's: its
+    // nodes', if they're all in the same one).
+    static constexpr int NO_STATE = -2;
+    static constexpr int MIXED_STATE = -1;
+    int state = NO_STATE;
+    unsigned allowed_states = ~0u;
+    int group = -1;
+
     // Whether children holds all of the node's children. A tree that loads nodes lazily (see
     // Tree::load_children()) adds a node's children only when they're needed.
     bool are_children_loaded;

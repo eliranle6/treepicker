@@ -41,6 +41,20 @@ its closest ancestor; `--side-select FD` reads paths to select in it as the sele
 KEY` makes Enter there finish picking, printing KEY and its selected node, `--side-expect KEYS` does so
 for other keys too, and `--side-hint KEY TEXT` says what they do in the keys row.
 
+Rather than picked or not, nodes can be in states the caller names, e.g. what a sync does with each
+file, each shown by a mark before it, with tabs that show some groups of the nodes:
+
+```
+$ treepicker - --typed -m --state skip " " grey "" --state to-b ">" green ">" \
+      --state to-a "<" green "<" --state-mark to-b only-b x red --states states.txt \
+      --tab All "" --tab "Only in A" only-a --tab "Only in B" only-b < paths
+```
+
+`states.txt` has a line for each file: the states it allows, the one it starts in, its group and its
+path, tab-separated. Space puts the selection (a dir: all under it) in the next state they allow, a
+state's key in that state; Tab and Shift-Tab switch tabs. A dir shows its nodes' state, or `*` if
+they differ. Each file not in the first state is printed as its state's name, a tab and its path.
+
 It draws on the terminal (`/dev/tty`), so stdin and stdout are free for the tree and the result.
 It exits with 0 if something was picked, and 1 if the user quit. `treepicker --help` lists the
 options and keys. dirdelta (github.com/eliranle6/dirdelta) uses it for all of its pickers.

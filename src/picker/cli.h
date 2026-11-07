@@ -47,6 +47,9 @@ struct CliOptions : PickerOptions {
     // PickerOptions)
     std::string side_file;
     std::string side_root_name;
+    // --states FILE: the nodes' states (see PickerOptions::node_states), read into node_states
+    // once the tree is there
+    std::string states_file;
 
     bool is_help_requested = false;
     // Set if the command line isn't valid
@@ -67,6 +70,14 @@ int pick_and_print(treelib::Tree& tree, const CliOptions& options);
 // A warning that scanning dir couldn't read everything, listing the first few of its errors,
 // or "" if there are none
 std::string scan_errors_warning(const std::string& dir, const std::vector<std::string>& errors);
+
+// The index of the group named name in options.groups, added if it isn't there
+int group_index(PickerOptions& options, const std::string& name);
+
+// Read --states' file: each line (ending with delimiter) the node's allowed states (their names,
+// separated by commas; empty: all), a tab, the state it starts in (empty: the first), a tab, its
+// group (empty: none), a tab and its path (as printed). Returns an error, or "".
+std::string read_node_states(CliOptions& options, std::istream& in, char delimiter);
 
 // Add a child to the root for each line in `in` (ending with delimiter), its id and tag the line
 // itself. Empty lines and repeated ones are skipped.

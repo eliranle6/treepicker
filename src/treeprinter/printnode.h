@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <iostream>
+#include <string>
 #include <vector>
 
 #include "tree/node.h"
@@ -23,6 +24,17 @@ struct PrintedLine {
     std::size_t nr_hidden;
 };
 
+// How a node's state (Node::state) is shown in the picked column: a mark (one column wide) and a
+// style (a guishell::Style)
+struct StateMark {
+    std::string mark;
+    int style;
+};
+// Each state's marks, by its index: [state][0] its own, and [state][group + 1] (if there is one,
+// and its mark isn't empty) for the nodes of that group (Node::group). A dir whose nodes' states
+// differ shows '*'.
+using StateMarks = std::vector<std::vector<StateMark>>;
+
 // has_next_sibling[depth]: whether the line last drawn at that depth (this one's ancestor) has
 // siblings after it, so a vertical line goes down past this one
 void print_node(
@@ -34,7 +46,9 @@ void print_node(
         const std::vector<bool>& has_next_sibling,
         int window_width = 0,
         // The selection of a tree that isn't the one being moved in: marked, but not highlighted
-        const std::shared_ptr<Node> dimmed_selection = nullptr
+        const std::shared_ptr<Node> dimmed_selection = nullptr,
+        // With states, the marks they're shown by, instead of picked's X and -
+        const StateMarks* state_marks = nullptr
         );
 
 // The path from the root down to printed_subtree_root, like "root > dir > ". If it's wider than

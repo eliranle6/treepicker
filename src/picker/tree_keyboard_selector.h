@@ -16,6 +16,8 @@
 #include "picker/picker_options.h"
 #include "picker/updates.h"
 #include "picker/previews.h"
+#include "picker/states.h"
+#include "picker/tabs.h"
 
 namespace picker {
 
@@ -50,7 +52,8 @@ enum {
     KEYCODE_UPPER_K = 75,
     KEYCODE_UPPER_V = 86,
     KEYCODE_Q = 113,
-    KEYCODE_Z = 122
+    KEYCODE_Z = 122,
+    KEYCODE_TAB = 9
 };
 
 enum mode {
@@ -202,6 +205,8 @@ private:
     // A row (or column) of -1 means it isn't shown.
     struct Layout {
         int nr_header_rows;
+        // The tabs' row, below the header (-1: none)
+        int tab_row = -1;
         // The footer's rows (--footer), above the stats line: the first, and how many (0: none)
         int footer_row = -1;
         int nr_footer_rows = 0;
@@ -228,6 +233,15 @@ private:
     Layout get_layout(void);
 
     bool is_search_line_shown(void);
+
+    // Whether the tree shows only some of its nodes: a search's matches, or a tab's
+    bool is_tree_filtered(void) const;
+    // Whether Space, V and the states' keys act only on what's shown under the selection
+    bool is_acting_on_shown(void) const;
+    // Tab, Shift-Tab: show the next tab (step 1) or the previous one (-1)
+    void move_tab(int step);
+    // Draw the tabs' row
+    void print_tabs(int row, int window_width);
 
     // Draw the keys' help instead of the tree
     void print_help(void);
@@ -290,6 +304,9 @@ private:
     std::string _status;
     treelib::TreePrinter _tree_printer;
     TreeSelector _tree_selector;
+    // The nodes' states and the tabs, when the caller gives them
+    States _states;
+    Tabs _tabs;
     // The side tree's printer and selection, and whether the user is moving in it
     std::unique_ptr<treelib::TreePrinter> _side_printer;
     std::unique_ptr<TreeSelector> _side_selector;
