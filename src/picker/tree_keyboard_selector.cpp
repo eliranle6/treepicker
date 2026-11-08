@@ -113,10 +113,10 @@ bool TreeKeyboardSelector::char_pressed(int c)
         if (c == KEYCODE_L or c == KEYCODE_CTRL_L or c == KEY_RIGHT) {
             focus_side();
         } else if (c == KEYCODE_H or c == KEYCODE_CTRL_H or c == KEY_LEFT) {
-            _is_side_focused = false;
+            _is_side_focused = _is_preview_focused = false;
         } else if (c == KEYCODE_LOWER_W or c == KEYCODE_CTRL_W) {
-            if (_is_side_focused) {
-                _is_side_focused = false;
+            if (_is_side_focused or _is_preview_focused) {
+                _is_side_focused = _is_preview_focused = false;
             } else {
                 focus_side();
             }
@@ -131,6 +131,11 @@ bool TreeKeyboardSelector::char_pressed(int c)
 
     if (_mode == mode::MODE_NAVIGATION and _is_side_focused) {
         return side_char_pressed(c);
+    }
+    // Scrolling the preview column; its other keys are the tree's (e.g. the caller's)
+    if (_mode == mode::MODE_NAVIGATION and _is_preview_focused and preview_char_pressed(c)) {
+        print_tree();
+        return false;
     }
     if (_mode == mode::MODE_NAVIGATION) {
         load_around_selection();
@@ -475,11 +480,35 @@ bool TreeKeyboardSelector::prev_tab(void) {
 }
 
 bool TreeKeyboardSelector::focus_side(void) {
-    if (get_layout().side_height > 0) {
+    const Layout layout = get_layout();
+    if (layout.side_height > 0) {
         end_range(true);
         _is_side_focused = true;
+    } else if (layout.preview_column >= 0 and _side_selector == nullptr and not selected_preview().empty()) {
+        end_range(true);
+        _is_preview_focused = true;
     }
     return false;
+}
+
+bool TreeKeyboardSelector::preview_char_pressed(int c) {
+    const int page = std::max(1, get_layout().nr_column_preview_rows / 2);
+    switch (c) {
+        case KEYCODE_J: case KEY_DOWN: _preview_scroll += 1; break;
+        case KEYCODE_K: case KEY_UP: _preview_scroll -= 1; break;
+        case KEYCODE_CTRL_D: case KEY_NPAGE: _preview_scroll += page; break;
+        case KEYCODE_CTRL_U: case KEY_PPAGE: _preview_scroll -= page; break;
+        case KEYCODE_LOWER_G: _preview_scroll = 0; break;
+        // As far as it goes (print_preview() keeps it there)
+        case KEYCODE_UPPER_G: _preview_scroll = static_cast<int>(selected_preview().size()); break;
+        case KEYCODE_H: case KEY_LEFT: case KEYCODE_CTRL_H: case KEYCODE_ESCAPE:
+            _is_preview_focused = false;
+            break;
+        default:
+            return false;
+    }
+    _preview_scroll = std::max(0, _preview_scroll);
+    return true;
 }
 
 bool TreeKeyboardSelector::start_window_key(void) {
@@ -811,7 +840,9 @@ void TreeKeyboardSelector::print_tree(void) {
             print_line(layout.footer_row + i, guishell::printable(line), window_width, false);
         }
     }
-    if (layout.preview_column >= 0) {
+    if (layout.preview_column < 0) {
+        _is_preview_focused = false;
+    } else {
         print_preview(layout);
     }
     if (layout.side_height > 0) {
@@ -926,7 +957,7 @@ void TreeKeyboardSelector::print_key_hints(int row, int window_width) {
     clrtoeol();
     const int width = std::max(0, window_width - 1);
     int column = 0;
-    for (auto& hint : key_hints(_options, _tree_selector.get_nr_picked() == 0, _is_side_focused)) {
+    for (auto& hint : key_hints(_options, _tree_selector.get_nr_picked() == 0, _is_side_focused, _is_preview_focused)) {
         // The key in reverse video, then what it does, two spaces apart from the next
         const std::string key = " " + guishell::printable(hint.key) + " ";
         const std::string text = " " + guishell::printable(hint.text) + "  ";
@@ -995,6 +1026,18 @@ void TreeKeyboardSelector::print_styled(int row, int column, const std::string& 
 
 void TreeKeyboardSelector::print_preview(const Layout& layout) {
     const auto& lines = selected_preview();
+    // Scrolled (Ctrl-W l) only as far as the last line, and back to the top for another node
+    const auto selection = _tree_selector.get_selection();
+    const std::string id = selection != nullptr ? selection->identifier : "";
+    if (id != _preview_scroll_id) {
+        _preview_scroll_id = id;
+        _preview_scroll = 0;
+    }
+    const int nr_lines = static_cast<int>(lines.size());
+    _preview_scroll = std::max(0, std::min(_preview_scroll, nr_lines - layout.nr_column_preview_rows));
+    // The last row says what's below it (or where it is, while scrolling), if not all of it fits
+    const bool is_cut = nr_lines > layout.nr_column_preview_rows and layout.nr_column_preview_rows > 1;
+    const int last_row = layout.column_preview_row + layout.nr_column_preview_rows - 1;
     // After the line and a space, up to the screen's last column, which stays empty
     const int column = layout.preview_column + 2;
     const int width = std::max(0, getmaxx(stdscr) - 1 - column);
@@ -1012,9 +1055,21 @@ void TreeKeyboardSelector::print_preview(const Layout& layout) {
                 addstr("─");
             }
         }
+        if (is_cut and row == last_row) {
+            const int nr_below = nr_lines - _preview_scroll - layout.nr_column_preview_rows + 1;
+            std::string note = _is_preview_focused ?
+                "\u25b6 " + std::to_string(_preview_scroll + 1) + "-" + std::to_string(nr_lines - nr_below) + " of " +
+                    std::to_string(nr_lines) + " (j/k, Ctrl-D/U; Ctrl-W h: back)" :
+                "... " + std::to_string(nr_below) + " more (Ctrl-W l scrolls)";
+            note.resize(guishell::nr_bytes_that_fit(note.data(), note.size(), text_width));
+            attron(_is_preview_focused ? A_REVERSE : A_DIM);
+            mvaddstr(row, column, note.c_str());
+            attroff(_is_preview_focused ? A_REVERSE : A_DIM);
+            continue;
+        }
         // Below the side tree, if there's one
-        const int line_index = row - layout.column_preview_row;
-        if (line_index >= 0 and line_index < layout.nr_column_preview_rows and
+        const int line_index = row - layout.column_preview_row + _preview_scroll;
+        if (line_index >= _preview_scroll and line_index - _preview_scroll < layout.nr_column_preview_rows and
                 line_index < static_cast<int>(lines.size())) {
             const Label line = parse_preview_line(lines[line_index]);
             std::string text = guishell::printable(line.text);
@@ -1047,8 +1102,8 @@ void TreeKeyboardSelector::print_preview(const Layout& layout) {
         return;
     }
     // Below the lines, after a blank row
-    const int nr_lines = std::min(layout.nr_column_preview_rows, static_cast<int>(lines.size()));
-    const int image_row = layout.column_preview_row + nr_lines + (nr_lines > 0 ? 1 : 0);
+    const int nr_shown = std::min(layout.nr_column_preview_rows, nr_lines);
+    const int image_row = layout.column_preview_row + nr_shown + (nr_shown > 0 ? 1 : 0);
     print_image(*image, image_row, layout.column_preview_row + layout.nr_column_preview_rows - image_row,
                 column, width);
 }

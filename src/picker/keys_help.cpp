@@ -25,6 +25,9 @@ static const std::vector<KeyLine>& other_key_lines(void) {
         {"Searching", "Backspace", "while typing: erase a character (none left: done)"},
         {"Searching", "Ctrl-U, Ctrl-W", "while typing: erase the keyword"},
         {"Picking", "a state's key", "put the selection in that state (with --state KEY; a dir: all under it)"},
+        {"Showing", "Ctrl-W l", "without a side tree: move into the preview column, to scroll it (j/k, "
+                                "Ctrl-D/Ctrl-U, g/G; the tree's other keys work there too); h, Esc or "
+                                "Ctrl-W h: back"},
         {"The side tree", "in it:", "h/j/k/l, J/K, Ctrl-J/Ctrl-K, Home/End move, Enter picks (with --side-key), Ctrl-H, Esc or Backspace: back"},
     };
     return lines;
@@ -164,8 +167,13 @@ std::unique_ptr<treelib::Tree> keys_help_tree(const PickerOptions& options, std:
     return tree;
 }
 
-std::vector<KeyHint> key_hints(const PickerOptions& options, bool is_none_picked, bool is_side_focused) {
+std::vector<KeyHint> key_hints(const PickerOptions& options, bool is_none_picked, bool is_side_focused,
+                               bool is_preview_focused) {
     std::vector<KeyHint> hints;
+    if (is_preview_focused) {
+        return {{"j/k", "scroll"}, {"Ctrl-D/U", "page"}, {"g/G", "top/bottom"}, {"Ctrl-W h", "back"},
+                {"?", "all keys"}};
+    }
     if (is_side_focused) {
         hints = options.side_key_hints;
         hints.push_back({"Ctrl-W h", "back"});

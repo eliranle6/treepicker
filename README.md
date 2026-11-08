@@ -41,6 +41,11 @@ its closest ancestor; `--side-select FD` reads paths to select in it as the sele
 KEY` makes Enter there finish picking, printing KEY and its selected node, `--side-expect KEYS` does so
 for other keys too, and `--side-hint KEY TEXT` says what they do in the keys row.
 
+Without a side tree, `Ctrl-W l` moves into the preview column (`--preview FD`) instead, to scroll a
+preview longer than the screen: `j`/`k`, `Ctrl-D`/`Ctrl-U`, `g`/`G`; `h`, Esc or `Ctrl-W h` back. The
+tree's other keys work there too (e.g. the caller's `--notify` keys, to change what it shows). `Ctrl-P`
+hides or shows the column.
+
 Rather than picked or not, nodes can be in states the caller names, e.g. what a sync does with each
 file, each shown by a mark before it, with tabs that show some groups of the nodes:
 

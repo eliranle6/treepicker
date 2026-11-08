@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <set>
 #include <sstream>
 #include <string>
@@ -159,4 +160,12 @@ TEST(keys_help_tree, wraps_long_lines_to_fit_an_80_column_screen) {
     ASSERT_TRUE(has_line(tags, "    " + std::string(30, 'b')));
     // A line like a key's: under its description
     ASSERT_TRUE(has_line(tags, std::string(19, ' ') + std::string(30, 'd')));
+}
+
+TEST(key_hints, in_the_preview_column_scrolling_and_the_way_back) {
+    picker::PickerOptions options;
+    options.key_hints = {{"Enter", "choose what to do"}};
+    const auto hints = picker::key_hints(options, false, false, true);
+    ASSERT_EQ(hints.front(), picker::KeyHint({"j/k", "scroll"}));
+    ASSERT_NE(std::find(hints.begin(), hints.end(), picker::KeyHint({"Ctrl-W h", "back"})), hints.end());
 }

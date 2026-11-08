@@ -181,6 +181,9 @@ private:
     std::shared_ptr<treelib::Node> closest_in_side(const std::string& path);
     // A key pressed while moving in the side tree; returns whether picking is finished
     bool side_char_pressed(int c);
+    // A key pressed while in the preview column (Ctrl-W l, without a side tree): returns whether it
+    // was one of its own (scrolling it, or going back), else it's the tree's
+    bool preview_char_pressed(int c);
 
     bool start_search(void);
     bool start_search_on_enter(void);
@@ -317,6 +320,11 @@ private:
     std::unique_ptr<treelib::TreePrinter> _side_printer;
     std::unique_ptr<TreeSelector> _side_selector;
     bool _is_side_focused = false;
+    // Whether the user is in the preview column (Ctrl-W l, without a side tree), scrolling it; how
+    // many of its lines are scrolled past, and the node they're of (another starts at the top)
+    bool _is_preview_focused = false;
+    int _preview_scroll = 0;
+    std::string _preview_scroll_id;
     mode _mode;
     ::treelib::Search _search;
     PickerOptions _options;

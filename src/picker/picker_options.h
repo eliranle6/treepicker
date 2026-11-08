@@ -149,9 +149,10 @@ struct PickerOptions {
 // The keys row's keys, in its order: treepicker's main ones (Space and Enter, as options says
 // they're used), the caller's (one with a key of treepicker's says what it does instead), then
 // search, help and quit. With is_none_picked, what none_picked_key_hints says instead. With
-// is_side_focused, the side tree's: side_key_hints, the way back, help and quit.
+// is_side_focused, the side tree's: side_key_hints, the way back, help and quit. With
+// is_preview_focused, the preview column's: scrolling, the way back, help and quit.
 std::vector<KeyHint> key_hints(const PickerOptions& options, bool is_none_picked = false,
-                               bool is_side_focused = false);
+                               bool is_side_focused = false, bool is_preview_focused = false);
 
 } // namespace picker
 
