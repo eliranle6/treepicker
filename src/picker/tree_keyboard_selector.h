@@ -59,7 +59,7 @@ enum {
 enum mode {
     MODE_NAVIGATION,
     MODE_EDIT_SEARCH,
-    // Showing the keys, until any key is pressed
+    // Showing the keys' help, a picker of its own, until it's done (q, Enter or ?)
     MODE_HELP,
     // Showing the selected node's picture on the whole screen, until any key is pressed
     MODE_PICTURE
@@ -79,6 +79,8 @@ public:
     struct KeyCommand {
         // Returns whether picking is finished
         using Action = bool (TreeKeyboardSelector::*)(void);
+        // What it's about, a heading in the help (e.g. "Moving")
+        const char* group;
         const char* keys;
         // Lines after the first are shown indented under it
         const char* description;
@@ -243,8 +245,6 @@ private:
     // Draw the tabs' row
     void print_tabs(int row, int window_width);
 
-    // Draw the keys' help instead of the tree
-    void print_help(void);
     // The selected node's picture, as big as the screen lets it be, its name above it
     void print_picture(void);
 
@@ -330,6 +330,10 @@ private:
     bool _is_window_key_pending = false;
     int _side_pressed_key = 0;
     std::vector<std::shared_ptr<treelib::Node>> _range_picked;
+    // The keys' help (?), while it's shown: a picker of its own, over a tree of the keys (see
+    // keys_help_tree()), that has the screen and the keys until it's done
+    std::unique_ptr<treelib::Tree> _help_tree;
+    std::unique_ptr<TreeKeyboardSelector> _help;
 };
 
 }

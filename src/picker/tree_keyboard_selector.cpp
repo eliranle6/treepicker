@@ -88,9 +88,18 @@ bool TreeKeyboardSelector::char_pressed(int c)
 {
     bool is_finished = false;
 
-    // The help (or a picture) stays until a key is pressed, which only takes it away (a resize
-    // redraws it)
-    if (_mode == mode::MODE_HELP or _mode == mode::MODE_PICTURE) {
+    // The help has the keys until it's done
+    if (_mode == mode::MODE_HELP) {
+        if (_help->char_pressed(c)) {
+            _help.reset();
+            _help_tree.reset();
+            _mode = mode::MODE_NAVIGATION;
+            print_tree();
+        }
+        return false;
+    }
+    // A picture stays until a key is pressed, which only takes it away (a resize redraws it)
+    if (_mode == mode::MODE_PICTURE) {
         if (c != KEY_RESIZE) {
             _mode = mode::MODE_NAVIGATION;
         }
@@ -244,53 +253,53 @@ const std::vector<TreeKeyboardSelector::KeyCommand>& TreeKeyboardSelector::get_k
     // A function's static, so it's there for whoever needs it while statics are initialized
     // (cli's usage text)
     static const std::vector<KeyCommand> commands = {
-        {"h/j/k/l, arrows", "move", {
+        {"Moving", "h/j/k/l, arrows", "move", {
             {KEYCODE_K, &T::move_to_prev}, {KEY_UP, &T::move_to_prev},
             {KEYCODE_J, &T::move_to_next}, {KEY_DOWN, &T::move_to_next},
             {KEYCODE_H, &T::move_one_up}, {KEY_LEFT, &T::move_one_up},
             {KEYCODE_L, &T::explore_children}, {KEY_RIGHT, &T::explore_children}}},
-        {"J/K", "next/previous node of the whole tree, collapsed dirs too", {
+        {"Moving", "J/K", "next/previous node of the whole tree, collapsed dirs too", {
             {KEYCODE_UPPER_J, &T::move_to_next_in_tree}, {KEYCODE_UPPER_K, &T::move_to_prev_in_tree}}},
-        {"g/G", "first/last line on the screen", {
+        {"Moving", "g/G", "first/last line on the screen", {
             {KEYCODE_LOWER_G, &T::move_to_first_shown}, {KEYCODE_UPPER_G, &T::move_to_last_shown}}},
-        {"Home/End", "first/last sibling", {
+        {"Moving", "Home/End", "first/last sibling", {
             {KEY_HOME, &T::move_to_first_sibling}, {KEY_END, &T::move_to_last_sibling}}},
-        {"Ctrl-J/Ctrl-K", "next/previous sibling", {
+        {"Moving", "Ctrl-J/Ctrl-K", "next/previous sibling", {
             {KEYCODE_CTRL_J, &T::move_to_next_sibling}, {KEYCODE_CTRL_K, &T::move_to_prev_sibling}}},
-        {"Ctrl-D/Ctrl-U", "page down/up", {
+        {"Moving", "Ctrl-D/Ctrl-U", "page down/up", {
             {KEYCODE_CTRL_D, &T::page_down}, {KEY_NPAGE, &T::page_down},
             {KEYCODE_CTRL_U, &T::page_up}, {KEY_PPAGE, &T::page_up}}},
-        {"/", "search as you type (Enter keeps the filter, Esc drops it)", {
+        {"Searching", "/", "search as you type (Enter keeps the filter, Esc drops it)", {
             {KEYCODE_SLASH, &T::start_search}}},
-        {"Ctrl-/", "search when Enter is pressed", {
+        {"Searching", "Ctrl-/", "search when Enter is pressed", {
             {KEYCODE_CTRL_SLASH, &T::start_search_on_enter}}},
-        {"Esc, Ctrl-[", "drop the search filter (without one, with -m: unpick all;\n"
+        {"Searching", "Esc, Ctrl-[", "drop the search filter (without one, with -m: unpick all;\n"
               "with states: all in the first one)", {
             {KEYCODE_ESCAPE, &T::drop_search}}},
-        {"f", "switch between showing only the matches and the\n"
+        {"Searching", "f", "switch between showing only the matches and the\n"
               "whole tree with the matches in yellow", {
             {KEYCODE_F, &T::toggle_filter}}},
-        {"p", "show or hide the preview column (with --preview)", {
+        {"Showing", "p", "show or hide the preview column (with --preview)", {
             {KEYCODE_P, &T::toggle_preview}}},
-        {"z", "see the selected node's picture on the whole screen\n"
+        {"Showing", "z", "see the selected node's picture on the whole screen\n"
               "(with --preview's pictures; any key goes back)", {
             {KEYCODE_Z, &T::show_picture}}},
-        {"Ctrl-L/Ctrl-H", "move in the side tree (with --side), and back", {
+        {"The side tree", "Ctrl-L/Ctrl-H", "move in the side tree (with --side), and back", {
             {KEYCODE_CTRL_L, &T::focus_side}}},
-        {"Ctrl-W l/h", "the same, as vim's (Ctrl-W w switches)", {
+        {"The side tree", "Ctrl-W l/h", "the same, as vim's (Ctrl-W w switches)", {
             {KEYCODE_CTRL_W, &T::start_window_key}}},
-        {"V", "pick a range (with -m, no states): moving picks the lines\n"
+        {"Picking", "V", "pick a range (with -m, no states): moving picks the lines\n"
               "from here to the selection (V, Space or Enter: done;\n"
               "Esc: unpick them)", {
             {KEYCODE_UPPER_V, &T::toggle_range}}},
-        {"Space", "pick or unpick (with -m); with states, the next state the\n"
+        {"Picking", "Space", "pick or unpick (with -m); with states, the next state the\n"
               "selection allows (a dir's: all under it)", {
             {KEYCODE_SPACE, &T::toggle_pick}}},
-        {"Enter", "pick (with -m: finish)", {
+        {"Picking", "Enter", "pick (with -m: finish)", {
             {KEYCODE_ENTER, &T::pick}, {KEY_ENTER, &T::pick}}},
-        {"?", "show these keys", {
+        {"Help and quitting", "?", "show all the keys (q, Enter or ? again: back)", {
             {KEYCODE_QUESTION_MARK, &T::show_help}}},
-        {"q, Ctrl-C", "quit", {
+        {"Help and quitting", "q, Ctrl-C", "quit", {
             {KEYCODE_Q, &T::quit}, {KEYCODE_CTRL_C, &T::quit}}},
     };
     return commands;
@@ -677,6 +686,16 @@ bool TreeKeyboardSelector::drop_search(void) {
 }
 
 bool TreeKeyboardSelector::show_help(void) {
+    _help_tree = keys_help_tree(_options);
+    PickerOptions options;
+    options.header = "All the keys, " + std::string(_options.key_hints.empty() and _options.help_lines.empty() ?
+        "by what they do" : "this screen's first") + " (/ searches them; q, Enter or ?: back)";
+    options.is_first_child_selected_first = true;
+    options.is_root_pickable = false;
+    // Its own ? goes back too, rather than to a help of the help
+    options.expect_keys = "?";
+    options.key_hints = {{"Enter", "back"}, {"?", "back"}, {"q", "back"}};
+    _help.reset(new TreeKeyboardSelector(*_help_tree, options));
     _mode = mode::MODE_HELP;
     return false;
 }
@@ -729,36 +748,10 @@ static void print_line(int row, const std::string& text, int window_width, bool 
     }
 }
 
-void TreeKeyboardSelector::print_help(void) {
-    const int window_height = getmaxy(stdscr);
-    const int window_width = getmaxx(stdscr);
-    std::vector<std::string> lines = {"Keys (press any key to go back):", ""};
-    std::istringstream keys(keys_help());
-    for (std::string line; std::getline(keys, line);) {
-        lines.push_back(line);
-    }
-    // The caller's: what its keys do here, and what else it says
-    if (not _options.key_hints.empty() or not _options.help_lines.empty()) {
-        lines.push_back("");
-        lines.push_back("Here:");
-        for (auto& hint : _options.key_hints) {
-            lines.push_back("  " + hint.key + std::string(std::max<int>(1, 17 - hint.key.size()), ' ') +
-                            hint.text);
-        }
-        for (auto& line : _options.help_lines) {
-            lines.push_back(line);
-        }
-    }
-    for (int row = 0; row < window_height and row < static_cast<int>(lines.size()); ++row) {
-        print_line(row, lines[row], window_width, false);
-    }
-    refresh();
-}
-
 void TreeKeyboardSelector::print_tree(void) {
     _out.clear();
     if (_mode == mode::MODE_HELP) {
-        print_help();
+        _help->print_tree();
         return;
     }
     if (_mode == mode::MODE_PICTURE) {
@@ -781,10 +774,11 @@ void TreeKeyboardSelector::print_tree(void) {
 
     // Print tree, below it: up to the screen's last column, which stays empty (see
     // NCursesSink::write), or with a preview, up to a space before its column
+    if (layout.nr_header_rows > 0 and layout.tree_row > layout.nr_header_rows) {
+        print_line(layout.nr_header_rows, "", window_width, false);
+    }
     if (layout.tab_row >= 0) {
         print_tabs(layout.tab_row, window_width);
-    } else if (layout.tree_row > layout.nr_header_rows) {
-        print_line(layout.nr_header_rows, "", window_width, false);
     }
     move(layout.tree_row, 0);
     const int tree_width = layout.preview_column >= 0 ? layout.preview_column - 1 :
@@ -1149,12 +1143,13 @@ TreeKeyboardSelector::Layout TreeKeyboardSelector::get_layout(void) {
                                      std::max(0, nr_rows_left - MIN_TREE_HEIGHT));
     nr_rows_left -= layout.nr_header_rows;
     layout.tree_row = layout.nr_header_rows;
-    if (_tabs.is_on() and nr_rows_left - 1 >= MIN_TREE_HEIGHT) {
-        // The tabs, in the blank row's place
-        layout.tab_row = layout.tree_row++;
-        --nr_rows_left;
-    } else if (layout.nr_header_rows > 0 and nr_rows_left - 1 >= MIN_TREE_HEIGHT) {
+    if (layout.nr_header_rows > 0 and nr_rows_left - 1 >= MIN_TREE_HEIGHT) {
         ++layout.tree_row;
+        --nr_rows_left;
+    }
+    // The tabs, below that, if they fit
+    if (_tabs.is_on() and nr_rows_left - 1 >= MIN_TREE_HEIGHT) {
+        layout.tab_row = layout.tree_row++;
         --nr_rows_left;
     }
 

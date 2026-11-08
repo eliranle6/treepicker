@@ -50,8 +50,10 @@ src/picker/       TreeSelector (the selection, and picked nodes: a dir is picked
                   dir's is its nodes' if they agree), Tabs (--tab: a row of them, each showing
                   some groups of nodes, by Search's filter),
                   Picker, cli (the programs' shared options
-                  and output), keys_help (the key list, for --help and the ? key, made from
-                  TreeKeyboardSelector's key table)
+                  and output), keys_help (the keys by group, from TreeKeyboardSelector's key
+                  table and the ones handled apart: for --help, and the ? key's help, a
+                  list of its own that a nested TreeKeyboardSelector shows, the caller's
+                  keys and --help-line's first, long lines wrapped to 80 columns)
 src/utils/        guishell (curses on /dev/tty, colors, cutting lines by display width)
 src/pathtree/     PathTree: a tree of paths, from a dir's scan (readdir, sorted), from a stream (in order), or
                   read lazily a dir at a time (--lazy: Tree::load_children(), which
