@@ -127,7 +127,7 @@ const std::string CLI_OPTIONS_USAGE = std::string(
     "  --tab TITLE GROUPS\n"
     "                 a tab, in a row above the tree, that shows only the nodes of GROUPS (their\n"
     "                 names separated by commas; empty: all), with their count. Given again, for\n"
-    "                 more tabs; Tab and Shift-Tab switch.\n"
+    "                 more tabs; Ctrl-L and Ctrl-H switch (Tab and Shift-Tab too).\n"
     "  -0             paths end with '\\0' rather than a newline (read ones and printed ones)\n"
     "  -h, --help     show this help\n"
     "\n"
@@ -136,8 +136,12 @@ const std::string CLI_OPTIONS_USAGE = std::string(
     "Prints the picked nodes' paths, in the tree's order. Exits with 0 if a node was picked (or an\n"
     "--expect key was pressed), 1 if not.\n";
 
-// Whether treepicker uses the key (a byte) itself, when moving around
+// Whether treepicker uses the key (a byte) itself, when moving around. Not Tab: it switches tabs
+// only while the caller doesn't have it (Ctrl-L does too).
 static bool is_treepickers_key(unsigned char byte) {
+    if (byte == KEYCODE_TAB) {
+        return false;
+    }
     for (auto& command : TreeKeyboardSelector::get_key_commands()) {
         for (auto& binding : command.bindings) {
             if (binding.first == byte) {

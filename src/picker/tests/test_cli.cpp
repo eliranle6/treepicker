@@ -175,6 +175,10 @@ TEST(cli, expect_keys_cant_be_treepickers_or_unprintable) {
     ASSERT_FALSE(parse({"--expect", "?"}).error.empty());
     ASSERT_FALSE(parse({"--expect", " "}).error.empty());
     ASSERT_FALSE(parse({"--expect", "\x7f"}).error.empty());
+    // Ctrl-L switches tabs; Tab does only while the caller doesn't have it
+    ASSERT_FALSE(parse({"--expect", "\x0c"}).error.empty());
+    ASSERT_TRUE(parse({"--expect", "\t"}).error.empty());
+    ASSERT_TRUE(parse({"--notify", "\t"}).error.empty());
 }
 
 TEST(cli, select) {

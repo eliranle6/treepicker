@@ -24,11 +24,8 @@ static const std::vector<KeyLine>& other_key_lines(void) {
         {"Searching", "Esc", "while typing: done, dropping the filter"},
         {"Searching", "Backspace", "while typing: erase a character (none left: done)"},
         {"Searching", "Ctrl-U, Ctrl-W", "while typing: erase the keyword"},
-        {"Picking", "Tab/Shift-Tab", "next/previous tab (with --tab)"},
-        {"Picking", "a state's key", "put the selection in that state (with --state KEY;\n"
-                                      "a dir: all under it)"},
-        {"The side tree", "in it:", "h/j/k/l, J/K, Ctrl-J/Ctrl-K, Home/End move, Enter picks\n"
-                                   "(with --side-key), Ctrl-H, Esc or Backspace: back"},
+        {"Picking", "a state's key", "put the selection in that state (with --state KEY; a dir: all under it)"},
+        {"The side tree", "in it:", "h/j/k/l, J/K, Ctrl-J/Ctrl-K, Home/End move, Enter picks (with --side-key), Ctrl-H, Esc or Backspace: back"},
     };
     return lines;
 }
@@ -55,31 +52,6 @@ static std::string key_line(const std::string& keys, const std::string& descript
     return keys + std::string(keys.size() < KEYS_WIDTH ? KEYS_WIDTH - keys.size() : 1, ' ') + description;
 }
 
-std::string keys_help(void) {
-    std::string help;
-    std::string group;
-    for (auto& line : key_lines()) {
-        if (line.group != group) {
-            group = line.group;
-            help += "  " + group + ":\n";
-        }
-        const std::string indent = "    ";
-        help += indent + key_line(line.keys, "");
-        for (char c : line.description) {
-            help += c;
-            if (c == '\n') {
-                help += indent + std::string(KEYS_WIDTH, ' ');
-            }
-        }
-        help += '\n';
-    }
-    return help;
-}
-
-// The widest the help's lines get, so they fit an 80-column screen after the selection's mark and
-// the tree's lines ("> ├── "), the last column left empty
-static constexpr std::size_t HELP_WIDTH = 73;
-
 // A line cut into lines of at most width display columns, at spaces where it can be, the ones after
 // the first indented as it is and by indent more
 static std::vector<std::string> wrapped(const std::string& line, std::size_t width, std::size_t indent) {
@@ -88,7 +60,8 @@ static std::vector<std::string> wrapped(const std::string& line, std::size_t wid
     std::string rest = line;
     while (static_cast<std::size_t>(guishell::display_width(rest)) > width) {
         std::size_t cut = guishell::nr_bytes_that_fit(rest.data(), rest.size(), width + 1);
-        const std::size_t space = rest.rfind(' ', cut);
+        // A space just after what fits ends the line there too
+        const std::size_t space = rest.rfind(' ', cut - 1);
         const std::size_t start = lines.empty() ? own_indent : own_indent + indent;
         if (space != std::string::npos and space > start) {
             cut = space;
@@ -106,7 +79,23 @@ static std::vector<std::string> wrapped(const std::string& line, std::size_t wid
     return lines;
 }
 
-std::unique_ptr<treelib::Tree> keys_help_tree(const PickerOptions& options) {
+std::string keys_help(void) {
+    std::string help;
+    std::string group;
+    for (auto& line : key_lines()) {
+        if (line.group != group) {
+            group = line.group;
+            help += "  " + group + ":\n";
+        }
+        // Fitting 80 columns, the last one left empty
+        for (auto& part : wrapped("    " + key_line(line.keys, line.description), 79, KEYS_WIDTH)) {
+            help += part + '\n';
+        }
+    }
+    return help;
+}
+
+std::unique_ptr<treelib::Tree> keys_help_tree(const PickerOptions& options, std::size_t width) {
     // A list rather than a tree of groups, so all of it shows (paged as the screen allows), each
     // group after a heading that moving skips, as a menu's
     std::unique_ptr<treelib::Tree> tree(new treelib::Tree());
@@ -123,20 +112,10 @@ std::unique_ptr<treelib::Tree> keys_help_tree(const PickerOptions& options) {
         }
         add(heading + ":", true, "cyan");
     };
-    // A key's line, and its description's other lines after it, under the description
+    // A key's line, wrapped under its description
     auto add_key = [&](const std::string& keys, const std::string& description) {
-        std::istringstream lines(description);
-        std::string line;
-        std::getline(lines, line);
-        // As the description's lines, a long one wrapped
-        const std::string under = "  " + std::string(KEYS_WIDTH, ' ');
-        for (auto& part : wrapped("  " + key_line(keys, line), HELP_WIDTH, KEYS_WIDTH)) {
+        for (auto& part : wrapped("  " + key_line(keys, description), width, KEYS_WIDTH)) {
             add(part);
-        }
-        while (std::getline(lines, line)) {
-            for (auto& part : wrapped(under + line, HELP_WIDTH, 0)) {
-                add(part);
-            }
         }
     };
     if (not options.key_hints.empty() or not options.help_lines.empty()) {
@@ -149,7 +128,12 @@ std::unique_ptr<treelib::Tree> keys_help_tree(const PickerOptions& options) {
             if (not line.empty() and line[0] != ' ' and line.back() == ':') {
                 add_heading(line.substr(0, line.size() - 1));
             } else {
-                for (auto& part : wrapped(line, HELP_WIDTH, 2)) {
+                // Under the text after its first gap of two spaces (e.g. a key's description)
+                const std::size_t start = line.find_first_not_of(' ');
+                const std::size_t gap = line.find("  ", start);
+                const std::size_t text = gap == std::string::npos ? std::string::npos : line.find_first_not_of(' ', gap);
+                const std::size_t hang = text == std::string::npos or text - start > width / 2 ? 2 : text - start;
+                for (auto& part : wrapped(line, width, hang)) {
                     add(part);
                 }
             }
@@ -205,7 +189,7 @@ std::vector<KeyHint> key_hints(const PickerOptions& options, bool is_none_picked
             }
         }
         if (not options.tabs.empty()) {
-            hints.push_back({"Tab", "next tab"});
+            hints.push_back({"Ctrl-L/H", "tabs"});
         }
     } else {
         hints.push_back({"Enter", options.is_root_pickable ? "pick" : "choose"});

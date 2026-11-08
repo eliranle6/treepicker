@@ -43,7 +43,7 @@ enum {
     KEYCODE_K = 107,
     KEYCODE_L = 108,
     KEYCODE_LOWER_G = 103,
-    KEYCODE_P = 112,
+    KEYCODE_CTRL_P = 16,
     KEYCODE_F = 102,
     KEYCODE_QUESTION_MARK = 63,
     KEYCODE_CTRL_SLASH = 31,  // What terminals send for Ctrl-/ (and Ctrl-_)
@@ -82,7 +82,7 @@ public:
         // What it's about, a heading in the help (e.g. "Moving")
         const char* group;
         const char* keys;
-        // Lines after the first are shown indented under it
+        // One line, wrapped where it's shown
         const char* description;
         std::vector<std::pair<int, Action>> bindings;
     };
@@ -129,6 +129,9 @@ public:
 private:
     // Number of nodes that page up/down move
     static constexpr int PAGE_SIZE = 10;
+    // The widest the keys' help (?) wraps its lines to, and the narrowest
+    static constexpr int MAX_HELP_WIDTH = 110;
+    static constexpr int MIN_HELP_WIDTH = 30;
 
     // What the keys do (see get_key_commands())
     bool move_to_prev(void);
@@ -169,7 +172,10 @@ private:
     bool start_window_key(void);
     // Finish picking on the side tree's selection, key (0: Enter) said by get_side_pressed_key()
     bool finish_in_side(int key);
-    // Ctrl-L: move in the side tree (until Ctrl-H)
+    // Ctrl-L, Tab / Ctrl-H, Shift-Tab: the next / previous tab, if there are tabs
+    bool next_tab(void);
+    bool prev_tab(void);
+    // Ctrl-W l: move in the side tree (until Ctrl-W h)
     bool focus_side(void);
     // The side tree's node at path, or its closest ancestor there
     std::shared_ptr<treelib::Node> closest_in_side(const std::string& path);
@@ -240,7 +246,7 @@ private:
     bool is_tree_filtered(void) const;
     // Whether Space, V and the states' keys act only on what's shown under the selection
     bool is_acting_on_shown(void) const;
-    // Tab, Shift-Tab: show the next tab (step 1) or the previous one (-1)
+    // Show the next tab (step 1) or the previous one (-1)
     void move_tab(int step);
     // Draw the tabs' row
     void print_tabs(int row, int window_width);

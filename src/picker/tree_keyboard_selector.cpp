@@ -134,11 +134,6 @@ bool TreeKeyboardSelector::char_pressed(int c)
     }
     if (_mode == mode::MODE_NAVIGATION) {
         load_around_selection();
-        if (_tabs.is_on() and (c == KEYCODE_TAB or c == KEY_BTAB)) {
-            move_tab(c == KEYCODE_TAB ? 1 : -1);
-            print_tree();
-            return false;
-        }
         const int state = _states.get_state_of_key(c);
         if (state >= 0 and _options.is_multi) {
             _states.set(_tree_selector.get_selection(), state, is_acting_on_shown());
@@ -273,27 +268,22 @@ const std::vector<TreeKeyboardSelector::KeyCommand>& TreeKeyboardSelector::get_k
             {KEYCODE_SLASH, &T::start_search}}},
         {"Searching", "Ctrl-/", "search when Enter is pressed", {
             {KEYCODE_CTRL_SLASH, &T::start_search_on_enter}}},
-        {"Searching", "Esc, Ctrl-[", "drop the search filter (without one, with -m: unpick all;\n"
-              "with states: all in the first one)", {
+        {"Searching", "Esc, Ctrl-[", "drop the search filter (without one, with -m: unpick all; with states: all in the first one)", {
             {KEYCODE_ESCAPE, &T::drop_search}}},
-        {"Searching", "f", "switch between showing only the matches and the\n"
-              "whole tree with the matches in yellow", {
+        {"Searching", "f", "switch between showing only the matches and the whole tree with the matches in yellow", {
             {KEYCODE_F, &T::toggle_filter}}},
-        {"Showing", "p", "show or hide the preview column (with --preview)", {
-            {KEYCODE_P, &T::toggle_preview}}},
-        {"Showing", "z", "see the selected node's picture on the whole screen\n"
-              "(with --preview's pictures; any key goes back)", {
+        {"Showing", "Ctrl-P", "show or hide the preview column (with --preview)", {
+            {KEYCODE_CTRL_P, &T::toggle_preview}}},
+        {"Showing", "z", "see the selected node's picture on the whole screen (with --preview's pictures; any key goes back)", {
             {KEYCODE_Z, &T::show_picture}}},
-        {"The side tree", "Ctrl-L/Ctrl-H", "move in the side tree (with --side), and back", {
-            {KEYCODE_CTRL_L, &T::focus_side}}},
-        {"The side tree", "Ctrl-W l/h", "the same, as vim's (Ctrl-W w switches)", {
+        {"Showing", "Ctrl-L/Ctrl-H", "next/previous tab (with --tab); so do Tab and Shift-Tab (Tab only if the caller doesn't take it as its own Ctrl-I)", {
+            {KEYCODE_CTRL_L, &T::next_tab}, {KEYCODE_CTRL_H, &T::prev_tab},
+            {KEYCODE_TAB, &T::next_tab}, {KEY_BTAB, &T::prev_tab}}},
+        {"The side tree", "Ctrl-W l/h", "move in the side tree (with --side), and back (Ctrl-W w switches)", {
             {KEYCODE_CTRL_W, &T::start_window_key}}},
-        {"Picking", "V", "pick a range (with -m, no states): moving picks the lines\n"
-              "from here to the selection (V, Space or Enter: done;\n"
-              "Esc: unpick them)", {
+        {"Picking", "V", "pick a range (with -m, no states): moving picks the lines from here to the selection (V, Space or Enter: done; Esc: unpick them)", {
             {KEYCODE_UPPER_V, &T::toggle_range}}},
-        {"Picking", "Space", "pick or unpick (with -m); with states, the next state the\n"
-              "selection allows (a dir's: all under it)", {
+        {"Picking", "Space", "pick or unpick (with -m); with states, the next state the selection allows (a dir's: all under it)", {
             {KEYCODE_SPACE, &T::toggle_pick}}},
         {"Picking", "Enter", "pick (with -m: finish)", {
             {KEYCODE_ENTER, &T::pick}, {KEY_ENTER, &T::pick}}},
@@ -468,6 +458,20 @@ void TreeKeyboardSelector::move_tab(int step) {
     _search.set_filter(_tabs.get_filter());
     _search.search(_applied_keyword, _is_filtering);
     _tree_selector.select_visible_ancestor();
+}
+
+bool TreeKeyboardSelector::next_tab(void) {
+    if (_tabs.is_on()) {
+        move_tab(1);
+    }
+    return false;
+}
+
+bool TreeKeyboardSelector::prev_tab(void) {
+    if (_tabs.is_on()) {
+        move_tab(-1);
+    }
+    return false;
 }
 
 bool TreeKeyboardSelector::focus_side(void) {
@@ -686,7 +690,10 @@ bool TreeKeyboardSelector::drop_search(void) {
 }
 
 bool TreeKeyboardSelector::show_help(void) {
-    _help_tree = keys_help_tree(_options);
+    // As wide as the screen lets it be (after the tree's "> ├── " and the last column), up to
+    // MAX_HELP_WIDTH, to be read
+    const int width = std::min(MAX_HELP_WIDTH, std::max(MIN_HELP_WIDTH, getmaxx(stdscr) - 7));
+    _help_tree = keys_help_tree(_options, width);
     PickerOptions options;
     options.header = "All the keys, " + std::string(_options.key_hints.empty() and _options.help_lines.empty() ?
         "by what they do" : "this screen's first") + " (/ searches them; q, Enter or ?: back)";

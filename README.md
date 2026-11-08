@@ -52,7 +52,7 @@ $ treepicker - --typed -m --state skip " " grey "" --state to-b ">" green ">" \
 
 `states.txt` has a line for each file: the states it allows, the one it starts in, its group and its
 path, tab-separated. Space puts the selection (a dir: all under it) in the next state they allow, a
-state's key in that state; Tab and Shift-Tab switch tabs. A dir shows its nodes' state, or `*` if
+state's key in that state; Ctrl-L and Ctrl-H switch tabs (Tab and Shift-Tab too, unless the caller has Tab as a key of its own). A dir shows its nodes' state, or `*` if
 they differ. Each file not in the first state is printed as its state's name, a tab and its path.
 
 It draws on the terminal (`/dev/tty`), so stdin and stdout are free for the tree and the result.

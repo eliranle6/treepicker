@@ -113,7 +113,7 @@ struct PickerOptions {
     std::string notify_keys;
     int notify_fd = -1;
     // Another tree, shown in the upper part of the right column (above the preview), to look
-    // through beside the picked one, e.g. where they'd go: Ctrl-L moves in it, Ctrl-H back. Not
+    // through beside the picked one, e.g. where they'd go: Ctrl-W l moves in it, Ctrl-W h back. Not
     // owned; nullptr: none.
     treelib::Tree* side_tree = nullptr;
     // A file descriptor to read the paths of the side tree's nodes to select from while picking
@@ -141,8 +141,8 @@ struct PickerOptions {
     // first), and their groups' names
     std::vector<NodeStates> node_states;
     std::vector<std::string> groups;
-    // Tabs, a row of them above the tree, each showing some of the groups: Tab and Shift-Tab
-    // switch. Empty: none.
+    // Tabs, a row of them above the tree, each showing some of the groups: Ctrl-L and Ctrl-H switch
+    // (Tab and Shift-Tab too). Empty: none.
     std::vector<TabOption> tabs;
 };
 

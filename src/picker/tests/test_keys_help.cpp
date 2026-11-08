@@ -100,7 +100,7 @@ TEST(keys_help_tree, lists_every_key_and_every_line_of_its_description) {
 
 TEST(keys_help_tree, lists_the_keys_handled_outside_the_table) {
     const auto help = picker::keys_help();
-    for (auto keys : {"Tab/Shift-Tab", "Backspace", "Ctrl-U, Ctrl-W"}) {
+    for (auto keys : {"Backspace", "Ctrl-U, Ctrl-W", "a state's key"}) {
         ASSERT_NE(help.find(keys), std::string::npos) << keys;
     }
 }
@@ -139,7 +139,8 @@ TEST(keys_help_tree, lists_the_states_keys) {
 TEST(keys_help_tree, moving_skips_only_the_headings) {
     auto tree = picker::keys_help_tree(picker::PickerOptions());
     for (auto& node : tree->get_root()->children) {
-        const bool is_heading = node->tag.empty() or node->tag.back() == ':';
+        // The keys' lines are indented, the headings aren't
+        const bool is_heading = node->tag.empty() or node->tag[0] != ' ';
         ASSERT_EQ(node->is_skipped, is_heading) << node->tag;
     }
 }
@@ -147,7 +148,8 @@ TEST(keys_help_tree, moving_skips_only_the_headings) {
 TEST(keys_help_tree, wraps_long_lines_to_fit_an_80_column_screen) {
     picker::PickerOptions options;
     options.key_hints = {{"#", std::string(30, 'x') + " " + std::string(40, 'y') + " the end"}};
-    options.help_lines = {"  " + std::string(50, 'a') + " " + std::string(30, 'b')};
+    options.help_lines = {"  " + std::string(50, 'a') + " " + std::string(30, 'b'),
+                          "  k                " + std::string(40, 'c') + " " + std::string(30, 'd')};
     const auto tags = help_tags(options);
     for (auto& tag : tags) {
         ASSERT_LE(guishell::display_width(tag), 73) << tag;
@@ -155,4 +157,6 @@ TEST(keys_help_tree, wraps_long_lines_to_fit_an_80_column_screen) {
     // The rest under the description, or the line's text
     ASSERT_TRUE(has_line(tags, std::string(19, ' ') + std::string(40, 'y')));
     ASSERT_TRUE(has_line(tags, "    " + std::string(30, 'b')));
+    // A line like a key's: under its description
+    ASSERT_TRUE(has_line(tags, std::string(19, ' ') + std::string(30, 'd')));
 }
