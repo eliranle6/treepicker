@@ -21,16 +21,19 @@ struct Update {
     // Whether moving skips it, too (e.g. a menu's heading or blank line): disabled, and not where
     // the selection stops
     bool is_skipped = false;
+    // The state (its name, with --state) to put it in, and what's under it that allows it; "": none
+    std::string state;
 
     bool operator==(const Update& other) const {
         return id == other.id and tag == other.tag and is_disabled == other.is_disabled and
-            color == other.color and is_skipped == other.is_skipped;
+            color == other.color and is_skipped == other.is_skipped and state == other.state;
     }
 };
 
 // Changes to the shown names (tags) of the tree's nodes while it's shown, read from a file
 // descriptor (--updates FD), e.g. a menu's options saying how something they're about is going.
-// Each is "ID\tTAG", then optionally "\tcolor=NAME" for its text's color, and "\tdisabled" for a
+// Each is "ID\tTAG", then optionally "\tcolor=NAME" for its text's color, "\tstate=NAME" to put it
+// (and what's under it that allows it) in that state (with --state), and "\tdisabled" for a
 // node that can't be picked (until an update without it), or "\tskipped" for one that moving skips
 // too, and ends with the delimiter; the node keeps its id, so it's printed as before when
 // picked. One with an empty ID is the caller's status (what it's doing, e.g. working something out

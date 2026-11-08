@@ -1336,6 +1336,10 @@ void TreeKeyboardSelector::apply_updates(const std::vector<Update>& updates) {
             node->is_disabled = update.is_disabled;
             node->is_skipped = update.is_skipped;
             node->color = update.color;
+            const int state = update.state.empty() ? -1 : _states.get_state_named(update.state);
+            if (state >= 0) {
+                _states.set(node, state, false);
+            }
         }
     }
     // Searches match tags

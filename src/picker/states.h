@@ -40,6 +40,8 @@ public:
 
     // The state the key sets, or -1 if none does
     int get_state_of_key(int key) const;
+    // The state of that name, or -1 if there's none
+    int get_state_named(const std::string& name) const;
 
     // How many nodes are in each state but the first, by their marks: e.g. "+ 120  ✗ 30  → 2"
     std::string get_counts_text(void) const;

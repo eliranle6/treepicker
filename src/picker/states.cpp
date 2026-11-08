@@ -170,6 +170,15 @@ int States::get_state_of_key(int key) const {
     return -1;
 }
 
+int States::get_state_named(const std::string& name) const {
+    for (std::size_t i = 0; i < _states.size(); ++i) {
+        if (_states[i].name == name) {
+            return static_cast<int>(i);
+        }
+    }
+    return -1;
+}
+
 const treelib::StateMark& States::get_mark(int state, int group) const {
     const auto& marks = _marks[state];
     const std::size_t index = static_cast<std::size_t>(group + 1);

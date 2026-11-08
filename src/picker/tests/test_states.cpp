@@ -199,3 +199,8 @@ TEST(tabs, count_switch_and_filter) {
     tabs.move(1);
     ASSERT_EQ(tabs.get_current(), 0u);
 }
+
+TEST_F(StatesTest, a_state_is_found_by_its_name) {
+    ASSERT_EQ(states.get_state_named("to-a"), 2);
+    ASSERT_EQ(states.get_state_named("nothing"), -1);
+}

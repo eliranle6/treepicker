@@ -93,3 +93,9 @@ TEST(updates, a_skipped_node_is_disabled_too) {
     picker::Update skipped{"a", "-- A --", true, "", true};
     ASSERT_EQ(reader.feed("a\t-- A --\tskipped\n"), Updates({skipped}));
 }
+
+TEST(updates, a_state_to_put_the_node_in) {
+    picker::UpdatesReader reader('\n');
+    ASSERT_EQ(reader.feed("a\tA  [ai: copy]\tcolor=magenta\tstate=to-b\nb\tB\tstate=skip\n"),
+              Updates({{"a", "A  [ai: copy]", false, "magenta", false, "to-b"}, {"b", "B", false, "", false, "skip"}}));
+}
