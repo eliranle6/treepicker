@@ -39,7 +39,9 @@ $ treepicker -m --typed --side other.txt --side-root other -    # other.txt: its
 `Ctrl-W l` moves into it and `Ctrl-W h` (or Esc) back. `--side-start PATH` starts there, on PATH or
 its closest ancestor; `--side-select FD` reads paths to select in it as the selection moves. `--side-key
 KEY` makes Enter there finish picking, printing KEY and its selected node, `--side-expect KEYS` does so
-for other keys too, and `--side-hint KEY TEXT` says what they do in the keys row.
+for other keys too, and `--side-hint KEY TEXT` says what they do in the keys row. While the selected node's
+image (`--preview`'s) is shown below it, the side tree shrinks (to 3 rows at least) to give the image
+the rows it needs, and gets them back once it's moved into.
 
 Without a side tree, `Ctrl-W l` moves into the preview column (`--preview FD`) instead, to scroll a
 preview longer than the screen: `j`/`k`, `Ctrl-D`/`Ctrl-U`, `g`/`G`; `h`, Esc or `Ctrl-W h` back. The

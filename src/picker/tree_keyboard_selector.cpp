@@ -1108,6 +1108,20 @@ void TreeKeyboardSelector::print_preview(const Layout& layout) {
                 column, width);
 }
 
+int TreeKeyboardSelector::nr_picture_preview_rows(const Image& image, int width) {
+    // As print_preview() lays them out
+    const int nr_lines = static_cast<int>(selected_preview().size());
+    const int half_width = (width - 1) / 2;
+    // (Two pixels a row; a picture's never made bigger, so this is as tall as it gets)
+    const int max_height = image.height + 1;
+    if (image.height > image.width and half_width >= MIN_IMAGE_WIDTH) {
+        const Image fitted = fit_image(image, width - half_width - 1, max_height);
+        return std::max(nr_lines, (fitted.height + 1) / 2);
+    }
+    const Image fitted = fit_image(image, width, max_height);
+    return nr_lines + (nr_lines > 0 ? 1 : 0) + (fitted.height + 1) / 2;
+}
+
 const Image* TreeKeyboardSelector::selected_image(void) {
     if (not guishell::can_show_images()) {
         return nullptr;
@@ -1230,7 +1244,18 @@ TreeKeyboardSelector::Layout TreeKeyboardSelector::get_layout(void) {
     if (layout.preview_column >= 0 and _side_selector != nullptr) {
         // The side tree on top, level with the tree, after its title; and below it, after a line,
         // the preview
-        const int nr_preview_rows = has_column_preview ? layout.tree_height * SIDE_PREVIEW_FIFTHS / 5 : 0;
+        const bool is_picture_shown = has_column_preview and not _is_side_focused and
+            _tree_selector.get_selection() != nullptr and selected_image() != nullptr;
+        const int fifths = is_picture_shown ? SIDE_PICTURE_PREVIEW_FIFTHS : SIDE_PREVIEW_FIFTHS;
+        int nr_preview_rows = has_column_preview ? layout.tree_height * fifths / 5 : 0;
+        if (is_picture_shown) {
+            // As many as it takes, not fewer than without a picture, and not so many that the side tree
+            // goes (its title, its rows and the line above the preview)
+            const int width = std::max(0, window_width - 1 - (layout.preview_column + 2));
+            nr_preview_rows = std::min(nr_preview_rows, nr_picture_preview_rows(*selected_image(), width));
+            nr_preview_rows = std::max(layout.tree_height * SIDE_PREVIEW_FIFTHS / 5,
+                                       std::min(nr_preview_rows, layout.tree_height - MIN_SIDE_HEIGHT - 2));
+        }
         const int nr_line_rows = nr_preview_rows > 0 ? 1 : 0;
         const int side_height = layout.tree_height - nr_preview_rows - nr_line_rows - 1;
         if (side_height >= MIN_SIDE_HEIGHT) {

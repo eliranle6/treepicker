@@ -93,6 +93,7 @@ const std::string CLI_OPTIONS_USAGE = std::string(
     "  --side FILE    another tree to look through beside it, in the upper part of the right\n"
     "                 column (below --preview's text): its paths, as -'s with --typed, ending like\n"
     "                 the paths do (see -0). Ctrl-W l moves in it, Ctrl-W h (or Esc) back.\n"
+    "                 It shrinks while the selected node's image is shown, unless it's moved in.\n"
     "  --side-root NAME\n"
     "                 the name shown for the side tree's root\n"
     "  --side-select FD\n"

@@ -208,6 +208,10 @@ private:
     static constexpr int MIN_WIDTH_WITH_PREVIEW = 60;
     static constexpr int PREVIEW_FIFTHS = 2;
     static constexpr int SIDE_PREVIEW_FIFTHS = 2;
+    // With a side tree, the preview's part of the right column's rows, in fifths: as it is, and while
+    // the selected node's picture is shown in it (the side tree shrinks, to MIN_SIDE_HEIGHT at least,
+    // while the tree, not the side tree, has the keys)
+    static constexpr int SIDE_PICTURE_PREVIEW_FIFTHS = 4;
     // The fewest rows the side tree is shown in
     static constexpr int MIN_SIDE_HEIGHT = 3;
 
@@ -272,6 +276,10 @@ private:
 
     // The selected node's preview's lines
     const std::vector<std::string>& selected_preview(void);
+    // The rows the selected node's preview takes in the preview column, width columns wide, with its
+    // picture as big as fits that width (its lines, then the picture below them, or a portrait one
+    // beside them)
+    int nr_picture_preview_rows(const Image& image, int width);
     // The selected node's image, if it has one and the terminal can show it, else nullptr
     const Image* selected_image(void);
     // Draw an image in the preview column's rows from row on (nr_rows), width columns from column,
