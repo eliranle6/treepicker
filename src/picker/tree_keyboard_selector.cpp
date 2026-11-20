@@ -805,7 +805,14 @@ void TreeKeyboardSelector::print_tree(void) {
 
     // Print header
     for (int row = 0; row < layout.nr_header_rows; ++row) {
-        print_line(row, guishell::printable(_header_lines[row]), window_width, false);
+        const std::string& line = _header_lines[row];
+        if (line.find(guishell::STYLE_MARK) != std::string::npos) {
+            move(row, 0);
+            clrtoeol();
+            print_styled(row, 0, line, window_width - 1);
+        } else {
+            print_line(row, guishell::printable(line), window_width, false);
+        }
     }
 
     // Print tree, below it: up to the screen's last column, which stays empty (see
