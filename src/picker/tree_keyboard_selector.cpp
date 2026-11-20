@@ -273,7 +273,7 @@ const std::vector<TreeKeyboardSelector::KeyCommand>& TreeKeyboardSelector::get_k
             {KEYCODE_SLASH, &T::start_search}}},
         {"Searching", "Ctrl-/", "search when Enter is pressed", {
             {KEYCODE_CTRL_SLASH, &T::start_search_on_enter}}},
-        {"Searching", "Esc, Ctrl-[", "drop the search filter (without one, with -m: unpick all; with states: all in the first one)", {
+        {"Searching", "Esc, Ctrl-[", "drop the search filter (without one, with -m: uncheck all; with states: all in the first one)", {
             {KEYCODE_ESCAPE, &T::drop_search}}},
         {"Searching", "f", "switch between showing only the matches and the whole tree with the matches in yellow", {
             {KEYCODE_F, &T::toggle_filter}}},
@@ -286,11 +286,11 @@ const std::vector<TreeKeyboardSelector::KeyCommand>& TreeKeyboardSelector::get_k
             {KEYCODE_TAB, &T::next_tab}, {KEY_BTAB, &T::prev_tab}}},
         {"The side tree", "Ctrl-W l/h", "move in the side tree (with --side), and back (Ctrl-W w switches)", {
             {KEYCODE_CTRL_W, &T::start_window_key}}},
-        {"Picking", "V", "pick a range (with -m, no states): moving picks the lines from here to the selection (V, Space or Enter: done; Esc: unpick them)", {
+        {"Checking", "V", "check a range (with -m, no states): moving checks the lines from here to the selection (V, Space or Enter: done; Esc: uncheck them)", {
             {KEYCODE_UPPER_V, &T::toggle_range}}},
-        {"Picking", "Space", "pick or unpick (with -m); with states, the next state the selection allows (a dir's: all under it)", {
+        {"Checking", "Space", "check or uncheck (with -m); with states, the next state the selection allows (a dir's: all under it)", {
             {KEYCODE_SPACE, &T::toggle_pick}}},
-        {"Picking", "Enter", "pick (with -m: finish)", {
+        {"Checking", "Enter", "choose (with -m: finish)", {
             {KEYCODE_ENTER, &T::pick}, {KEY_ENTER, &T::pick}}},
         {"Help and quitting", "?", "show all the keys (q, Enter or ? again: back)", {
             {KEYCODE_QUESTION_MARK, &T::show_help}}},
@@ -870,12 +870,12 @@ void TreeKeyboardSelector::print_tree(void) {
             stats_line += ", " + (counts.empty() ? std::string("all skipped") : counts);
         } else if (_options.is_multi) {
             // Files, when the tree knows which nodes are files (else nodes, dirs too)
-            stats_line += ", picked: " + (_are_files_known ?
+            stats_line += ", checked: " + (_are_files_known ?
                 std::to_string(_tree_selector.get_nr_picked_files()) + " files" :
                 std::to_string(_tree_selector.get_nr_picked()));
         }
         if (_range_start != nullptr) {
-            stats_line += " (picking a range: V done, Esc undo)";
+            stats_line += " (checking a range: V done, Esc undo)";
         }
         stats_line += std::string(", selected: ") +
             guishell::printable(_tree_selector.get_selection()->tag);

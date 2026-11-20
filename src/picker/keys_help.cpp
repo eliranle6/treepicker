@@ -14,7 +14,7 @@ static constexpr std::size_t KEYS_WIDTH = 17;
 // function's statics, so they're there for cli's usage text, made while statics are initialized)
 static const std::vector<std::string>& groups(void) {
     static const std::vector<std::string> groups = {
-        "Moving", "Searching", "Picking", "Showing", "The side tree", "Help and quitting"};
+        "Moving", "Searching", "Checking", "Showing", "The side tree", "Help and quitting"};
     return groups;
 }
 
@@ -24,11 +24,11 @@ static const std::vector<KeyLine>& other_key_lines(void) {
         {"Searching", "Esc", "while typing: done, dropping the filter"},
         {"Searching", "Backspace", "while typing: erase a character (none left: done)"},
         {"Searching", "Ctrl-U, Ctrl-W", "while typing: erase the keyword"},
-        {"Picking", "a state's key", "put the selection in that state (with --state KEY; a dir: all under it)"},
+        {"Checking", "a state's key", "put the selection in that state (with --state KEY; a dir: all under it)"},
         {"Showing", "Ctrl-W l", "without a side tree: move into the preview column, to scroll it (j/k, "
                                 "Ctrl-D/Ctrl-U, g/G; the tree's other keys work there too); h, Esc or "
                                 "Ctrl-W h: back"},
-        {"The side tree", "in it:", "h/j/k/l, J/K, Ctrl-J/Ctrl-K, Home/End move, Enter picks (with --side-key), Ctrl-H, Esc or Backspace: back"},
+        {"The side tree", "in it:", "h/j/k/l, J/K, Ctrl-J/Ctrl-K, Home/End move, Enter chooses (with --side-key), Ctrl-H, Esc or Backspace: back"},
     };
     return lines;
 }
@@ -188,7 +188,7 @@ std::vector<KeyHint> key_hints(const PickerOptions& options, bool is_none_picked
         return hints;
     }
     if (options.is_multi) {
-        hints.push_back({"Space", options.states.empty() ? "pick" : "next state"});
+        hints.push_back({"Space", options.states.empty() ? "check" : "next state"});
         hints.push_back({"Enter", "done"});
         // The keys that set a state
         for (auto& state : options.states) {

@@ -40,7 +40,7 @@ TEST(key_hints, treepickers_then_the_callers_then_search_help_and_quit) {
     options.is_multi = true;
     options.key_hints = {{"Enter", "choose what to do"}, {"#", "hashing"}, {"q", "back"}};
     ASSERT_EQ(picker::key_hints(options), std::vector<picker::KeyHint>({
-        {"Space", "pick"}, {"Enter", "choose what to do"}, {"#", "hashing"}, {"/", "search"},
+        {"Space", "check"}, {"Enter", "choose what to do"}, {"#", "hashing"}, {"/", "search"},
         {"?", "all keys"}, {"q", "back"}}));
 }
 
